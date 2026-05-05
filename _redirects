@@ -1,0 +1,3 @@
+# Redirections 301 vers la liste des cas clients (anciennes pages supprimées)
+/cas-client-ag-maif.html        /cas-clients.html  301
+/cas-client-pret-a-manger.html  /cas-clients.html  301
