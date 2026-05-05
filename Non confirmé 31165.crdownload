@@ -1,0 +1,5 @@
+php_globals=off
+php_gpc=off
+safe_mode=off
+php_displayerr=off
+php_url_fopen=on

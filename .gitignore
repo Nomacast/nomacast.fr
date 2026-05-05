@@ -1,0 +1,20 @@
+# Système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Sublime Text
+*.sublime-workspace
+
+# Backups et temp
+*.bak
+*.tmp
+*~
+.~lock.*
+
+# Logs
+*.log
+
+# Variables d'environnement
+.env
+.env.local

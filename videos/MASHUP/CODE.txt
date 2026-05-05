@@ -1,0 +1,1 @@
+python mashup_video.py --input . --output mashup.mp4 --duree-totale 60
