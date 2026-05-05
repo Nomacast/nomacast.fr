@@ -64,17 +64,19 @@ Historique des modifications du site. Format : sessions chronologiques, plus ré
 
 ### Performance & infrastructure
 
-- **WebP transparent activé** via `.htaccess` : si `.png.webp` existe, le serveur le sert au lieu du PNG aux navigateurs compatibles. Conversion via `cwebp -q 85` dans Termux. (2026-04-30)
+> ⚠️ **Note 2026-05-06** : la migration de l'hébergement de LWS vers Cloudflare Pages rend une partie des éléments ci-dessous **obsolètes ou à reconfigurer** (la stack Cloudflare ne lit pas `.htaccess`). Voir la section "Migration LWS → Cloudflare Pages" (session 2026-05-06) pour le détail des points qui restent à traiter (WebP serving, headers de sécurité, pages d'erreur custom, formulaire de contact `envoyer.php`).
 
-- **Compression Gzip + Brotli** activée. Cache 1 an sur images, 1 mois sur CSS/JS. (2026-04-30)
+- **WebP transparent activé** via `.htaccess` : si `.png.webp` existe, le serveur le sert au lieu du PNG aux navigateurs compatibles. Conversion via `cwebp -q 85` dans Termux. (2026-04-30) — **OBSOLÈTE post-bascule** : Cloudflare Pages ne lit pas `.htaccess`. Pour conserver le serving WebP, deux options : (a) plan Cloudflare Pro pour activer Polish (auto-conversion images), (b) servir directement les `.webp` dans le HTML via `<picture><source srcset>`.
 
-- **Headers de sécurité** : HSTS, X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Permissions-Policy. CSP **NON activé** intentionnellement (casse GTM, GA4, Cloudflare Turnstile). (2026-04-30)
+- **Compression Gzip + Brotli** activée. Cache 1 an sur images, 1 mois sur CSS/JS. (2026-04-30) — **Géré par Cloudflare post-bascule** : compression et caching sont automatiques sur Cloudflare Pages, pas besoin de configuration manuelle. Pour tuner les TTLs spécifiques : Cloudflare → Caching → Configuration.
 
-- **Fichier `default_index.html`** recréé automatiquement par LWS quand on le supprime. Contournement : `Redirect 301 /default_index.html → /` dans `.htaccess`. (2026-05-01)
+- **Headers de sécurité** : HSTS, X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Permissions-Policy. CSP **NON activé** intentionnellement (casse GTM, GA4, Cloudflare Turnstile). (2026-04-30) — **À migrer post-bascule** : les directives `Header set` du `.htaccess` ne s'appliquent plus. Solutions Cloudflare Pages : (a) fichier `_headers` à la racine du repo (syntaxe Cloudflare Pages, équivalent direct), (b) Cloudflare Rules → Transform Rules → Modify Response Header. À traiter en priorité moyenne. HSTS reste actif via le toggle "Always Use HTTPS" + Cloudflare HSTS settings (SSL/TLS → Edge Certificates).
 
-- **Page 404 personnalisée** : design Nomacast natif (pas de page LWS générique). Routée via `ErrorDocument 404 /404.html` dans `.htaccess` (idem 403 et 500 pour cohérence). (2026-05-01)
+- **Fichier `default_index.html`** recréé automatiquement par LWS quand on le supprime. Contournement : `Redirect 301 /default_index.html → /` dans `.htaccess`. (2026-05-01) — **CADUC post-bascule** : Cloudflare Pages ne génère pas ce fichier parasite. Si une copie traîne dans le repo, elle peut être supprimée. La règle `_redirects` n'est plus nécessaire pour ça.
 
-- **`envoyer.php` sécurisé multi-couches** : Cloudflare Turnstile (CAPTCHA invisible), honeypot, vérification origin/referer, anti-flood (rate limiting), content filter (anti-spam), anti-injection (sanitization). Ne pas redébugger : c'est volontairement strict. (2026-04-28)
+- **Page 404 personnalisée** : design Nomacast natif (pas de page LWS générique). Routée via `ErrorDocument 404 /404.html` dans `.htaccess` (idem 403 et 500 pour cohérence). (2026-05-01) — **À VÉRIFIER post-bascule** : Cloudflare Pages sert automatiquement `404.html` à la racine du repo si la requête ne matche aucune route. Le fichier `404.html` doit donc être présent à la racine du repo (à confirmer). Pour 403 et 500, Cloudflare a son propre comportement par défaut (pages d'erreur Cloudflare-branded). Si custom 403/500 souhaitées : `_redirects` ne le permet pas, il faut Pages Functions.
+
+- **`envoyer.php` sécurisé multi-couches** : Cloudflare Turnstile (CAPTCHA invisible), honeypot, vérification origin/referer, anti-flood (rate limiting), content filter (anti-spam), anti-injection (sanitization). Ne pas redébugger : c'est volontairement strict. (2026-04-28) — **⚠️ POINT CRITIQUE POST-BASCULE 2026-05-06** : Cloudflare Pages ne fait PAS tourner PHP. Si le formulaire de contact pointe encore vers `https://nomacast.fr/envoyer.php`, il est cassé en prod. À tester en priorité absolue. Solutions de remplacement à choisir : (a) garder le PHP sur LWS via un sous-domaine type `form.nomacast.fr` (hébergement LWS conservé pour ce seul service), (b) Cloudflare Pages Functions (JS serverless), (c) Cloudflare Workers, (d) service tiers type Formspree/Plunk.
 
 ### UX & design
 
@@ -88,9 +90,22 @@ Historique des modifications du site. Format : sessions chronologiques, plus ré
 
 ### Hosting & DNS
 
-- **Hébergeur : LWS** (France). HTTPS forcé via `.htaccess`. (baseline)
+- **Hébergeur web : Cloudflare Pages** (gratuit, CDN global). Auto-deploy depuis `main` du repo `github.com/Nomacast/nomacast.fr`. Build settings : Framework=None, Build command vide, Output `/`. URL canonique : `nomacast.fr`, URL technique fallback : `nomacast-fr.pages.dev`. (2026-05-06, migration depuis LWS)
 
-- **Email pro** : Google Workspace (`evenement@nomacast.fr`, `agences@nomacast.fr`). Forwarding LWS → Gmail. (baseline)
+- **Stockage vidéos : Cloudflare R2** (free tier 10 GB + bande passante illimitée). Bucket `nomacast-videos`. Public Development URL : `https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev`. Les `<video><source>` dans les HTML pointent directement vers cette URL R2. **Ne jamais remettre les vidéos dans le repo GitHub** (Cloudflare Pages a une limite stricte 25 MB par fichier, donc le repo est rejeté à la première vidéo HD). (2026-05-06)
+
+- **DNS gérés par Cloudflare**. Nameservers : `mark.ns.cloudflare.com` et `monroe.ns.cloudflare.com`. Registrar du domaine `nomacast.fr` : reste **LWS** (changement de NS uniquement, pas de transfert de domaine). (2026-05-06)
+
+- **HTTPS** : automatique via Cloudflare. Réglages activés : "Always Use HTTPS", "Automatic HTTPS Rewrites", Encryption mode "Full", TLS minimum 1.2. Plus de directive HTTPS dans `.htaccess` (le `.htaccess` ne s'applique plus de toute façon, Cloudflare Pages ne fait pas tourner Apache). (2026-05-06)
+
+- **Records DNS critiques préservés à la bascule** :
+  - MX : `SMTP.GOOGLE.COM` (Google Workspace, intact)
+  - TXT SPF, DKIM (`dkim._domainkey`, `google._domainkey`), DMARC, vérification Google
+  - A `mail` → IP serveur LWS, et CNAMEs `imap`/`pop`/`smtp` → `mail.nomacast.fr` : conservés en **DNS only** (gris, pas de proxy Cloudflare) pour les clients mail tiers type Thunderbird qui utiliseraient encore les protocoles LWS
+  - CNAME `ftp` → `nomacast.fr` : DNS only (FTP non proxiable)
+  - A `nomacast.fr` et CNAME `www` : Proxied (orange) → pointent vers Cloudflare Pages
+
+- **Email pro : Google Workspace direct.** Boîtes : `evenement@nomacast.fr`, `agences@nomacast.fr`. **Pas de forwarding LWS** : le MX pointe directement vers Google Workspace, les emails arrivent en direct sans transit par LWS. (correction 2026-05-06, le CHANGELOG d'avant indiquait à tort un forwarding LWS → Gmail)
 
 ### Documentation & process
 
@@ -99,6 +114,20 @@ Historique des modifications du site. Format : sessions chronologiques, plus ré
 - **`CHANGELOG.md` à la racine** : historique chronologique par session + section "Décisions techniques actées" (cette section) pour ne pas remettre en question les choix actés. **Bloqué de l'indexation** via `Disallow: /CHANGELOG.md` dans `robots.txt`. (2026-05-01)
 
 - **À chaque livraison** : vérifier `grep -ri matliveprod` sur tous les fichiers livrés (sauf CHANGELOG.md). (2026-05-01)
+
+### Workflow & déploiement
+
+- **Architecture Drive → GitHub → Cloudflare Pages, auto-deploy direct sur prod.** Source de vérité éditoriale : `G:\Mon Drive\NOMACAST\` (atelier, Claude lit/écrit via le connecteur Google Drive). Drag-drop ou modif d'un fichier dans Drive → push automatique sur `main` de `github.com/Nomacast/nomacast.fr` via Apps Script (trigger toutes les 1 min) → Cloudflare Pages détecte le push et déploie sur `nomacast.fr` en ~30 s. **Pas de preview/merge intermédiaire** : choix assumé, mode auto-deploy direct. Filet de sécurité = bouton Rollback Cloudflare en 1 clic dans Deployments en cas de pépin. (2026-05-06, refonte de l'architecture du 2026-05-05)
+
+- **Apps Script "Nomacast Drive Sync"** sur `script.google.com`, lié au compte Google Workspace `production@matliveprod.com`. Une seule fonction principale `syncDriveToGitHub` qui scanne le folder Drive racine, détecte les fichiers modifiés depuis `LAST_SYNC` (Script Property), pousse chaque fichier sur `main` via l'API GitHub `PUT /repos/{owner}/{repo}/contents/{path}`, met à jour `LAST_SYNC`. Trigger time-driven every 1 minute. Authentification via Personal Access Token GitHub (scope `repo`) stocké directement dans le code (acceptable car script perso non partagé). Code source : voir le projet Apps Script. (2026-05-06)
+
+- **Exclusions du sync Drive → GitHub** : `videos/` (servies par R2, pas par Pages), `files/` (héritage du robocopy initial qui peut traîner), fichiers système (`.DS_Store`, `Thumbs.db`, `desktop.ini`), dossier `.git`. Tout le reste à la racine de `NOMACAST/` est synchronisé. (2026-05-06)
+
+- **`_redirects` à la racine du repo** pour les redirections 301 (remplace les `Redirect 301` de l'ancien `.htaccess`). Format Cloudflare Pages : une ligne par règle `<source> <destination> <code>`. Règles actuelles : `/cas-client-ag-maif.html → /cas-clients.html 301` et `/cas-client-pret-a-manger.html → /cas-clients.html 301`. Toute future redirection se fait dans ce fichier. (2026-05-06)
+
+- **GitHub repo privé.** Repo `Nomacast/nomacast.fr` en visibilité privée. Compte GitHub `Nomacast` avec 2FA activée. **Plus de Git local en miroir** : le dossier `C:\Users\Hallelujah\Desktop\NOMACAST\files\` est obsolète et peut être supprimé. Plus de `deploy.sh`, plus de robocopy, plus d'édition Git Bash côté Jérôme. Tout passe par Drive. (2026-05-06, simplification depuis l'archi du 2026-05-05)
+
+- **`.gitignore` à la racine du repo** : exclut systèmes (`.DS_Store`, `Thumbs.db`, `desktop.ini`), Sublime (`*.sublime-workspace`), backups (`*.bak`, `*.tmp`, `*~`, `.~lock.*`), logs (`*.log`), variables d'env (`.env`, `.env.local`). Pas de `node_modules` puisqu'il n'y a pas de build front. (2026-05-05)
 
 ### Logique commerciale du simulateur tarifs
 
@@ -241,6 +270,109 @@ Règles du moteur **dans l'ordre de priorité** (les règles hautes priment touj
 - **`.wpsql_nomacast.fr.sqlite`** : suppression manuelle prévue par le fondateur (reliquat WordPress).
 - **Backlinks clients** : demander à Louvre, Figma, Comédie-Française, Johnson & Johnson, GL Events, EBG, Morning Coworking de mentionner Nomacast sur leurs pages partenaires/prestataires audiovisuels. Plus gros levier SEO long terme. (priorisé pour Sprint dédié backlinks)
 - **Google Business Profile** : à créer (15 min). Gros impact SEO local Paris + apparition Maps + réceptacle pour avis clients (qui pourront alimenter Schema `aggregateRating` ensuite).
+
+---
+
+## 2026-05-06, Migration complète vers Cloudflare Pages + R2 + auto-deploy Apps Script
+
+### Infrastructure / Workflow
+
+Finalisation et refonte de l'architecture de déploiement entamée le 2026-05-05. Le workflow Git local + `deploy.sh` + branches preview est abandonné au profit d'un setup beaucoup plus simple : drag-drop dans Drive → push automatique sur GitHub `main` → auto-deploy Cloudflare Pages sur prod en ~1 min total. La bascule DNS de LWS vers Cloudflare est faite, le site est désormais 100% servi par Cloudflare avec vidéos sur R2.
+
+**Étapes réalisées :**
+
+- **Phase 1 — Connexion Cloudflare Pages au repo GitHub.** Création du projet `nomacast` (slug technique `nomacast-fr`), Framework=None, Build command vide, Output `/`. URL preview : `nomacast-fr.pages.dev`. Premier build a échoué car le dossier `videos/` du repo contenait des fichiers > 25 MB (limite stricte Cloudflare Pages). Suppression du dossier `videos/` du repo via interface web GitHub, second build réussi.
+
+- **R2 setup pour vidéos.** Bucket `nomacast-videos` créé (Standard, location auto). Public Development URL activé : `https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev`. 6 vidéos uploadées (~30 Mo chacune, ~180 Mo total = 1.8% du free tier 10 GB) : `cas-client-comedie-francaise.mp4`, `cas-client-digital-benchmark-berlin.mp4`, `cas-client-gl-events.mp4`, `cas-client-louvre-lahorde.mp4`, `cas-client-morning.mp4`, `mashup.mp4` (hero `index.html`).
+
+- **Modification des 7 HTML qui référencent une vidéo.** Remplacement systématique `<source src="https://nomacast.fr/videos/XXX.mp4">` par `<source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/XXX.mp4">`. Fichiers touchés : `index.html`, `cas-client-comedie-francaise.html`, `cas-client-digital-benchmark-berlin.html`, `cas-client-figma-conference.html`, `cas-client-gl-events.html`, `cas-client-louvre-lahorde.html`, `cas-client-morning.html`. Note : `cas-client-figma-conference.mp4` n'est pas (encore) dans R2 (vidéo pas tournée), la page figma aura un hero vidéo cassé jusqu'à upload.
+
+- **Phase 3 — Apps Script Drive → GitHub.** Création projet `Nomacast Drive Sync` sur `script.google.com` lié au compte `production@matliveprod.com`. Personal Access Token GitHub généré (scope `repo`) et embarqué dans le code (acceptable pour script perso non partagé). Folder Drive racine `1U5BM9a9wjxtoR8PXAOrgqLI2xw7RhcR-`. Trigger time-driven every 1 minute. Mode auto-deploy direct sur `main` (pas de branche preview, pas de PR à merger). Plus d'email de notification (Apps Script vers email custom domaine LWS filtré silencieusement, point clos).
+
+- **Phase 2 — Bascule DNS LWS → Cloudflare.** Domain `nomacast.fr` ajouté à Cloudflare Free, scan automatique des DNS LWS, validation des records importés (notamment MX `SMTP.GOOGLE.COM` confirmant que l'email était déjà sur Google Workspace direct, contrairement à ce que la mémoire indiquait). Désactivation du DNSSEC chez LWS, remplacement des nameservers `ns21-24.lwsdns.com` par `mark.ns.cloudflare.com` et `monroe.ns.cloudflare.com`. Activation détectée par Cloudflare en moins d'1 h. Records mail-related (`mail` A, `imap`/`pop`/`smtp` CNAME, `ftp` CNAME) passés en DNS only (gris) avant activation, pour ne pas casser les protocoles non-HTTP. Custom domain `nomacast.fr` + `www.nomacast.fr` connectés au projet Pages, certificat SSL provisionné automatiquement.
+
+- **`_redirects` créé à la racine du repo** pour les 2 redirections 301 héritées du `.htaccess` : `/cas-client-ag-maif.html` → `/cas-clients.html` et `/cas-client-pret-a-manger.html` → `/cas-clients.html`.
+
+- **Réglages SSL/TLS Cloudflare** : Encryption mode "Full", Always Use HTTPS ON, Automatic HTTPS Rewrites ON, TLS minimum 1.2.
+
+### Fichiers créés ou modifiés
+
+- 7 HTML mis à jour avec URLs R2 (commentaire `<!-- Last update: 2026-05-05 22:15 -->`)
+- `_redirects` à la racine du repo (nouveau)
+- `CHANGELOG.md` (cette session + maj sections Hosting & DNS, Workflow & déploiement, annotations sur les éléments .htaccess obsolètes dans Performance & infrastructure)
+- Apps Script `Nomacast Drive Sync` (hors repo, hébergé sur `script.google.com`)
+- DNS records sur Cloudflare (importés depuis LWS)
+- Custom domains `nomacast.fr` et `www.nomacast.fr` ajoutés au projet Cloudflare Pages
+
+### Validations
+
+- `nomacast.fr` répond avec le site Cloudflare Pages, certificat valide
+- Vidéo hero d'`index.html` charge bien depuis R2 (`pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4`)
+- Cas-clients chargent les vidéos depuis R2 (sauf figma, normal)
+- Email `evenement@nomacast.fr` continue de recevoir (Google Workspace intact)
+- Apps Script trigger every 1 min fonctionne : modif d'un fichier dans Drive → propagation sur GitHub puis Cloudflare en ~1-2 min
+- Redirection `/cas-client-ag-maif.html` → `/cas-clients.html` testable une fois `_redirects` poussé
+
+### ⚠️ Points critiques à traiter (TODO post-migration)
+
+1. **`envoyer.php` (formulaire de contact)** : Cloudflare Pages ne fait PAS tourner PHP. Si le formulaire pointe encore vers `https://nomacast.fr/envoyer.php`, il est cassé en prod. **À tester en priorité absolue** avant de communiquer / lancer des campagnes Ads. Solutions : sous-domaine LWS, Cloudflare Pages Functions, ou service tiers.
+
+2. **Mise à jour `politique-de-confidentialite.html`** : mentions actuelles "LWS hébergement" et "données stockées en France (LWS)" sont obsolètes. À refondre : sous-traitant Cloudflare Inc. (hébergement web Pages + storage R2 + DNS, transferts hors UE encadrés par CCT), conservation logs Cloudflare, etc. Bloqué jusqu'à clarification du point #1 (LWS reste-t-il sous-traitant pour le formulaire ?).
+
+3. **Headers de sécurité** (HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy) : à migrer du `.htaccess` vers un fichier `_headers` à la racine du repo (syntaxe Cloudflare Pages) ou vers Cloudflare Rules. Priorité moyenne.
+
+4. **WebP serving automatique** : la règle `.htaccess` qui servait `.png.webp` au lieu du `.png` ne s'applique plus. Soit upgrade Cloudflare Pro pour Polish, soit refonte des `<img>` en `<picture><source srcset="X.webp"><img src="X.png"></picture>` dans le HTML.
+
+5. **Vidéo `cas-client-figma-conference.mp4`** à tourner et uploader sur R2 (la page figma a un hero vidéo cassé en attendant).
+
+### Cleanup possible (non urgent)
+
+- Supprimer le dossier local obsolète `C:\Users\Hallelujah\Desktop\NOMACAST\` (Git local + `deploy.sh` plus utilisés)
+- Supprimer le sous-dossier `files/` dupliqué dans `G:\Mon Drive\NOMACAST\` (vide depuis le déplacement des fichiers à la racine)
+- Résilier l'**hébergement web** LWS si plus aucun service hébergé là-bas (à confirmer après résolution du point #1 sur `envoyer.php`). **Conserver le domaine** `nomacast.fr` chez LWS comme registrar (juste les nameservers ont changé, le domaine reste là). **Conserver Google Workspace** (pas lié à LWS).
+
+---
+
+## 2026-05-05 (suite), Mise en place du workflow Git + Cloudflare Pages
+
+### Infrastructure / Workflow
+
+Bascule complète du déploiement vers une chaîne Git + Cloudflare Pages pour éliminer les risques d'erreurs lors des modifications du site. Avant : édition locale puis upload FTP direct sur LWS, sans historique ni preview, risque d'écraser des modifs récentes en travaillant depuis le téléphone et le desktop. Après : édition dans Drive, déploiement via script qui passe par une branche Git, preview Cloudflare avant merge, rollback en 1 clic via l'historique Git.
+
+**Étapes réalisées :**
+
+- Création du compte GitHub `Nomacast` (2FA activée) et du repo privé `nomacast.fr`
+- Installation de Git for Windows et configuration `user.name` et `user.email`
+- Init du repo local dans `C:\Users\Hallelujah\Desktop\NOMACAST\files\` (`.gitignore` + premier commit du site complet)
+- Push initial vers `github.com/Nomacast/nomacast.fr` (auth via Git Credential Manager OAuth)
+- Copie initiale Git vers Drive via `MSYS_NO_PATHCONV=1 robocopy "C:\...\files" "G:\Mon Drive\NOMACAST" /E /XD .git`
+- Création du `deploy.sh` à la racine de `NOMACAST\` (hors repo)
+- Fix du bug bracketed paste de Git Bash via `echo "set enable-bracketed-paste off" >> ~/.inputrc`
+
+**Connexion Cloudflare Pages au repo :** à finaliser dans une prochaine session (création du projet Pages, build settings Framework=None / output `/` / branche `main`, validation du déploiement temporaire `*.pages.dev`, puis bascule du domaine `nomacast.fr` sur Cloudflare avec préservation des MX LWS pour l'email).
+
+### Fichiers créés ou modifiés
+
+- `C:\Users\Hallelujah\Desktop\NOMACAST\files\.gitignore` : nouveau, à la racine du repo
+- `C:\Users\Hallelujah\Desktop\NOMACAST\deploy.sh` : nouveau, hors repo (script de déploiement)
+- `~/.inputrc` (Git Bash) : ajout de `set enable-bracketed-paste off`
+
+Aucune modification de contenu HTML, CSS ou JS lors de cette session, uniquement infrastructure.
+
+### Validations
+
+- `git status` propre après commit initial, repo clean
+- Premier push réussi vers GitHub, fichiers visibles sur `github.com/Nomacast/nomacast.fr`
+- Robocopy Git vers Drive : 0 FAILED
+- `deploy.sh` testé à blanc, détection correcte des chemins et sortie propre
+
+### Décisions reportées (à finaliser ensuite)
+
+- **Connexion Cloudflare Pages effective** au repo GitHub (prochaine session)
+- **Bascule DNS `nomacast.fr` vers Cloudflare** (après validation du deploy temporaire `*.pages.dev`), avec préservation des MX records LWS pour l'email pro
+- **Checks automatiques pré-commit** à mettre en place ensuite : refus du commit si "MatLiveProd" présent dans les fichiers de prod (hors `CHANGELOG.md`), si `CHANGELOG.md` n'a pas été modifié, si le timestamp `<!-- Last update: -->` n'a pas été actualisé sur les HTML touchés
+- **Workflow mobile** : appli GitHub à installer sur le téléphone pour les retouches en déplacement (édition + création de PR depuis l'interface web GitHub, preview Cloudflare automatique sur la branche)
+- **Nettoyage du dossier `files/` dupliqué dans Drive** : créé par erreur lors du robocopy initial. À supprimer pour ne garder que les fichiers à la racine de `G:\Mon Drive\NOMACAST\`
 
 ---
 
