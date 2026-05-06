@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-01 23:30 -->
+<!-- Last update: 2026-05-06 11:45 -->
 <html lang="fr">
 <head>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -26,7 +26,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   "isPartOf": { "@id": "https://www.nomacast.fr/#website" },
   "inLanguage": "fr",
   "datePublished": "2026-04-30",
-  "dateModified": "2026-04-30"
+  "dateModified": "2026-05-06"
 }
 </script>
 <script type="application/ld+json">
@@ -221,7 +221,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="page-wrap">
   <p class="page-eyebrow">Informations légales</p>
   <h1>Politique de confidentialité</h1>
-  <p class="update-date">Dernière mise à jour : avril 2026</p>
+  <p class="update-date">Dernière mise à jour : mai 2026</p>
 
   <p>La présente politique décrit comment je traite vos données personnelles lorsque vous utilisez le site <strong>nomacast.fr</strong> ou que vous me contactez pour une demande de devis. Je m'engage à respecter le Règlement Général sur la Protection des Données (RGPD) et la loi Informatique et Libertés du 6 janvier 1978 modifiée.</p>
 
@@ -242,6 +242,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <li><strong>Nom, prénom, société</strong> (facultatifs) : pour personnaliser la réponse.</li>
     <li><strong>Détails de l'événement</strong> : date, lieu, durée, options techniques, plateformes de diffusion, message libre.</li>
     <li><strong>Code partenaire</strong> (facultatif) : si vous arrivez via une agence partenaire.</li>
+    <li><strong>Adresse IP et provenance</strong> : collectées automatiquement par le formulaire pour les besoins de la sécurité (vérification anti-bot Cloudflare Turnstile, limitation des soumissions répétées). Conservées 60 secondes après la soumission.</li>
   </ul>
   <p>Aucune donnée sensible (origine, opinions, santé, etc.) n'est collectée. Aucune donnée n'est demandée si vous vous contentez de naviguer sur le site sans soumettre de formulaire.</p>
 
@@ -269,31 +270,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <li><strong>Demandes de devis sans suite</strong> : 3 ans à compter du dernier contact.</li>
     <li><strong>Données clients</strong> (devis signés, factures) : 10 ans, conformément aux obligations comptables.</li>
     <li><strong>Cookies analytiques</strong> : 13 mois maximum.</li>
-    <li><strong>Logs serveur</strong> (hébergeur LWS) : 12 mois.</li>
+    <li><strong>Logs techniques</strong> (serveurs Cloudflare) : moins de 24 heures pour les logs d'accès, conservés uniquement à des fins de sécurité et de détection d'anomalies.</li>
+    <li><strong>Données anti-flood</strong> (Cloudflare Workers KV) : 60 secondes maximum après la soumission du formulaire, puis suppression automatique.</li>
   </ul>
 
   <h2>Destinataires des données</h2>
   <p>Vos données sont accessibles uniquement par moi, en tant que seul opérateur de Nomacast. Aucune donnée n'est cédée, vendue ou louée à des tiers à des fins commerciales.</p>
   <p>Certains prestataires techniques peuvent toutefois traiter vos données pour mon compte, en qualité de <strong>sous-traitants</strong> au sens du RGPD :</p>
   <div class="info-block">
-    <p><strong>LWS (Ligne Web Services)</strong> — Hébergement du site et envoi des emails issus du formulaire. Données hébergées en France.</p>
-    <p><strong>Google Ireland Ltd.</strong> — Google Workspace pour la messagerie professionnelle, Google Tag Manager et Google Analytics 4 pour la mesure d'audience. Données pouvant être transférées hors UE selon les Clauses Contractuelles Types de la Commission européenne.</p>
+    <p><strong>Cloudflare Inc.</strong> (États-Unis) : hébergement du site (Cloudflare Pages), stockage des fichiers vidéo (Cloudflare R2, données stockées dans la région européenne), gestion DNS, protection anti-bot du formulaire (Turnstile), traitement serveur du formulaire (Pages Functions) et stockage temporaire anti-spam (Workers KV). Transferts hors UE encadrés par les Clauses Contractuelles Types adoptées par la Commission européenne.</p>
+    <p><strong>Resend Inc.</strong> (États-Unis) : envoi des emails déclenchés par le formulaire de contact, depuis l'adresse technique noreply@nomacast.fr vers ma boîte professionnelle. Resend s'appuie sur Amazon SES (région Irlande, eu-west-1) pour la livraison effective. Transferts hors UE encadrés par les Clauses Contractuelles Types.</p>
+    <p><strong>Google Ireland Ltd.</strong> : Google Workspace pour la messagerie professionnelle (boîtes evenement@nomacast.fr et agences@nomacast.fr), Google Tag Manager et Google Analytics 4 pour la mesure d'audience, Google Ads pour la mesure de performance des campagnes publicitaires. Données pouvant être transférées hors UE selon les Clauses Contractuelles Types et le Data Processing Addendum de Google.</p>
+    <p><strong>LWS (Ligne Web Services)</strong> : registrar du nom de domaine nomacast.fr uniquement. Aucune donnée personnelle des visiteurs ou prospects n'est traitée par LWS.</p>
   </div>
 
   <h2>Cookies et traceurs</h2>
   <p>Le site utilise les outils suivants, déclenchés via Google Tag Manager :</p>
   <ul>
-    <li><strong>Cookies strictement nécessaires</strong> : fonctionnement du site, mémorisation des choix de consentement. Pas d'opt-in requis.</li>
+    <li><strong>Cookies strictement nécessaires</strong> : fonctionnement du site, mémorisation des choix de consentement, protection anti-bot du formulaire de contact (Cloudflare Turnstile, qui peut déposer un identifiant de session technique). Pas d'opt-in requis.</li>
     <li><strong>Google Analytics 4</strong> : mesure d'audience anonymisée, déclenchée uniquement après votre consentement.</li>
     <li><strong>Google Ads</strong> : mesure de la performance des campagnes publicitaires, déclenchée uniquement après votre consentement.</li>
   </ul>
   <p>Vous pouvez à tout moment refuser ou retirer votre consentement aux cookies non strictement nécessaires via le bandeau prévu à cet effet, ou en supprimant les cookies via les paramètres de votre navigateur.</p>
 
   <h2>Transferts hors Union européenne</h2>
-  <p>Les données collectées sont stockées en France (LWS). Certaines données techniques (cookies, mesure d'audience) peuvent transiter par les serveurs de Google et faire l'objet d'un transfert hors UE. Ces transferts sont encadrés par les Clauses Contractuelles Types adoptées par la Commission européenne et par les politiques de conformité de Google (Data Processing Addendum).</p>
+  <p>Les fichiers vidéo et données techniques liées au site sont stockés dans l'infrastructure Cloudflare avec préférence pour les centres de données européens. Les emails issus du formulaire transitent par les serveurs Resend (États-Unis) puis Amazon SES en Irlande avant d'arriver dans ma boîte Google Workspace. Les données de mesure d'audience (Google Analytics, Google Ads) peuvent transiter par les serveurs de Google et faire l'objet d'un transfert hors UE. L'ensemble de ces transferts est encadré par les Clauses Contractuelles Types adoptées par la Commission européenne et par les politiques de conformité des sous-traitants concernés (Data Processing Addendum Google, Cloudflare Data Processing Addendum, Resend Data Processing Addendum).</p>
 
   <h2>Sécurité</h2>
-  <p>Le site est servi en HTTPS (chiffrement TLS). Les données soumises via le formulaire transitent de manière chiffrée. L'accès à ma boîte mail professionnelle est protégé par mot de passe fort et double authentification.</p>
+  <p>Le site est servi en HTTPS (chiffrement TLS) via Cloudflare. Les données soumises via le formulaire transitent de manière chiffrée. Le formulaire est protégé par plusieurs mécanismes de sécurité : vérification anti-bot Cloudflare Turnstile, champ piège invisible (honeypot), vérification de l'origine de la requête, limitation du nombre de soumissions par adresse IP, filtrage anti-spam, et protection contre l'injection d'en-têtes mail. L'accès à ma boîte mail professionnelle Google Workspace est protégé par mot de passe fort et double authentification.</p>
 
   <div class="divider"></div>
 
