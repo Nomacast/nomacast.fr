@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-06 16:30 -->
+<!-- Last update: 2026-05-06 18:00 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -1037,157 +1037,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 const TVA = 1.20;
 const PLATFORMS = ["YouTube","LinkedIn","Facebook","Twitch","Vimeo","Teams","Zoom","RTMP custom","Autre"];
 
-// Codes partenaires : prix forfaitaires par durée + options forcées (gratuites) + grille de remise par paliers + description
-// `forceOptions` : options offertes automatiquement si cochées
-// `discountTiers` : paliers de remise forfaitaire selon le total HT hors Pack sonorisation. Trie par seuil croissant.
-//                   Ex: [{minHT:1500, amount:150}, {minHT:2000, amount:250}] → on prend la plus haute amount dont minHT est atteint.
-//                   Le palier le plus bas requiert "au moins 1 option payante cochée".
-const PARTNER_CODES = {
-  "MORNING": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: ["reperage","veille","5g","montage_tc"],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Repérage, mise en place J-1, 5G de secours, montage par chapitres + remise par palier"
-  },
-  "SOLARIS": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: ["reperage","veille","5g"],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Repérage, mise en place J-1, 5G de secours + remise par palier"
-  },
-  "PEECH": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: [],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Tarif partenaire + remise par palier"
-  },
-  "FIGMA": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: [],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Tarif partenaire + remise par palier"
-  },
-  "SODEXO": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: [],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Tarif partenaire + remise par palier"
-  },
-  "PLISSKEN": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: [],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Tarif partenaire + remise par palier"
-  },
-  "GALLERIA": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: [],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Tarif partenaire + remise par palier"
-  },
-  "AGENCE": {
-    durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
-    forceOptions: [],
-    discountTiers: [
-      { minHT: 1500, amount: 150, charmAllowed: true },
-      { minHT: 2000, amount: 200, charmAllowed: true },
-      { minHT: 2250, amount: 250, charmAllowed: true },
-      { minHT: 2500, amount: 350, charmAllowed: true },
-      { minHT: 2750, amount: 450, charmAllowed: true },
-      { minHT: 3000, amount: 550, charmAllowed: true },
-      { minHT: 3250, amount: 700, charmAllowed: true },
-      { minHT: 3500, amount: 800, charmAllowed: true },
-      { minHT: 4000, amount: 1000, charmAllowed: true },
-      { minHT: 5000, amount: 1200, charmAllowed: true },
-      { minHT: 6000, amount: 1400, charmAllowed: true }
-    ],
-    description: "Tarif partenaire + remise par palier"
-  }
-};
+// Codes partenaires : récupérés à la volée via /api/validate-code (Pages Function Cloudflare)
+// L'objet est peuplé dynamiquement après validation côté serveur, jamais en clair dans le HTML.
+const PARTNER_CODES = {};
 
 const CONFIG = {
   base: 1500,
@@ -2389,19 +2241,42 @@ function buildAddons() {
 // ─── Code partenaire : détecté UNIQUEMENT via URL ?code=XXX ───
 // Plus de saisie manuelle ; les partenaires reçoivent un lien direct.
 // Affichage passif : un badge "Code partenaire actif · XXX" sous le total quand un code est détecté.
-function applyPartnerCode(raw) {
+async function applyPartnerCode(raw) {
   const code = (raw || "").toUpperCase().trim();
-  const match = PARTNER_CODES[code];
-  if (!match) {
-    state.partnerCode = null;
+
+  // Si déjà chargé en cache local (même session), on évite l'appel API
+  if (PARTNER_CODES[code]) {
+    state.partnerCode = code;
     updatePartnerDisplay();
+    pushDataLayer("configurator_partner_code", { partner_code: code });
+    render();
     return;
   }
-  state.partnerCode = code;
-  updatePartnerDisplay();
-  // GA4 tracking
-  pushDataLayer("configurator_partner_code", { partner_code: code });
-  render();
+
+  // Sinon, on demande au serveur de valider
+  try {
+    const res = await fetch("/api/validate-code?code=" + encodeURIComponent(code));
+    if (!res.ok) {
+      state.partnerCode = null;
+      updatePartnerDisplay();
+      return;
+    }
+    const payload = await res.json();
+    if (!payload.valid) {
+      state.partnerCode = null;
+      updatePartnerDisplay();
+      return;
+    }
+    // Cache local pour le reste de la session
+    PARTNER_CODES[payload.code] = payload.data;
+    state.partnerCode = payload.code;
+    updatePartnerDisplay();
+    pushDataLayer("configurator_partner_code", { partner_code: payload.code });
+    render();
+  } catch (e) {
+    state.partnerCode = null;
+    updatePartnerDisplay();
+  }
 }
 
 function removePartnerCode() {
@@ -2715,8 +2590,9 @@ function setTechMode(on) {
   try {
     const params = new URLSearchParams(window.location.search);
     const codeParam = (params.get("code") || params.get("partner") || "").toUpperCase().trim();
-    if (codeParam && PARTNER_CODES[codeParam]) {
+    if (codeParam) {
       // Léger délai pour s'assurer que tous les listeners sont attachés
+      // applyPartnerCode valide via /api/validate-code et n'applique que si OK
       setTimeout(() => {
         applyPartnerCode(codeParam);
       }, 50);
