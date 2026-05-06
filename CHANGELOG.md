@@ -76,7 +76,7 @@ Historique des modifications du site. Format : sessions chronologiques, plus ré
 
 - **Page 404 personnalisée** : design Nomacast natif (pas de page LWS générique). Routée via `ErrorDocument 404 /404.html` dans `.htaccess` (idem 403 et 500 pour cohérence). (2026-05-01) — **À VÉRIFIER post-bascule** : Cloudflare Pages sert automatiquement `404.html` à la racine du repo si la requête ne matche aucune route. Le fichier `404.html` doit donc être présent à la racine du repo (à confirmer). Pour 403 et 500, Cloudflare a son propre comportement par défaut (pages d'erreur Cloudflare-branded). Si custom 403/500 souhaitées : `_redirects` ne le permet pas, il faut Pages Functions.
 
-- **`envoyer.php` sécurisé multi-couches** : Cloudflare Turnstile (CAPTCHA invisible), honeypot, vérification origin/referer, anti-flood (rate limiting), content filter (anti-spam), anti-injection (sanitization). Ne pas redébugger : c'est volontairement strict. (2026-04-28) — **⚠️ POINT CRITIQUE POST-BASCULE 2026-05-06** : Cloudflare Pages ne fait PAS tourner PHP. Si le formulaire de contact pointe encore vers `https://nomacast.fr/envoyer.php`, il est cassé en prod. À tester en priorité absolue. Solutions de remplacement à choisir : (a) garder le PHP sur LWS via un sous-domaine type `form.nomacast.fr` (hébergement LWS conservé pour ce seul service), (b) Cloudflare Pages Functions (JS serverless), (c) Cloudflare Workers, (d) service tiers type Formspree/Plunk.
+- **Formulaire de contact sécurisé multi-couches** : Cloudflare Turnstile (CAPTCHA invisible), honeypot, vérification origin/referer, anti-flood (rate limiting), content filter (anti-spam), anti-injection (sanitization). Ne pas redébugger : c'est volontairement strict. **Implémentation actuelle (post-bascule 2026-05-06) : Cloudflare Pages Functions + Resend**, voir sous-section "Email & formulaire" plus bas. (logique métier 2026-04-28, port JS 2026-05-06)
 
 ### UX & design
 
@@ -106,6 +106,42 @@ Historique des modifications du site. Format : sessions chronologiques, plus ré
   - A `nomacast.fr` et CNAME `www` : Proxied (orange) → pointent vers Cloudflare Pages
 
 - **Email pro : Google Workspace direct.** Boîtes : `evenement@nomacast.fr`, `agences@nomacast.fr`. **Pas de forwarding LWS** : le MX pointe directement vers Google Workspace, les emails arrivent en direct sans transit par LWS. (correction 2026-05-06, le CHANGELOG d'avant indiquait à tort un forwarding LWS → Gmail)
+
+### Email & formulaire (backend serverless)
+
+> Stack actée pour le traitement du formulaire de contact post-migration. Aucune dépendance LWS dans cette chaîne.
+
+- **Cloudflare Pages Functions = backend serverless du formulaire.** Fichier `functions/envoyer.php.js` à la racine du repo. Le **filename mappe directement à l'URL** chez Cloudflare Pages : ce fichier intercepte `https://nomacast.fr/envoyer.php`. L'extension `.php.js` est un choix volontaire pour préserver la rétrocompatibilité avec les `<form action="envoyer.php">` (relatif) sans avoir à modifier les HTML. Le fichier exporte `onRequestGet` (refuse les GET, redirige vers homepage) et `onRequestPost` (traitement complet du form). (2026-05-06)
+
+- **Resend = service d'envoi d'emails transactionnels** depuis le formulaire (à la place du `mail()` PHP/SMTP LWS). Free tier : 3 000 emails/mois, 100/jour. Domaine `nomacast.fr` vérifié via 3 records DNS auto-créés par l'intégration Resend↔Cloudflare : MX `send` → `feedback-smtp.eu-west-1.amazonses.com`, TXT `resend._domainkey` (DKIM), TXT `send` (SPF `v=spf1 include:amazonses.com ~all`). **Le SPF est appliqué uniquement au sous-domaine `send.nomacast.fr`**, le SPF Google Workspace du domaine racine reste intact (pas de conflit). Sender utilisé dans le code : `noreply@nomacast.fr`. (2026-05-06)
+
+- **Cloudflare KV pour anti-flood.** Namespace `RATE_LIMIT` (créé sur Cloudflare → Workers & Pages → KV), bindé dans Pages Functions avec variable name `RATE_LIMIT` (Pages → Settings → Functions → KV namespace bindings). Clé `flood:{ip}`, TTL 60s (minimum Cloudflare KV, le PHP avait 30s côté `$_SESSION` mais 60s est OK). Si le binding est absent côté Cloudflare, le code détecte et skippe l'anti-flood sans crash. (2026-05-06)
+
+- **Variables d'environnement Cloudflare Pages requises** (Settings → Variables and Secrets, type **Secret** chiffré) :
+  - `RESEND_API_KEY` : clé API Resend `re_xxx...`, scope "Sending access" pour `nomacast.fr`
+  - `TURNSTILE_SECRET_KEY` : Secret Key Cloudflare Turnstile (pas la Site Key qui est publique dans le HTML)
+  - **Ces deux secrets sont obligatoires** pour que le formulaire fonctionne. Si l'un manque, le code rate sa redirection avec `?error=verify` ou `?error=send`. (2026-05-06)
+
+- **Mapping URL ↔ fichier Pages Functions** (référence rapide) :
+
+  | Fichier dans le repo | URL exposée |
+  | --- | --- |
+  | `functions/envoyer.php.js` | `https://nomacast.fr/envoyer.php` |
+  | `functions/api/contact.js` (si créé un jour) | `https://nomacast.fr/api/contact` |
+  | `functions/[id].js` (route dynamique) | `https://nomacast.fr/{anything}` |
+
+- **Routage email** (logique conservée du PHP) :
+  - Si `is_agence` coché dans le form → envoi vers `agences@nomacast.fr`
+  - Sinon → envoi vers `evenement@nomacast.fr`
+  - Dans les deux cas, copie d'archivage automatique sur `jerome.bouquillon@ik.me`
+  - Sujet du mail : `Demande de devis - [AGENCE] [source] {societe ou nom} [nomacast.fr]` (les tags `[AGENCE]` et `[source]` n'apparaissent que s'ils sont pertinents)
+  - Reply-To : email du visiteur (permet de répondre directement depuis Gmail)
+
+- **Anti-spam (4 filtres séquentiels)** : 3+ liens dans le message, mots-clés blacklist (crypto, bitcoin, viagra, seo services, etc.), > 30% de caractères non-latins (cyrillique/chinois/arabe) sur message > 20 chars, header injection (`\r\n`, `bcc:`, `cc:`, `to:`, `content-type:`). Sur les filtres soft (liens/mots-clés/non-latins), redirection vers `merci.html` (simulate success) pour ne pas révéler le filtrage aux bots. Sur le filtre header injection (sécurité critique), redirection vers `index.html#contact?error=invalid`. (2026-05-06)
+
+- **Sécurité Turnstile** : la **Secret Key** Turnstile DOIT être stockée uniquement dans la variable d'env `TURNSTILE_SECRET_KEY` côté Cloudflare Pages, jamais hardcodée dans le code source du repo. La **Site Key** (publique) reste dans le HTML, pas de problème. En cas d'exposition accidentelle de la Secret Key (commit, partage), la régénérer immédiatement via Cloudflare → Turnstile → site → Rotate Secret Key, puis mettre à jour la variable d'env. (2026-05-06)
+
+- **Plus aucune dépendance LWS pour le formulaire.** Plus de FTP envoyer.php, plus de sous-domaine `form.nomacast.fr`, plus d'hébergement web LWS requis pour faire tourner du PHP. La formule LWS "Perso" peut être descendue à "Domaine" 0 € HT au prochain renouvellement (09/04/2027) si plus aucun autre service LWS n'est utilisé. Conservation de LWS comme registrar du domaine (changement de registrar non prévu). (2026-05-06)
 
 ### Documentation & process
 
@@ -270,6 +306,127 @@ Règles du moteur **dans l'ordre de priorité** (les règles hautes priment touj
 - **`.wpsql_nomacast.fr.sqlite`** : suppression manuelle prévue par le fondateur (reliquat WordPress).
 - **Backlinks clients** : demander à Louvre, Figma, Comédie-Française, Johnson & Johnson, GL Events, EBG, Morning Coworking de mentionner Nomacast sur leurs pages partenaires/prestataires audiovisuels. Plus gros levier SEO long terme. (priorisé pour Sprint dédié backlinks)
 - **Google Business Profile** : à créer (15 min). Gros impact SEO local Paris + apparition Maps + réceptacle pour avis clients (qui pourront alimenter Schema `aggregateRating` ensuite).
+
+---
+
+## 2026-05-06 (suite), Migration formulaire vers Cloudflare Pages Functions + Resend
+
+### Contexte / motivation
+
+Suite à la bascule DNS de la nuit (LWS → Cloudflare Pages, session précédente), le formulaire `envoyer.php` était cassé en prod : Cloudflare Pages ne fait pas tourner PHP. Premier patch tenté : sous-domaine `form.nomacast.fr` qui restait sur LWS via Multi-Domaines alias (DNS only sur Cloudflare). Workaround fonctionnel mais conservait une dépendance LWS coûteuse (formule "Perso" 47.88 €/an obligatoire pour conserver l'hébergement web). 
+
+Décision actée : migrer définitivement vers Cloudflare Pages Functions + Resend pour l'envoi mail. Bénéfices : (1) plus aucune dépendance LWS pour le traitement du formulaire, (2) possibilité de descendre la formule LWS à "Domaine" 0 € HT au renouvellement (09/04/2027), (3) tout le code dans le repo Drive→GitHub→Pages, plus de FTP, (4) backend serverless qui scale tout seul.
+
+### Architecture finale
+
+```
+Visiteur (browser)
+    │
+    │ POST sur https://nomacast.fr/envoyer.php
+    ▼
+Cloudflare edge (DNS + CDN + Pages routing)
+    │
+    │ Pages Functions intercepte /envoyer.php → functions/envoyer.php.js
+    ▼
+functions/envoyer.php.js (JavaScript serverless)
+    │
+    ├──► Turnstile siteverify API (validation captcha)
+    ├──► Cloudflare KV namespace "RATE_LIMIT" (anti-flood, TTL 60s)
+    ├──► Resend API (envoi mail via SES eu-west-1)
+    │       │
+    │       └──► Boîtes Google Workspace
+    │            evenement@nomacast.fr / agences@nomacast.fr
+    │            + copie jerome.bouquillon@ik.me
+    │
+    └──► Redirect 302 vers https://nomacast.fr/merci.html?type=devis|agence
+```
+
+### Setup Cloudflare réalisé
+
+- **Compte Resend créé** sur `resend.com`, sign-in Google. Domaine `nomacast.fr` ajouté et vérifié via l'intégration native Resend↔Cloudflare (3 records DNS auto-créés sur la zone Cloudflare). Verification status : **Verified**.
+- **API Key Resend** créée avec scope "Sending access" pour `nomacast.fr`. Stockée dans la variable d'env Cloudflare `RESEND_API_KEY` (Secret chiffré). Format `re_xxx...`.
+- **Records DNS Resend ajoutés automatiquement** dans la zone Cloudflare (DNS only, gris) :
+  - `MX send 10 → feedback-smtp.eu-west-1.amazonses.com` (réception bounces/complaints)
+  - `TXT resend._domainkey → p=MIGfMA0...` (DKIM, signature des emails)
+  - `TXT send → "v=spf1 include:amazonses.com ~all"` (SPF appliqué uniquement au sous-domaine `send.nomacast.fr`)
+- **Le SPF Google Workspace du domaine racine reste intact** (les records Resend sont sur le sous-domaine `send`). Aucun conflit avec les emails reçus sur `evenement@` / `agences@`.
+- **KV namespace `RATE_LIMIT`** créé sur Cloudflare → Workers & Pages → KV → Create namespace.
+- **Binding KV** configuré dans Pages → projet `nomacast-fr` → Settings → Functions → KV namespace bindings → Variable name `RATE_LIMIT` lié au namespace `RATE_LIMIT`.
+- **Variables d'environnement** ajoutées dans Pages → Settings → Variables and Secrets (type Secret chiffré) :
+  - `RESEND_API_KEY` = clé Resend
+  - `TURNSTILE_SECRET_KEY` = Secret Key Turnstile (régénérée pour invalider l'ancienne qui était hardcodée dans le PHP)
+
+### Code livré
+
+- **`functions/envoyer.php.js`** (nouveau, ~250 lignes JavaScript) : port fidèle de la logique `envoyer.php` en Pages Functions. Fonctions exportées :
+  - `onRequestGet()` : refuse les GET, redirige vers `https://nomacast.fr/`.
+  - `onRequestPost(context)` : traitement complet en 11 étapes :
+    1. Parse `formData` (multipart ou x-www-form-urlencoded)
+    2. **Honeypot** : champ `website` doit être vide, sinon simule succès silencieusement
+    3. **Origin check** : `referer` doit commencer par `https://www.nomacast.fr` ou `https://nomacast.fr`
+    4. **Turnstile siteverify** : POST vers `https://challenges.cloudflare.com/turnstile/v0/siteverify` avec `secret` (env), `response` (token form), `remoteip` (CF-Connecting-IP)
+    5. **Anti-flood KV** : lookup `flood:{ip}` ; si présent → 302 `?error=flood`. Sinon `put('flood:{ip}', '1', { expirationTtl: 60 })`
+    6. **Cleanup** : équivalent `htmlspecialchars` + `strip_tags` + `trim` sur tous les champs
+    7. **Validation** : email regex + telephone obligatoire, message ≤ 5000, nom/société ≤ 200
+    8. **Anti-spam (4 filtres)** : 3+ liens, mots-clés blacklist, > 30% caractères non-latins, header injection
+    9. **Routage** : `agences@nomacast.fr` si `is_agence` coché, sinon `evenement@nomacast.fr`. Copie systématique sur `jerome.bouquillon@ik.me`.
+    10. **Construction du mail** : sujet avec tags `[AGENCE]` et `[source]`, corps texte avec séparateurs `─`, métadonnées IP/Referer/Date Paris en pied
+    11. **Envoi via Resend API** : `POST https://api.resend.com/emails`, Bearer auth, JSON. Sender `Formulaire Nomacast <noreply@nomacast.fr>`, `reply_to` = email du visiteur, destinataires = array `to`. En cas d'erreur Resend (status non-2xx), redirect `?error=send`.
+    12. **Redirection succès** : 302 vers `https://nomacast.fr/merci.html?type=agence` ou `?type=devis` (utilisé par GA4 pour différencier les conversions)
+
+- **21 HTML modifiés** : `action="envoyer.php"` (relatif) **PRÉSERVÉ tel qu'à l'origine**. C'est le revert volontaire de la modif `https://form.nomacast.fr/envoyer.php` poussée à 02:10 cette nuit. Le filename `envoyer.php.js` côté Pages Functions intercepte automatiquement les POST sur `nomacast.fr/envoyer.php`, donc l'action relative `envoyer.php` continue de fonctionner sans modif des HTML. Timestamp `<!-- Last update: 2026-05-06 10:57 -->` mis à jour. Liste : `agences-partenaires`, `captation-4k`, `captation-conference-seminaire`, `captation-evenement-entreprise`, `captation-interview-table-ronde`, `captation-video-corporate`, `captation-video-evenement`, `devis-captation-4k`, `devis-captation-conference-seminaire`, `devis-captation-evenement`, `devis-captation-table-ronde`, `devis-emission-live-corporate`, `devis-live-streaming-evenement`, `devis-live-streaming-paris`, `emission-live-corporate`, `index`, `live-streaming-evenement`, `prestataire-captation-evenement`, `streaming-multi-plateformes`, `streaming-multiplex-multi-sites`, `tarifs`.
+
+- **Apps Script `Nomacast Drive Sync` modifié** pour parcourir récursivement le sous-dossier `functions/` dans Drive et préserver le path complet (`functions/envoyer.php.js`) côté GitHub. Point de vigilance : sans cette modif, le `envoyer.php.js` resterait à la racine du repo et Cloudflare ne le routerait pas.
+
+### Process de déploiement (workflow opérationnel)
+
+1. Créer le sous-dossier `G:\Mon Drive\NOMACAST\functions\` (s'il n'existe pas).
+2. Drop `envoyer.php.js` dans `G:\Mon Drive\NOMACAST\functions\`.
+3. Drop les 21 HTML modifiés dans `G:\Mon Drive\NOMACAST\` (à la racine, écrase les versions précédentes qui contenaient `https://form.nomacast.fr/envoyer.php`).
+4. Apps Script trigger 1 min pousse l'ensemble sur GitHub `main`.
+5. Cloudflare Pages auto-deploy en ~30 s (visible dans Pages → Deployments).
+6. Variables d'env (`RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`) et KV binding (`RATE_LIMIT`) déjà configurés au préalable, le code les trouve au runtime.
+
+**Plus jamais de manipulation FTP** : tout passe par Drive comme le reste du site.
+
+### Validations à faire post-déploiement
+
+- Test 4G fenêtre privée sur `https://nomacast.fr/tarifs.html` → submit → mail reçu sur `evenement@nomacast.fr` + copie `jerome.bouquillon@ik.me`, redirection vers `https://nomacast.fr/merci.html?type=devis`
+- Test cas agence sur `agences-partenaires.html` (case `is_agence` cochée par le form) → mail vers `agences@nomacast.fr`, redirect `?type=agence`
+- Test Turnstile : décocher manuellement le widget côté browser → submit doit échouer avec redirect `?error=captcha`
+- Test anti-flood : 2 soumissions du même formulaire en moins de 60s depuis la même IP → la 2ème doit retourner `?error=flood`
+- Vérifier que GA4 enregistre les conversions séparément selon le paramètre `type` dans `merci.html`
+
+### Cleanup post-validation
+
+À faire **après** que les tests bout-en-bout sont passés (ne pas couper les ponts trop tôt) :
+
+1. Cloudflare DNS → suppression du record A `form` (83.229.19.73)
+2. LWS Panel → Multi Domaines → suppression de l'alias `form.nomacast.fr`
+3. Drive : suppression de `envoyer.php` à la racine NOMACAST (Apps Script poussera la suppression sur GitHub, Cloudflare Pages déploie sans le fichier)
+4. LWS via FTP : suppression de `envoyer.php` (optionnel, plus utilisé par personne)
+5. Mémoire à mettre à jour : retirer la mention `form.nomacast.fr` de l'archi
+6. Politique de confidentialité (`politique-de-confidentialite.html`) : retirer LWS comme sous-traitant pour le formulaire (LWS reste registrar uniquement). Ajouter Resend comme sous-traitant pour envoi mail (transferts hors UE encadrés par CCT, AWS SES eu-west-1). Maintenir Cloudflare comme sous-traitant principal (Pages + R2 + DNS + KV).
+
+### Sécurité (point d'attention)
+
+⚠️ **Régénérer la Secret Key Turnstile** avant la mise en prod (action recommandée même si le repo est privé). L'ancienne Secret Key (`0x4AAAAAAD...`) était hardcodée dans `envoyer.php` qui est synchronisé sur GitHub via Drive. Bonne pratique : aucun secret en clair dans le code source. Action : Cloudflare Dashboard → Turnstile → site `nomacast.fr` → Rotate Secret Key. Mettre la nouvelle valeur dans `TURNSTILE_SECRET_KEY` côté Pages env vars. **La Site Key (publique, dans le HTML) reste la même**, pas besoin de modifier les HTML.
+
+### Coût
+
+- **Resend free tier** : 3 000 emails/mois, 100/jour, 1 domaine vérifié. Volume actuel < 5 mails/jour, marge énorme.
+- **Cloudflare Pages Functions** : 100 000 invocations/jour gratuites. Volume estimé < 100 invocations/jour (anti-bot rejette la majorité avant Resend).
+- **Cloudflare KV** : 100 000 reads/jour, 1 000 writes/jour, 1 GB storage gratuits. Anti-flood ne stocke qu'un timestamp éphémère TTL 60s par IP, volume négligeable.
+- **Total surcoût** : 0 €/an. Économie attendue à terme : ~48 €/an de formule LWS au renouvellement 2027.
+
+### Fichiers créés ou modifiés
+
+- `functions/envoyer.php.js` (nouveau, à pousser dans `Drive/NOMACAST/functions/`)
+- 21 HTML à la racine : `action="envoyer.php"` relatif restauré, timestamp `2026-05-06 10:57`
+- `CHANGELOG.md` (cette session + nouvelle sous-section "Email & formulaire" dans Décisions techniques actées)
+- Apps Script `Nomacast Drive Sync` (modif récursion sous-dossier `functions/`, hors repo)
+- Cloudflare Pages : variables d'env `RESEND_API_KEY` et `TURNSTILE_SECRET_KEY`, KV binding `RATE_LIMIT`
+- Cloudflare DNS : 3 records auto-créés par Resend (MX `send`, TXT `resend._domainkey`, TXT `send`)
 
 ---
 
