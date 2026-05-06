@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-06 10:57 -->
+<!-- Last update: 2026-05-06 16:30 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -1079,7 +1079,7 @@ const PARTNER_CODES = {
     ],
     description: "Repérage, mise en place J-1, 5G de secours + remise par palier"
   },
-   "PEECH": {
+  "PEECH": {
     durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
     forceOptions: [],
     discountTiers: [
@@ -1095,7 +1095,9 @@ const PARTNER_CODES = {
       { minHT: 5000, amount: 1200, charmAllowed: true },
       { minHT: 6000, amount: 1400, charmAllowed: true }
     ],
-    "FIGMA": {
+    description: "Tarif partenaire + remise par palier"
+  },
+  "FIGMA": {
     durations: { half: 1500, full: 1750, "2days": 2250, "3days": 3000 },
     forceOptions: [],
     discountTiers: [
@@ -2375,12 +2377,30 @@ function removePartnerCode() {
 function updatePartnerDisplay() {
   const display = document.getElementById("partner-active-display");
   const txt = document.getElementById("partner-toggle-text");
+  const agencyBtn = document.getElementById("agency-toggle");
   if (!display) return;
   if (state.partnerCode) {
     display.style.display = "block";
     if (txt) txt.textContent = "Code partenaire actif · " + state.partnerCode;
+    // Quand un code partenaire est appliqué, le bouton "Je suis une agence" devient
+    // redondant (le tarif partenaire prend le dessus). On le masque et on reset l'état
+    // si jamais il avait été coché avant l'application du code.
+    if (agencyBtn) {
+      agencyBtn.style.display = "none";
+      if (state.isAgence) {
+        state.isAgence = false;
+        agencyBtn.classList.remove("active");
+        const txtMain = document.getElementById("agency-text-main");
+        if (txtMain) txtMain.textContent = "Je suis une agence événementielle";
+        const fAg = document.getElementById("h-is-agence");
+        if (fAg) fAg.value = "";
+        if (typeof setTechMode === "function") setTechMode(false);
+      }
+    }
   } else {
     display.style.display = "none";
+    // Réaffiche le bouton agence quand le code partenaire est retiré
+    if (agencyBtn) agencyBtn.style.display = "";
   }
 }
 
