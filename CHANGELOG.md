@@ -155,7 +155,7 @@ Historique des modifications du site. Format : sessions chronologiques, plus ré
 
 - **Architecture Drive → GitHub → Cloudflare Pages, auto-deploy direct sur prod.** Source de vérité éditoriale : `G:\Mon Drive\NOMACAST\` (atelier, Claude lit/écrit via le connecteur Google Drive). Drag-drop ou modif d'un fichier dans Drive → push automatique sur `main` de `github.com/Nomacast/nomacast.fr` via Apps Script (trigger toutes les 1 min) → Cloudflare Pages détecte le push et déploie sur `nomacast.fr` en ~30 s. **Pas de preview/merge intermédiaire** : choix assumé, mode auto-deploy direct. Filet de sécurité = bouton Rollback Cloudflare en 1 clic dans Deployments en cas de pépin. (2026-05-06, refonte de l'architecture du 2026-05-05)
 
-- **Apps Script "Nomacast Drive Sync"** sur `script.google.com`, lié au compte Google Workspace `production@matliveprod.com`. Une seule fonction principale `syncDriveToGitHub` qui scanne le folder Drive racine, détecte les fichiers modifiés depuis `LAST_SYNC` (Script Property), pousse chaque fichier sur `main` via l'API GitHub `PUT /repos/{owner}/{repo}/contents/{path}`, met à jour `LAST_SYNC`. Trigger time-driven every 1 minute. Authentification via Personal Access Token GitHub (scope `repo`) stocké directement dans le code (acceptable car script perso non partagé). Code source : voir le projet Apps Script. (2026-05-06)
+- **Apps Script "Nomacast Drive Sync"** sur `script.google.com`, lié au compte Google Workspace `production@matliveprod.com`. Fonction principale `syncDriveToGitHub` qui scanne récursivement le folder Drive racine (`functions/` et autres sous-dossiers inclus), détecte les modifs via comparaison du **state per-file** (modifiedTime + size par fichier, stocké dans la Script Property `FILE_STATES`), pousse chaque fichier modifié sur `main` via l'API GitHub `PUT /repos/{owner}/{repo}/contents/{path}`. Trigger time-driven every 1 minute. **Détection robuste** : un fichier dont le `modifiedTime` change dans n'importe quel sens (incluant un sens "vers le passé") ou dont la taille change est détecté comme modifié → résout le bug d'upload Drive Desktop avec timestamp local préservé. Reset complet possible via `setupInitialSync()` qui vide le state et re-pousse tous les fichiers au run suivant. Auth via Personal Access Token GitHub (scope `repo`) stocké dans le code (script perso non partagé). (v2 2026-05-06, refonte de la v1 du matin qui utilisait un timestamp global LAST_SYNC fragile)
 
 - **Exclusions du sync Drive → GitHub** : `videos/` (servies par R2, pas par Pages), `files/` (héritage du robocopy initial qui peut traîner), fichiers système (`.DS_Store`, `Thumbs.db`, `desktop.ini`), dossier `.git`. Tout le reste à la racine de `NOMACAST/` est synchronisé. (2026-05-06)
 
@@ -419,14 +419,57 @@ functions/envoyer.php.js (JavaScript serverless)
 - **Cloudflare KV** : 100 000 reads/jour, 1 000 writes/jour, 1 GB storage gratuits. Anti-flood ne stocke qu'un timestamp éphémère TTL 60s par IP, volume négligeable.
 - **Total surcoût** : 0 €/an. Économie attendue à terme : ~48 €/an de formule LWS au renouvellement 2027.
 
+### Bug fix : URLs vidéo LWS au lieu de R2 (corrigé en cours de session)
+
+Lors de la rédaction des 21 HTML modifiés, les fichiers source utilisés (uploads dans le chat) étaient des versions PRÉ-migration R2 du matin. Conséquence : 11 HTML sortaient avec `https://nomacast.fr/videos/mashup.mp4` au lieu de `https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4` (le hero vidéo `mashup.mp4` est partagé entre `index.html` et 10 pages services). Si poussées en l'état, ces pages auraient eu un hero vidéo cassé en prod (Cloudflare Pages ne contient plus le dossier `videos/`).
+
+Détection : J a noté que les URLs vidéo avaient été remplacées (par erreur). Correction immédiate via `sed` sur les 11 fichiers concernés. Tous les `mashup.mp4` repointent vers R2.
+
+**Leçon procédurale (intégrée à la mémoire)** : pour toute modification multi-fichiers sur Nomacast, lire les versions actuelles via le connecteur Drive plutôt que de partir des uploads chat. Drive est la source de vérité, le disque local de J peut être obsolète par rapport à des modifs faites directement dans Drive.
+
+Fichiers re-livrés (correctifs URLs vidéo R2) : `index.html`, `captation-4k.html`, `captation-conference-seminaire.html`, `captation-interview-table-ronde.html`, `captation-video-evenement.html`, `devis-live-streaming-paris.html`, `emission-live-corporate.html`, `live-streaming-evenement.html`, `prestataire-captation-evenement.html`, `streaming-multi-plateformes.html`, `streaming-multiplex-multi-sites.html`.
+
+### Validation production — formulaire opérationnel
+
+Test bout-en-bout réussi. Le formulaire envoie correctement les emails via Resend, redirige vers `merci.html`, l'anti-flood KV est opérationnel, le hero vidéo charge depuis R2. Validations confirmées :
+
+- Test 4G fenêtre privée sur `https://nomacast.fr/tarifs.html` → submit → email reçu sur `evenement@nomacast.fr` + copie sur `jerome.bouquillon@ik.me`, redirection vers `https://nomacast.fr/merci.html?type=devis`
+- Test desktop fenêtre privée → mêmes validations
+- Pages Function `functions/envoyer.php.js` bien détectée et exécutée par Cloudflare (intercepte `/envoyer.php`)
+- Resend API répond correctement avec la clé en variable d'env, livraison Gmail sans délai notable
+- Variables d'env Cloudflare Pages (`RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`) et binding KV (`RATE_LIMIT`) tous fonctionnels
+
+La migration Pages Functions + Resend est en **production effective**. Plus aucune dépendance LWS pour le traitement du formulaire.
+
+### Apps Script v2 — détection robuste des modifications (refonte LAST_SYNC → state per-file)
+
+**Bug découvert sur la v1** : le script utilisait un timestamp global `LAST_SYNC` (Script Property) et comparait `file.getLastUpdated() > LAST_SYNC` pour détecter les modifications. Faille : Drive Desktop préserve le `modifiedTime` du fichier source local lors de l'upload, donc un fichier déposé dans Drive peut avoir un timestamp ANTÉRIEUR à `LAST_SYNC`. Conséquence : Apps Script ne le détecte pas et ne le pousse pas. C'est arrivé sur `envoyer.php.js` (modifiedTime `2026-05-06 06:59 UTC` alors que LAST_SYNC était postérieur, donc pas poussé sans intervention manuelle de J).
+
+Workaround manuel évoqué (forcer le timestamp via éditeur ou clic droit → copier/renommer dans Drive) jugé non viable à long terme par J.
+
+**Refonte v2** : remplacement de `LAST_SYNC` (un seul timestamp global) par un **state per-file** stocké en JSON dans la Script Property `FILE_STATES`. Pour chaque fichier suivi, on stocke `{modifiedTime, size}` lors du dernier push réussi. Au prochain scan :
+
+- Si le fichier n'est pas dans le state → considéré comme nouveau, poussé
+- Si `modifiedTime` actuel ≠ celui du state (dans n'importe quel sens) → considéré comme modifié, poussé
+- Si `size` actuel ≠ celle du state → considéré comme modifié, poussé
+- Sinon → skip
+
+Plus aucune dépendance à un timestamp global. Robuste à tous les scénarios d'upload Drive Desktop (timestamp préservé, modif en bypass, copie de fichier).
+
+**Migration** : J colle le nouveau `Code.gs` dans `script.google.com` → projet `Nomacast Drive Sync` (écrase l'ancien). Exécute manuellement `setupInitialSync()` une fois pour vider le state. Au prochain trigger, TOUS les fichiers présents dans Drive sont repoussés sur GitHub (~30 fichiers, ~1 min de runtime), puis le fonctionnement redevient incrémental.
+
+Code livré : voir `Code.gs` dans les outputs de cette session (à coller dans Apps Script).
+
 ### Fichiers créés ou modifiés
 
-- `functions/envoyer.php.js` (nouveau, à pousser dans `Drive/NOMACAST/functions/`)
-- 21 HTML à la racine : `action="envoyer.php"` relatif restauré, timestamp `2026-05-06 10:57`
-- `CHANGELOG.md` (cette session + nouvelle sous-section "Email & formulaire" dans Décisions techniques actées)
-- Apps Script `Nomacast Drive Sync` (modif récursion sous-dossier `functions/`, hors repo)
+- `functions/envoyer.php.js` (nouveau, dans `Drive/NOMACAST/functions/`) : Pages Function ~250 lignes
+- 21 HTML à la racine `Drive/NOMACAST/` : `action="envoyer.php"` relatif restauré, timestamp updated
+- 11 HTML correctifs URLs vidéo R2 (recouvrement avec les 21 ci-dessus pour `index.html` et 10 pages services)
+- `Code.gs` (Apps Script v2 state per-file) : à coller dans `script.google.com` → projet `Nomacast Drive Sync` (écrase l'ancien)
+- `CHANGELOG.md` : nouvelle session + nouvelle sous-section "Email & formulaire" dans Décisions techniques actées + maj du bullet Apps Script
 - Cloudflare Pages : variables d'env `RESEND_API_KEY` et `TURNSTILE_SECRET_KEY`, KV binding `RATE_LIMIT`
 - Cloudflare DNS : 3 records auto-créés par Resend (MX `send`, TXT `resend._domainkey`, TXT `send`)
+- Cloudflare KV : namespace `RATE_LIMIT` créé
 
 ---
 
