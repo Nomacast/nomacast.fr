@@ -18,13 +18,13 @@ $copie_archivage = 'jerome.bouquillon@ik.me';
 $email_general  = 'evenement@nomacast.fr';
 $email_agences  = 'agences@nomacast.fr';
 
-$page_merci   = 'merci.html';
-$page_erreur  = 'index.html#contact';
+$page_merci   = 'https://nomacast.fr/merci.html';
+$page_erreur  = 'https://nomacast.fr/index.html#contact';
 $domaine      = 'nomacast.fr';
 
 // ─── SÉCURITÉ : refuser tout sauf POST ──────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.html');
+    header('Location: https://nomacast.fr/');
     exit;
 }
 
