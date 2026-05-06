@@ -460,15 +460,58 @@ Plus aucune dépendance à un timestamp global. Robuste à tous les scénarios d
 
 Code livré : voir `Code.gs` dans les outputs de cette session (à coller dans Apps Script).
 
+### Cleanup DNS et fichiers obsolètes — fin de la dépendance LWS applicative
+
+Suite à la validation du formulaire Pages Functions + Resend en production, le workaround `form.nomacast.fr` n'a plus aucune utilité. Cleanup complet effectué pour ne plus dépendre de LWS sur aucun service applicatif.
+
+**Suppressions DNS Cloudflare** (validées par J, screenshots à l'appui) :
+
+- `A form → 83.229.19.73` (workaround formulaire abandonné)
+- `A mail → 213.255.195.63` (serveur mail LWS, non utilisé puisque mail = Google Workspace direct)
+- `CNAME ftp → nomacast.fr` (FTP LWS, non utilisé puisque déploiement = Apps Script + GitHub + Cloudflare Pages)
+- `CNAME imap → mail.nomacast.fr` (client mail IMAP via LWS, non utilisé)
+- `CNAME pop → mail.nomacast.fr` (client mail POP via LWS, non utilisé)
+- `CNAME smtp → mail.nomacast.fr` (client mail SMTP via LWS, non utilisé)
+
+**Records conservés** (à ne pas toucher) : MX `nomacast.fr` (Google Workspace), MX `send` (Resend), TXT SPF root (Google), TXT `google._domainkey` (DKIM Google), TXT `resend._domainkey` (DKIM Resend), TXT `send` (SPF Resend), TXT `_dmarc` (DMARC), TXT vérif Google, CNAME `nomacast.fr` et `www` (Cloudflare Pages, Proxied), TXT `dkim._domainkey` (DKIM générique LWS, conservé temporairement par prudence en attendant analyse).
+
+**Suppressions Drive** (à pousser via Apps Script v2) :
+- `envoyer.php` (10 KB, remplacé par `functions/envoyer.php.js`)
+- `.htaccess` (1 KB, ignoré par Cloudflare Pages, ne sert plus à rien)
+- `htaccess` (9.6 KB, doublon backup)
+
+**Validation cas A confirmée** : J utilise ses mails uniquement via interface web Gmail (ou app Gmail mobile), pas via client desktop configuré sur les hostnames LWS. Suppression des records mail/imap/pop/smtp sans risque de casser un client mail.
+
+**Reste à faire** : suppression de l'alias `form.nomacast.fr` côté LWS Multi Domaines. Suppression effective de l'hébergement web LWS au prochain renouvellement (09/04/2027), conservation de LWS uniquement comme registrar de domaine.
+
+### Politique de confidentialité — refonte des sous-traitants
+
+Refonte de `politique-de-confidentialite.html` pour refléter la nouvelle architecture post-migration. Modifications principales :
+
+- **Section "Destinataires des données"** entièrement réécrite. Quatre sous-traitants désormais listés avec rôle précis :
+  - Cloudflare Inc. (USA) : hébergement Pages, R2, DNS, Turnstile, Pages Functions, KV
+  - Resend Inc. (USA) : envoi emails formulaire, AWS SES eu-west-1 en backend
+  - Google Ireland Ltd. : Workspace, GTM, GA4, Ads
+  - LWS : **registrar uniquement**, plus aucun traitement de données personnelles
+- **Section "Données collectées"** : ajout de l'adresse IP et de la provenance (collectées par le formulaire pour les besoins de la sécurité Turnstile et anti-flood, conservées 60 secondes maximum).
+- **Section "Durée de conservation"** : retrait du bullet "Logs serveur (LWS) 12 mois", remplacé par "Logs techniques Cloudflare moins de 24 heures" et "Données anti-flood KV 60 secondes maximum".
+- **Section "Transferts hors UE"** : étoffée avec les 4 sous-traitants concernés (Cloudflare, Resend/AWS SES, Google) et les bases juridiques (Clauses Contractuelles Types + DPA respectifs).
+- **Section "Cookies et traceurs"** : ajout de Cloudflare Turnstile dans la catégorie "strictement nécessaires" (peut déposer un identifiant de session technique pour la vérification anti-bot).
+- **Section "Sécurité"** : étoffée pour mentionner les mécanismes du formulaire (Turnstile, honeypot, origin check, anti-flood IP, anti-spam, anti-injection).
+- Date de mise à jour : avril 2026 → mai 2026. JSON-LD `dateModified` synchronisé.
+
+Fichier livré : `politique-de-confidentialite.html` dans les outputs (à drop dans `Drive/NOMACAST/`).
+
 ### Fichiers créés ou modifiés
 
 - `functions/envoyer.php.js` (nouveau, dans `Drive/NOMACAST/functions/`) : Pages Function ~250 lignes
 - 21 HTML à la racine `Drive/NOMACAST/` : `action="envoyer.php"` relatif restauré, timestamp updated
 - 11 HTML correctifs URLs vidéo R2 (recouvrement avec les 21 ci-dessus pour `index.html` et 10 pages services)
+- `politique-de-confidentialite.html` : refonte sous-traitants Cloudflare + Resend + Google, retrait LWS sauf registrar
 - `Code.gs` (Apps Script v2 state per-file) : à coller dans `script.google.com` → projet `Nomacast Drive Sync` (écrase l'ancien)
 - `CHANGELOG.md` : nouvelle session + nouvelle sous-section "Email & formulaire" dans Décisions techniques actées + maj du bullet Apps Script
 - Cloudflare Pages : variables d'env `RESEND_API_KEY` et `TURNSTILE_SECRET_KEY`, KV binding `RATE_LIMIT`
-- Cloudflare DNS : 3 records auto-créés par Resend (MX `send`, TXT `resend._domainkey`, TXT `send`)
+- Cloudflare DNS : 3 records auto-créés par Resend (MX `send`, TXT `resend._domainkey`, TXT `send`), 6 records LWS supprimés
 - Cloudflare KV : namespace `RATE_LIMIT` créé
 
 ---
