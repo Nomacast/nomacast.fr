@@ -1,3 +1,209 @@
+## 2026-05-07, Chantier bilingue FR/EN — Lot 1 (core), Lot 2 (cas clients), Lot 3 partiel (services)
+
+### Contexte
+
+Lancement d'une version anglaise complète du site `nomacast.fr` pour adresser le marché B2B européen (UK, Belgique, Allemagne, Espagne, Pays-Bas). Anglais britannique cible (filming, colour, optimise, organisation). Architecture choisie : **sous-répertoire `/en/`** au lieu d'un sous-domaine, pour rester sur le même domaine et bénéficier du SEO existant.
+
+37 pages HTML totales sur le site. Cette session livre 16 pages EN + 4 pages FR modifiées + 1 Pages Function patchée.
+
+### Architecture bilingue : décisions actées
+
+- **Structure URL** : `/en/{slug-en}.html` côté EN, `/{slug-fr}.html` côté FR (root inchangé)
+- **Slugs traduits** pour le SEO : `case-louvre-lahorde` ↔ `cas-client-louvre-lahorde`, `pricing` ↔ `tarifs`, `conference-seminar-filming` ↔ `captation-conference-seminaire`, etc. Mapping complet maintenu dans `docs/MAPPING-SLUGS.md` (37 entrées)
+- **hreflang** sur toutes les pages : `<link rel="alternate" hreflang="fr">`, `<link rel="alternate" hreflang="en">`, `<link rel="alternate" hreflang="x-default" href="…fr…">` (FR par défaut)
+- **og:locale** + **og:locale:alternate** pour les social cards (en_GB / fr_FR)
+- **Switcher de langue discret dans la nav** : `FR · EN`. Desktop intégré dans `.nav-links` à la fin. Mobile : intégré dans `.mobile-overlay` en `position:absolute; bottom:76px` (au-dessus du tel/email du footer) après itération QA
+- **IDs HTML FR conservés** côté EN (`#offre`, `#cas-clients`, `#agences`, `#apropos`) — décision actée après push-back du QA. Raison : le CSS partage les mêmes IDs entre les deux versions, traduire les IDs imposerait de dupliquer toutes les feuilles de style, source de drift à long terme. Convention multilingue standard (Apple, Stripe). Côté SEO, Google ne valorise pas les fragments. Les `<h2>` visibles sont traduits, eux.
+- **Anchor "Agencies" desktop vs mobile** : desktop pointe vers `#agences` (teaser dans home), mobile vers `partner-agencies.html` (page dédiée). Identique au FR, choix UX volontaire (le scroll-into-view + fermeture overlay mobile fait un saut visuel pas terrible, donc on bascule sur la page dédiée).
+
+### Glossaire FR → EN clé (lexique métier)
+
+Référentiel maintenu dans `docs/GLOSSAIRE-FR-EN.md`. Termes principaux :
+
+- **Tournage vidéo / Captation** → `filming` ou `video filming`
+- **Vidéaste événementiel** → `event videographer`
+- **Régie** → `production gallery` / `gallery`
+- **Devis** → `Quote` ; **HT** → `(excl. VAT)` ; **TTC** → `(incl. VAT)`
+- **Marque blanche** → `white-label` ; **Clé en main** → `turnkey` ; **Sur-mesure** → `bespoke`
+- **Repérage** → `site survey` ; **Mise en place J-1** → `day-before setup`
+- **Plateau** → `set` ou `rig` ; **Cadreur** → `camera operator`
+- **Plan du site** → `Sitemap` ; **Mentions légales** → `Legal notice` ; **Politique de confidentialité** → `Privacy policy`
+- **Demande de devis** → `Quote request` ; **Fil d'Ariane** → `Breadcrumb`
+- **Prestations** → `Services` ; **Cas clients** → `Case studies` ; **Tarifs** → `Pricing`
+- **Devis sous 24h** → `Quote in 24h`
+- **L'essentiel / Contexte / Défi / Solution / Résultat** → `In brief / Context / Challenge / Solution / Outcome`
+- **Le contexte / Les contraintes / Le dispositif / Le déroulé / Résultats / Ce que j'en retiens** → `Context / Constraints / The setup / How it ran / Results / What I take away`
+
+**Termes NON traduits** (préservés en FR) : noms propres (Brainsonic, Peech Studio, GL Events, Havas Event, Plissken, Livee, Ekoss), lieux historiques ((LA)HORDE × Louvre, Comédie-Française, Morning, Stratégies, Théâtre à la table), noms techniques de produits (vMix, NDI, Canon CR-N500).
+
+### Format devise UK appliqué côté EN
+
+Convention typographique britannique : symbole `€` **avant** le montant. Exemples : `€1,500`, `−€150`, `+ €500`. Implémentation dans `pricing.html` :
+
+- Nouvelle fonction JS `eur(n) = "€" + fmt(n)` ajoutée à côté du `fmt` existant
+- Tous les `fmt(...) + " €"` du configurateur remplacés par `eur(...)` : card prices, summary lines, partner discount, addon rows, bestof/photographe, savings banner, options price, hidden form fields (`h-cfg-options`, `h-cfg-addons`, `h-cfg-total`), recap text envoyé en email
+- HTML statique du total également mis à jour : `<span id="total-num">€1,500</span>` au lieu de `<span id="total-num">1,500</span> €` (idem `mobile-total`)
+- `Math.round(n).toLocaleString("en-GB")` pour le formatage des milliers (virgule UK : `1,500` au lieu de `1 500`)
+
+### Pages Function `envoyer.php.js` : patch multilingue
+
+L'endpoint Cloudflare Pages Function (`functions/envoyer.php.js`) qui gère les soumissions de formulaires a été patché pour supporter la langue. Détails :
+
+- **Détection de langue** via champ caché `<input type="hidden" name="lang" value="en">` injecté dans tous les formulaires des pages EN. Côté JS : `const isEn = formData.get("lang") === "en"`.
+- **4 constantes de redirection** dérivées : `PAGE_MERCI_FR`, `PAGE_MERCI_EN`, `PAGE_ERREUR_FR`, `PAGE_ERREUR_EN`. Sélection ternaire selon `isEn`.
+- **Préfixe `[EN]`** ajouté au sujet d'email côté admin (`evenement@nomacast.fr`) pour identifier rapidement la langue d'origine.
+- **Ligne "Language : English"** ajoutée dans le corps du mail si EN.
+- **Templates de réponse à l'expéditeur** : versions FR et EN distinctes (signature, tagline, formules de politesse).
+- Routing inchangé côté Cloudflare Pages : la fonction matche le path `/envoyer.php` qu'elle vienne de FR (`action="envoyer.php"`) ou de EN (`action="../envoyer.php"`) — Cloudflare normalise.
+
+Testé en live sur `index.html` EN et `pricing.html` EN. Email reçu correctement formaté, redirection vers `/en/thank-you.html` validée.
+
+### Lot 1 — Pages core (livré, validé, testé en live)
+
+**Pages EN créées (7) :**
+- `en/index.html` — homepage complète, avec switcher mobile en `position:absolute; bottom:76px`
+- `en/pricing.html` — configurateur tarifs avec format `€1,500` et fonction `eur()`
+- `en/404.html` — unifié FR/EN (auto-detect via `navigator.language` → switch contenu, pas de page séparée)
+- `en/thank-you.html` — page merci post-formulaire, ton `Request received!` (vs `.`)
+- `en/legal-notice.html` — mentions légales (SIRET, RGPD, Cloudflare/LWS hosting)
+- `en/privacy-policy.html` — RGPD UK + cookies (Turnstile, GTM)
+- `en/sitemap.html` — sitemap visuel des pages EN
+
+**Pages FR modifiées (3) :**
+- `index.html` (FR) — ajout switcher desktop + mobile, hreflang, faute corrigée `Partie Socialiste` → `Parti Socialiste`
+- `tarifs.html` — switcher + hreflang
+- `404.html` — switcher + hreflang + auto-detect langue
+
+**Infrastructure :**
+- `functions/envoyer.php.js` — patch multilingue (détaillé section précédente)
+
+### Lot 2 — Cas clients (livré complet : 9/9)
+
+Toutes les pages cas clients existantes traduites :
+
+- `en/partner-agencies.html` — page agences partenaires (page hub B2B, structure complète)
+- `en/case-studies.html` — index des cas clients avec 3 JSON-LD (CollectionPage + BreadcrumbList) en EN
+- `en/case-louvre-lahorde.html` — Musée du Louvre × (LA)HORDE (13 caméras, 46 iPhones, 2,3M vues)
+- `en/case-comedie-francaise.html` — Théâtre à la table + Molière live YouTube
+- `en/case-figma-conference.html` — Customer Evenings Paris/Madrid/Barcelona depuis 2022
+- `en/case-gl-events.html` — Global Industrie 6 chaînes broadcast, 8 régies vMix, 4 jours
+- `en/case-johnson-johnson.html` — multiplex bidirectionnel 6 villes (Paris + 5 régions)
+- `en/case-digital-benchmark-berlin.html` — EBG 850+ décideurs, 9 saisons, 3 éditions internationales
+- `en/case-morning.html` — 300+ captations en 8 ans, marque blanche
+
+Chaque cas client : title + meta desc + 3 JSON-LD (Article + BreadcrumbList + parfois autres) + hero + tldr (4 items) + sections narratives + CTA + footer-links — tout traduit, slugs internes pointent vers les versions EN.
+
+Script Python `case_transform.py` créé pour automatiser le boilerplate commun (head, JSON-LD URLs, nav, footer, switcher CSS, slugs, hreflang). Le contenu narratif unique de chaque cas a été traduit manuellement.
+
+### Lot 3 partiel — Services (2/11 livrés)
+
+- `en/conference-seminar-filming.html` — page hub services (700+ lignes, structure complète : nav, prest-cards, two-col approche, sidebar price-card + incl-card, déroulé 6 étapes, FAQ visible 8 Q/A, form contact complet, footer-links 9 entrées)
+- `en/corporate-event-filming.html` — landing SEO simplifiée (hero KPIs + form intégré, prestation + price-block, déroulé 6, proof-grid 3 témoignages, FAQ visible 8, CTA band)
+
+Constat important sur les pages services : **structure HTML hétérogène entre les pages**. Certaines (`conference-seminar-filming`) sont des pages hubs avec nav-links complète + mobile-overlay + footer riche. D'autres (`corporate-event-filming`) sont des landings SEO simplifiées avec nav minimaliste + footer minimaliste + form intégré au hero. Conséquence : le script `service_transform.py` automatise une bonne partie mais chaque page nécessite une passe manuelle ciblée selon sa structure.
+
+**Reste à faire (9 services) :**
+- `corporate-video-production.html` ← `captation-video-corporate.html`
+- `interview-roundtable-filming.html` ← `captation-interview-table-ronde.html`
+- `4k-video-recording.html` ← `captation-4k.html`
+- `event-video-production.html` ← `captation-video-evenement.html`
+- `event-live-streaming.html` ← `live-streaming-evenement.html`
+- `multi-site-live-streaming.html` ← `streaming-multiplex-multi-sites.html`
+- `multi-platform-streaming.html` ← `streaming-multi-plateformes.html`
+- `corporate-live-show.html` ← `emission-live-corporate.html`
+- `b2b-event-filming-provider.html` ← `prestataire-captation-evenement.html`
+
+### Fixes QA itérés en cours de chantier
+
+Itération QA appliquée sur Lot 1 + Lot 2 (5 fichiers retouchés) :
+
+**`en/index.html`**
+- Switcher mobile repositionné en `position:absolute; bottom:76px; left:0; right:0;` (était centré avec les liens menu, maintenant juste au-dessus de tel/email du footer absolu)
+- `/index.html` → `/` côté lien switcher FR (URL canonique propre)
+- `want a price right away?` → `Want a price right away?` (capitalisation post-CTA hero)
+- Faute `Partie Socialiste` → `Parti Socialiste` corrigée dans `SITE_DATA`
+
+**`en/pricing.html`**
+- Devise format UK : nouvelle fonction `eur(n)` qui préfixe `€`. Tous les usages `fmt(X) + " €"` remplacés par `eur(X)`. HTML statique total/mobile-total mis à jour.
+- Emoji 💬 ajouté au début du `project-nudge` (manquait par rapport au FR)
+
+**`en/privacy-policy.html`**
+- 2 JSON-LD entièrement traduits en EN (`Privacy policy`, `Home`, `inLanguage:"en-GB"`, URLs `/en/`) — étaient restés en FR
+
+**`en/thank-you.html`**
+- `Request received!` + `Agency request received!` (avec `!`, ton plus chaleureux UK English en confirmation)
+
+**`index.html` (FR)** : faute `Parti Socialiste` corrigée aussi côté FR
+
+### Push-back QA (refus motivés)
+
+Deux remontées QA non appliquées avec justification :
+
+1. **Traduire les IDs HTML** (`#offre` → `#services`, `#cas-clients` → `#case-studies`) : refusé. Risque CSS sur les deux versions, pas d'impact SEO réel (Google ne valorise pas les fragments). Convention multilingue standard.
+2. **Uniformiser la nav "Agencies" desktop/mobile** : refusé. Le comportement actuel (desktop=ancre teaser, mobile=page dédiée) est identique au FR, choix UX volontaire.
+
+### Documentation produite
+
+- `docs/GLOSSAIRE-FR-EN.md` — glossaire métier complet
+- `docs/MAPPING-SLUGS.md` — mapping FR ↔ EN des 37 slugs
+- `docs/SWITCHER-COMPONENT.md` — composant switcher (CSS + HTML desktop + mobile)
+- `docs/PATCH-envoyer-php.md` — détail du patch Pages Function
+
+### Outils créés
+
+- `case_transform.py` — script Python automatise le boilerplate commun aux pages cas clients (head, JSON-LD URLs, nav, footer, switcher, slugs, hreflang, tel international)
+- `service_transform.py` — variante adaptée aux pages services (active sur Services au lieu de Case studies, traduction "Appeler" → "Call" sur tel mobile et float-call, footer-col Prestations → Services)
+
+### Décisions techniques actées
+
+- **Pas de sous-domaine `en.nomacast.fr`** : sous-répertoire `/en/` privilégié pour rester sur le même domaine, garder le SEO existant et simplifier la config DNS/Cloudflare.
+- **x-default = FR** dans hreflang : convention pour un site dont la version par défaut est en français.
+- **Form action `../envoyer.php`** depuis les pages EN (path relatif depuis `/en/` vers la racine où la Pages Function est mappée).
+- **Champ `<input type="hidden" name="lang" value="en">`** systématiquement injecté dans tous les formulaires EN — c'est le seul mécanisme fiable de détection côté Pages Function (l'inspection du Referer header est trop fragile).
+- **Tous les chemins d'images relatifs** depuis `/en/` : `../images/...` (et non `/images/...` qui casse en preview Cloudflare).
+- **Convention de date EN** : format ISO court `15 September 2022` (UK) au lieu de `September 15, 2022` (US).
+- **Slugs EN sémantiques** : SEO-friendly (`case-louvre-lahorde`, `conference-seminar-filming`) et descriptifs (mots-clés métier dans l'URL).
+- **Pages déjà existantes en EN à l'arrivée du chantier** : aucune. Tout a été créé from scratch à partir des sources FR.
+
+### Tâches finales restantes (hors lot 3 services)
+
+À traiter une fois Lot 3 services terminé :
+
+- **7 pages devis** (`quote-*.html`) : structures très répétitives, automatisable en bonne partie. ~1363 lignes par page (sauf `quote-live-streaming-paris` à 676 lignes).
+- **2 pages blog** (`blog.html` + `blog-hybrid-agm-in-person-remote.html`).
+- **Application du switcher + hreflang sur les ~35 pages FR existantes** non encore touchées (script-able via une variante des transforms).
+- **`sitemap.xml`** : ajouter toutes les URLs FR + EN avec balises `<xhtml:link rel="alternate" hreflang>` pour chaque pair de pages.
+- **Soumission du sitemap mis à jour à Google Search Console**.
+
+### Fichiers livrés (cette session)
+
+**Lot 1 :**
+- `en/index.html`, `en/pricing.html`, `en/404.html`, `en/thank-you.html`, `en/legal-notice.html`, `en/privacy-policy.html`, `en/sitemap.html`
+- `index.html` (FR modifié), `tarifs.html` (FR modifié), `404.html` (unifié)
+- `functions/envoyer.php.js`
+
+**Lot 2 :**
+- `en/partner-agencies.html`, `en/case-studies.html`
+- `en/case-louvre-lahorde.html`, `en/case-comedie-francaise.html`, `en/case-figma-conference.html`, `en/case-gl-events.html`, `en/case-johnson-johnson.html`, `en/case-digital-benchmark-berlin.html`, `en/case-morning.html`
+
+**Lot 3 (partiel) :**
+- `en/conference-seminar-filming.html`, `en/corporate-event-filming.html`
+
+**Documentation :**
+- `docs/GLOSSAIRE-FR-EN.md`, `docs/MAPPING-SLUGS.md`, `docs/SWITCHER-COMPONENT.md`, `docs/PATCH-envoyer-php.md`
+
+Tous les fichiers HTML EN ont le DOCTYPE `<!-- Last update: 2026-05-07 23:55 -->`.
+
+### Tests à faire post-déploiement
+
+- `https://nomacast.fr/en/` → page accueil EN, switcher fonctionnel, langue alternée si on clique FR
+- `https://nomacast.fr/en/pricing.html` → format `€1,500`, configurateur opérationnel, soumission form → mail [EN] reçu
+- Mobile : ouvrir `/en/` → hamburger → switcher juste au-dessus du tel/email
+- `https://nomacast.fr/en/case-louvre-lahorde.html` → vidéo background, JSON-LD valide via Rich Results Test, breadcrumb EN
+- Google Search Console : vérifier indexation EN après quelques jours
+
+---
+
 ## 2026-05-07, Add-on Photographe + bandeau "Vue technique" repositionné dans le simulateur tarifs
 
 ### Contexte
