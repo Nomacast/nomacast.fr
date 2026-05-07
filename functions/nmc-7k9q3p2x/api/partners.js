@@ -115,6 +115,9 @@ export async function onRequestPost(context) {
   const displayName = (body.displayName || "").trim();
   const type = (body.type || "standard").trim();
   const active = body.active !== false;
+  // Sécurité par défaut : un nouveau partenaire n'a JAMAIS reçu d'ancien lien donc legacyEnabled false par défaut.
+  // L'utilisateur doit explicitement cocher la case dans l'admin pour autoriser ?code=NOMCODE.
+  const legacyEnabled = body.legacyEnabled === true;
 
   if (!validateCode(code)) return err("invalid_code");
   if (!validateDisplayName(displayName)) return err("invalid_display_name");
@@ -145,6 +148,7 @@ export async function onRequestPost(context) {
     displayName,
     type,
     active,
+    legacyEnabled,
     durations: { ...STANDARD_DURATIONS },
     forceOptions: typeDef.forceOptions,
     discountTiers: STANDARD_TIERS.map(t => ({ ...t })),
@@ -158,7 +162,7 @@ export async function onRequestPost(context) {
     return err("kv_write_error", 500);
   }
 
-  return json({ ok: true, code, token, displayName, type, active });
+  return json({ ok: true, code, token, displayName, type, active, legacyEnabled });
 }
 
 export async function onRequestPut(context) {
@@ -196,6 +200,10 @@ export async function onRequestPut(context) {
   }
   if (body.active !== undefined) {
     entry.active = !!body.active;
+  }
+  if (body.legacyEnabled !== undefined) {
+    if (typeof body.legacyEnabled !== "boolean") return err("invalid_legacyEnabled");
+    entry.legacyEnabled = body.legacyEnabled;
   }
 
   try {
