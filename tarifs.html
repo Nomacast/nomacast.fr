@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 15:30 -->
+<!-- Last update: 2026-05-07 17:00 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -2313,6 +2313,29 @@ function updatePartnerDisplay() {
     // Réaffiche le bouton agence quand le code partenaire est retiré
     if (agencyBtn) agencyBtn.style.display = "";
   }
+
+  // ─── Remplissage automatique du champ "Société" du formulaire ───
+  // Quand un code partenaire est actif, on pré-remplit f-societe avec le nom du code.
+  // On marque la valeur via data-auto-filled-by="partner-code" pour pouvoir distinguer
+  // une valeur saisie manuellement par l'utilisateur (qu'on ne doit pas écraser).
+  // Si l'utilisateur tape ensuite dans le champ, le tag est retiré (listener plus bas)
+  // et la valeur ne sera plus écrasée par un changement de code.
+  const fSociete = document.getElementById("f-societe");
+  if (fSociete) {
+    if (state.partnerCode) {
+      // Remplir si vide OU si déjà auto-rempli par un précédent code
+      if (!fSociete.value || fSociete.dataset.autoFilledBy === "partner-code") {
+        fSociete.value = state.partnerCode;
+        fSociete.dataset.autoFilledBy = "partner-code";
+      }
+    } else {
+      // Code retiré : vider seulement si la valeur avait été auto-remplie
+      if (fSociete.dataset.autoFilledBy === "partner-code") {
+        fSociete.value = "";
+        delete fSociete.dataset.autoFilledBy;
+      }
+    }
+  }
 }
 
 // ─── GA4 tracking helper ───
@@ -2488,6 +2511,16 @@ const _formFieldsTracked = new Set();
     });
   });
 });
+
+// ─── Quand l'utilisateur tape manuellement dans f-societe, on retire le tag auto-fill ───
+// Comme ça, sa saisie est respectée et ne sera plus écrasée par un changement de code partenaire.
+(function() {
+  const fSociete = document.getElementById("f-societe");
+  if (!fSociete) return;
+  fSociete.addEventListener("input", function() {
+    delete this.dataset.autoFilledBy;
+  });
+})();
 
 buildOptions();
 buildAddons();
