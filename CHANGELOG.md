@@ -1,3 +1,24 @@
+## 2026-05-07, Ajout code partenaire DIXXIT
+
+Ajout du code `DIXXIT` (standard, mêmes barèmes que les codes "non spéciaux") à la variable `PARTNER_CODES_JSON` sur Cloudflare. Total désormais : 22 codes.
+
+### Liste à jour
+
+22 codes : MORNING, SOLARIS, PEECH, FIGMA, SODEXO, PLISSKEN, GALLERIA, AGENCE, CONSTELLATION, HVH, NEXTON, RATECARD, GS1, PRACHE, V3, BEARIDEAS, EKOSS, ESRI, WOJO, ACTITO, INWINK, DIXXIT.
+
+### Lien partenaire
+
+`https://nomacast.fr/tarifs.html?code=DIXXIT`
+
+### Procédure (rappel, voir entrée précédente pour le détail)
+
+1. Cloudflare → Variables → `PARTNER_CODES_JSON` → Edit → coller la nouvelle valeur
+2. Save
+3. Deployments → Retry deployment sur le dernier
+4. Tester `https://nomacast.fr/api/validate-code?code=DIXXIT` doit retourner `{"valid":true,...}`
+
+---
+
 ## 2026-05-06 (suite), Migration codes partenaires en Pages Function + ajout 13 codes
 
 ### Architecture mise en place
@@ -39,15 +60,11 @@ Tous les codes ont la forme :
 ```
 
 Variantes existantes :
-- Codes standards (PEECH, FIGMA, SODEXO, PLISSKEN, GALLERIA, AGENCE, CONSTELLATION, HVH, NEXTON, RATECARD, GS1, PRACHE, V3, BEARIDEAS, EKOSS, ESRI, WOJO, ACTITO, INWINK) : `forceOptions: []`, description "Tarif partenaire + remise par palier".
+- Codes standards (PEECH, FIGMA, SODEXO, PLISSKEN, GALLERIA, AGENCE, CONSTELLATION, HVH, NEXTON, RATECARD, GS1, PRACHE, V3, BEARIDEAS, EKOSS, ESRI, WOJO, ACTITO, INWINK, DIXXIT) : `forceOptions: []`, description "Tarif partenaire + remise par palier".
 - MORNING : `forceOptions: ["reperage","veille","5g","montage_tc"]`, description spécifique.
 - SOLARIS : `forceOptions: ["reperage","veille","5g"]`, description spécifique.
 
 Validation côté serveur : nom du code doit matcher `/^[A-Z0-9]{2,30}$/`. Donc majuscules + chiffres, 2 à 30 caractères, pas de tirets ni d'underscore.
-
-### Codes actifs au 2026-05-06
-
-21 codes : MORNING, SOLARIS, PEECH, FIGMA, SODEXO, PLISSKEN, GALLERIA, AGENCE, CONSTELLATION, HVH, NEXTON, RATECARD, GS1, PRACHE, V3, BEARIDEAS, EKOSS, ESRI, WOJO, ACTITO, INWINK.
 
 ### Décisions techniques actées
 
