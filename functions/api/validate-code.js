@@ -59,6 +59,13 @@ export async function onRequestGet(context) {
     return jsonResponse({ valid: false, reason: "inactive" }, 410);
   }
 
+  // Si l'utilisateur arrive via l'ancien format ?code= mais que la rétro-compat est désactivée
+  // pour ce partenaire spécifiquement, on rejette. L'absence du champ legacyEnabled = activé par défaut
+  // (compat des 24 partenaires migrés). Seul legacyEnabled === false bloque.
+  if (codeParam && entry.legacyEnabled === false) {
+    return jsonResponse({ valid: false, reason: "legacy_disabled" }, 410);
+  }
+
   // Construction de la réponse : on n'expose que les champs utiles au client
   const responseData = {
     durations: entry.durations,
