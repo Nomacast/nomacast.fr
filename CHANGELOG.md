@@ -1,12 +1,13 @@
-## 2026-05-07, Ajout add-on Photographe événementiel dans le simulateur tarifs
+## 2026-05-07, Add-on Photographe + bandeau "Vue technique" repositionné dans le simulateur tarifs
 
 ### Contexte
 
-Ajout d'une troisième prestation post-événement dans la Step 04 du configurateur, aux côtés du Best-of monté et des Interviews post-événement. Cible les clients souhaitant compléter la captation vidéo par une couverture photo professionnelle livrée rapidement.
+Deux évolutions sur `tarifs.html` :
 
-### Modification appliquée
+1. Ajout d'une troisième prestation post-événement (Photographe événementiel) dans la Step 04, aux côtés du Best-of monté et des Interviews post-événement.
+2. Repositionnement et redesign du toggle "Vue technique" : il était discret, planqué en bas du bloc "Inclus dans tous les forfaits" en Step 02. Devenu un bandeau CTA dédié entre Step 02 et Step 03, avec icône, titre, description et toggle. Beaucoup plus visible pour les visiteurs qui veulent voir le matériel détaillé.
 
-Nouvel add-on `photographe` dans `tarifs.html` :
+### Add-on Photographe : modifications appliquées
 
 - **Card HTML** ajoutée dans la grille `.addons-grid` de la Step 04 (après la card Interviews).
 - **State** : `state.addons.photographe = false` ajouté à l'objet d'état initial.
@@ -16,15 +17,36 @@ Nouvel add-on `photographe` dans `tarifs.html` :
 - **buildAddons()** : photographe ajouté dans le `forEach`. Le tracking GA4 a été refactoré en map `addonLabels` + lookup générique sur `ADDON_PRICES` pour éviter d'empiler des ternaires à chaque nouvel add-on.
 - **render()** : mise à jour dynamique du prix affiché dans la card selon la durée sélectionnée (même mécanique que Best-of).
 
+### Bandeau "Vue technique" : modifications appliquées
+
+- **HTML** : le `<label class="tech-switch">` retiré du bas de l'`included-block` en Step 02. Remplacé par un `<label class="tech-banner">` inséré comme 3e enfant de `.steps`, entre Step 02 et Step 03. Variante retenue après itération visuelle : **dark inversé, sans icône**. Le bandeau contient un titre `Voir le matériel inclus`, une description (`Micros, trépieds, ordinateur, câblage… le matériel technique prévu pour chaque partie du dispositif.`), et le toggle slider à droite.
+- **Input** : conserve `id="tech-switch"` pour ne pas casser les références JS existantes (`setTechMode()`, listener `change`, auto-activation en mode agence).
+- **Bloc `tech-base-details`** : reste à sa place dans Step 02 sous l'`included-block` (matériel régie + éclairage de base). Le toggle global continue de le révéler/masquer comme avant. UX : quand on active le bandeau, le matériel régie apparaît dans Step 02 au-dessus, et le matériel par option apparaît dans Step 03/04 en dessous. Cohérent.
+- **CSS** : nouveau bloc `.tech-banner.*` avec background slate dark (`linear-gradient(135deg, #1a2332, #0f1825)`), bordure cyan fine (`rgba(14,165,233,.3)` qui passe à `var(--cyan)` en mode actif), glow radial cyan en haut-gauche via `::before`, titre blanc, description blanc 62% opacity, slider blanc 18% qui passe au cyan en mode actif. L'ancien bloc `.tech-switch.*` retiré (mort). Les rules `.tech-base-title` et `.tech-base-list` conservées (utilisées par `tech-base-details`).
+- **Animation chain** : `.steps` a désormais 5 enfants (Step 01, Step 02, bandeau, Step 03, Step 04). Les delays `:nth-child` ont été décalés en conséquence : le bandeau hérite de `.16s` via la rule `.tech-banner`, Step 03 passe à `.24s` (nth-child(4)), Step 04 à `.32s` (nth-child(5)). L'ancien rule mort `.step:nth-child(3)` retiré.
+- **JS `setTechMode()`** : ajout du toggle de la classe `.active` sur `#tech-banner-label` pour le feedback visuel (bordure cyan saturée + slider cyan). Le reste du comportement (auto-activation en mode agence, persistance du tech-mode sur body) inchangé.
+
 ### Décisions techniques actées
 
 - Add-ons post-événement : trois prestations distinctes (Best-of monté, Interviews post-événement, Photographe événementiel). Chaque add-on est calculé en dehors de la mécanique partenaire (pas de remise grille A, pas de charm, pas d'absorption). Tarif fixe ajouté au total final.
 - Tarif photographe : 1 150 €/jour, +600 €/jour additionnel. Le tarif demi-journée n'est pas distinct du tarif jour entier (aligné sur la logique Best-of, parce que la prestation et le livrable sont les mêmes : 100+ photos éditées, livraison J+1/J+2).
 - Refactor du tracking GA4 dans `buildAddons()` : map `addonLabels` + lookup `ADDON_PRICES[addonId]` au lieu de ternaires en cascade. À reproduire pour tout futur add-on (4ème, 5ème, etc.) sans toucher à la structure.
+- Toggle "Vue technique" : positionné en bandeau CTA entre Step 02 et Step 03, pas dans un step-header. Choix UX : ce n'est pas une option configurable (qui modifie le devis), c'est un mode d'affichage global du matériel détaillé. Lui donner sa propre carte visuelle entre les sections de configuration le rend visible immédiatement sans le confondre avec les options techniques. L'option A "switch dans le step-header de Step 03" et l'option C "double placement avec hint" ont été écartées.
+- Bandeau "Vue technique" : design dark inversé sans icône. Sur une page blanche avec déjà des accents cyan partout (CTA "Recevoir mon devis", duration cards actives, options actives), un 3e élément cyan diluerait la hiérarchie visuelle. Le dark crée un point focal par contraste et renforce le côté "outil de pro" aligné avec le positionnement Nomacast. L'icône a été retirée parce que le contraste de couleur fait déjà tout le travail de signal sur 5 éléments empilés, et que le texte "Voir le matériel inclus" porte tout le sens.
+- L'`id="tech-switch"` de l'input est conservé : tout le JS existant (`setTechMode`, listener `change`, auto-activation agence) continue de fonctionner sans modification de logique. Seul le wrapper visuel a changé.
+- Parité FR/EN : toute évolution structurelle du configurateur (add-on, bandeau, mécanique) doit être propagée à `pricing.html` dans la même session ou la session suivante pour éviter les divergences. Les deux fichiers partagent la même structure HTML, le même JS et les mêmes CSS variables. Seuls les libellés diffèrent.
 
-### Fichier livré
+### Propagation EN (pricing.html)
 
-- `tarifs.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-07 17:00 -->`)
+- L'add-on Photographer était déjà présent dans `pricing.html` à l'arrivée du fichier (timestamp `2026-05-07 23:15`) : pas d'intervention sur cette partie.
+- Bandeau "Tech view" : mêmes modifications que sur `tarifs.html` (retrait du `tech-switch` en Step 02, insertion du `tech-banner` dark sans icône entre Step 02 et Step 03, animation chain décalée pour 5 enfants, `setTechMode()` toggle `.active` sur `#tech-banner-label`).
+- Wording EN du bandeau : titre `See included equipment`, description `Mics, tripods, computer, cabling… the technical kit included for every part of your setup.` Choix de "kit" plutôt que "equipment" pour la description, plus courant en anglais britannique pour le matériel de production (cohérent avec "Make use of the kit already on site" déjà présent dans la description Interviews).
+- Le commentaire JS `setTechMode()` traduit en anglais à l'occasion (était resté en français dans `pricing.html`).
+
+### Fichiers livrés
+
+- `tarifs.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-07 18:00 -->`)
+- `pricing.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-07 23:45 -->`)
 
 ---
 
