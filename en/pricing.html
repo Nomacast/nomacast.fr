@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 23:45 -->
+<!-- Last update: 2026-05-07 23:15 -->
 <html lang="en-GB">
 <head>
 <!-- Google Tag Manager -->
@@ -307,24 +307,15 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .option-material-list li { padding-left: 12px; position: relative; }
 .option-material-list li::before { content: "•"; position: absolute; left: 0; color: var(--cyan); font-weight: 700; }
 /* Switch "Vue technique" : interrupteur on/off élégant */
-/* Tech view banner: global toggle that reveals detailed kit in Step 02, 03 and 04. Dark inverted look to contrast against the white configurator page. */
-.tech-banner { display: flex; align-items: center; gap: 16px; padding: 18px 22px; background: linear-gradient(135deg, #1a2332, #0f1825); border: 1px solid rgba(14,165,233,.3); border-radius: 14px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; transition: border-color .2s ease; }
-.tech-banner::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 0% 0%, rgba(14,165,233,.12), transparent 60%); pointer-events: none; }
-.tech-banner:hover { border-color: rgba(14,165,233,.5); }
-.tech-banner.active { border-color: var(--cyan); }
-.tech-banner input { position: absolute; opacity: 0; pointer-events: none; }
-.tech-banner-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
-.tech-banner-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; letter-spacing: -0.005em; }
-.tech-banner-desc { font-size: 12.5px; color: rgba(255,255,255,.62); font-weight: 400; line-height: 1.5; }
-.tech-banner-slider { position: relative; width: 38px; height: 22px; background: rgba(255,255,255,.18); border-radius: 22px; transition: background .25s ease; flex-shrink: 0; z-index: 1; }
-.tech-banner-slider::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .25s ease; }
-.tech-banner.active .tech-banner-slider { background: var(--cyan); }
-.tech-banner.active .tech-banner-slider::before { transform: translateX(16px); }
-@media (max-width: 540px) {
-  .tech-banner { padding: 16px 18px; gap: 12px; }
-  .tech-banner-title { font-size: 14px; }
-  .tech-banner-desc { font-size: 12px; }
-}
+.tech-switch { display: inline-flex; align-items: center; gap: 10px; margin-top: 16px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+.tech-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.tech-switch-text { font-size: 13px; font-weight: 500; color: var(--ink-muted); transition: color .2s ease; }
+.tech-switch-slider { position: relative; width: 38px; height: 22px; background: var(--border); border-radius: 22px; transition: background .25s ease; flex-shrink: 0; }
+.tech-switch-slider::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .25s ease; }
+.tech-switch input:checked ~ .tech-switch-slider { background: var(--cyan); }
+.tech-switch input:checked ~ .tech-switch-slider::before { transform: translateX(16px); }
+.tech-switch input:checked + .tech-switch-slider { background: var(--cyan); }
+.tech-switch:hover .tech-switch-text { color: var(--ink); }
 .tech-base-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
 .tech-base-list { list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink-muted); }
 .tech-base-list li { padding-left: 14px; position: relative; }
@@ -500,10 +491,8 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .step { animation: fadeUp .5s ease both; }
 .step:nth-child(1) { animation-delay: 0s; }
 .step:nth-child(2) { animation-delay: .08s; }
-/* nth-child(3) is now the Tech view banner (animated via .tech-banner) */
-.tech-banner { animation: fadeUp .5s ease both; animation-delay: .16s; }
+.step:nth-child(3) { animation-delay: .16s; }
 .step:nth-child(4) { animation-delay: .24s; }
-.step:nth-child(5) { animation-delay: .32s; }
 .summary { animation: fadeUp .5s ease .3s both; }
 
 /* Bandeau économie partenaire : proéminent sous le total */
@@ -735,6 +724,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="included-row"><svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>Final video delivered at the end of the event</div>
               <div class="included-row"><svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>Paris: free transport · Provinces and international quoted separately</div>
             </div>
+            <!-- Tech view switch: shows detailed kit list of base set + each ticked option. Auto-enabled when "I'm an agency" is ticked. -->
+            <label class="tech-switch" id="tech-switch-label" for="tech-switch">
+              <span class="tech-switch-text">Tech view</span>
+              <input type="checkbox" id="tech-switch">
+              <span class="tech-switch-slider"></span>
+            </label>
             <div id="tech-base-details" style="display:none;margin-top:14px;padding:14px 16px;background:rgba(14,165,233,.05);border:1px solid rgba(14,165,233,.15);border-radius:10px;">
               <div class="tech-base-title">Gallery &amp; filming kit</div>
               <ul class="tech-base-list">
@@ -779,16 +774,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </div>
         </div>
-
-        <!-- Tech view banner: global toggle that reveals detailed kit in Step 02, 03 and 04 (base set + under each ticked option and add-on). Auto-enabled when "I'm an agency" is ticked. -->
-        <label class="tech-banner" id="tech-banner-label" for="tech-switch">
-          <div class="tech-banner-body">
-            <div class="tech-banner-title">See included equipment</div>
-            <div class="tech-banner-desc">Mics, tripods, computer, cabling… the technical kit included for every part of your setup.</div>
-          </div>
-          <input type="checkbox" id="tech-switch">
-          <span class="tech-banner-slider"></span>
-        </label>
 
         <!-- 03 -->
         <div class="step">
@@ -878,7 +863,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </label>
           </div>
           <div class="total-value" id="total-value">
-            <span id="total-num">1,500</span> €
+            <span id="total-num">€1,500</span>
             <span class="suffix" id="total-suffix">excl. VAT</span>
           </div>
           <div class="total-disclaimer">Indicative estimate. Final quote within 24 hours after technical exchange.</div>
@@ -895,7 +880,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <!-- "Larger project" nudge: appears when totalHT > 3000 -->
           <div id="project-nudge" style="display:none;margin-top:14px;padding:14px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;font-size:13px;line-height:1.5;color:rgba(255,255,255,.85);">
-            For a project of this scale, a quick exchange usually helps optimise the setup.
+            💬 For a project of this scale, a quick exchange usually helps optimise the setup.
           </div>
         </div>
 
@@ -1091,7 +1076,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="mobile-bar">
   <div class="mobile-bar-total">
     <small id="mobile-label">Estimate (excl. VAT)</small>
-    <strong><span id="mobile-total">1,500</span> €</strong>
+    <strong><span id="mobile-total">€1,500</span></strong>
   </div>
   <button class="mobile-bar-cta" type="button" onclick="(function(){var f=document.getElementById('quote-form'),e=document.getElementById('f-email'),t=document.getElementById('f-tel');if(!e.value.trim()||!t.value.trim()){f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){if(!e.value.trim())e.focus();else if(!t.value.trim())t.focus();},600);return}f.requestSubmit?f.requestSubmit():f.submit();})();">Send my request →</button>
 </div>
@@ -1293,6 +1278,7 @@ function refreshTechOptions() {
 
 const state = { event:"conference", duration:"half", options:{}, addons:{ bestof:false, interviews:false, photographe:false }, ttc:false, partnerCode:null, partnerDisplayName:null, platforms:[], isAgence:false, activationOrder:[] };
 const fmt = n => Math.round(n).toLocaleString("en-GB");
+const eur = n => "€" + fmt(n);
 const shown = ht => state.ttc ? Math.round(ht * TVA) : Math.round(ht);
 
 function getDurPrice(durKey) {
@@ -2026,7 +2012,7 @@ function render() {
   // Card prices : toujours afficher les prix standards, indépendamment du code partenaire
   Object.keys(CONFIG.durations).forEach(key => {
     const el = document.getElementById("price-"+key);
-    if (el) el.textContent = fmt(shown(CONFIG.durations[key].price)) + " € " + suffix;
+    if (el) el.textContent = eur(shown(CONFIG.durations[key].price)) + " " + suffix;
   });
 
   // Options : section masquée s'il n'y a aucune option cochée
@@ -2041,8 +2027,8 @@ function render() {
       const valHTML = ln.isFree
         ? '<span class="val" style="color:var(--green);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">Included</span>'
         : (ln.oldPrice
-            ? "<span class='val'><span class='price-old'>"+fmt(shown(ln.oldPrice))+" €</span><span class='price-new'>"+fmt(shown(ln.price))+" €</span></span>"
-            : "<span class='val'>"+fmt(shown(ln.price))+" €</span>");
+            ? "<span class='val'><span class='price-old'>"+eur(shown(ln.oldPrice))+"</span><span class='price-new'>"+eur(shown(ln.price))+"</span></span>"
+            : "<span class='val'>"+eur(shown(ln.price))+"</span>");
       row.innerHTML = "<span>"+ln.label+"</span>" + valHTML;
       optsContainer.appendChild(row);
     });
@@ -2056,7 +2042,7 @@ function render() {
   if (partnerDiscSection && partnerDiscAmount) {
     if (r.partnerDiscount && r.partnerDiscount > 0) {
       partnerDiscSection.style.display = "block";
-      partnerDiscAmount.textContent = "−" + fmt(shown(r.partnerDiscount)) + " €";
+      partnerDiscAmount.textContent = "−" + eur(shown(r.partnerDiscount));
     } else {
       partnerDiscSection.style.display = "none";
     }
@@ -2073,7 +2059,7 @@ function render() {
       r.addonLines.forEach(ln => {
         const row = document.createElement("div");
         row.className = "breakdown-line";
-        row.innerHTML = "<span>" + ln.label + "</span><span class='val'>" + fmt(shown(ln.price)) + " €</span>";
+        row.innerHTML = "<span>" + ln.label + "</span><span class='val'>" + eur(shown(ln.price)) + "</span>";
         addonsContainer.appendChild(row);
       });
     } else {
@@ -2085,14 +2071,14 @@ function render() {
   const bestofPriceEl = document.getElementById("addon-bestof-price");
   if (bestofPriceEl) {
     const bestofPrice = ADDON_PRICES.bestof[state.duration] || ADDON_PRICES.bestof.half;
-    bestofPriceEl.textContent = "+ " + fmt(shown(bestofPrice)) + " €";
+    bestofPriceEl.textContent = "+ " + eur(shown(bestofPrice));
   }
 
   // ─── Mise à jour dynamique du prix Photographe dans la card (selon durée sélectionnée) ───
   const photographePriceEl = document.getElementById("addon-photographe-price");
   if (photographePriceEl) {
     const photographePrice = ADDON_PRICES.photographe[state.duration] || ADDON_PRICES.photographe.half;
-    photographePriceEl.textContent = "+ " + fmt(shown(photographePrice)) + " €";
+    photographePriceEl.textContent = "+ " + eur(shown(photographePrice));
   }
 
   // Mention "Setup technique sur site" : durée estimée selon la combinaison d'options.
@@ -2108,7 +2094,7 @@ function render() {
   if (savingsBanner) {
     const savings = getPartnerSavings();
     if (state.partnerCode && savings > 0) {
-      savingsAmount.textContent = fmt(shown(savings)) + " €";
+      savingsAmount.textContent = eur(shown(savings));
       savingsBanner.classList.add("show");
     } else {
       savingsBanner.classList.remove("show");
@@ -2119,7 +2105,7 @@ function render() {
   document.getElementById("total-label").textContent = "Total estimate " + suffix;
   document.getElementById("total-suffix").textContent = suffix;
   document.getElementById("mobile-label").textContent = "Estimate " + suffix;
-  const newVal = fmt(shown(r.totalHT));
+  const newVal = eur(shown(r.totalHT));
   const totalNum = document.getElementById("total-num");
   const mobileNum = document.getElementById("mobile-total");
   if (totalNum.textContent !== newVal) {
@@ -2156,9 +2142,9 @@ function render() {
       const fullPrice = opt.dayMultiplied ? Math.round(opt.price * dayMult) : opt.price;
       if (opt.id === "son" && sonDuplex.sonPrice !== null) {
         const newP = Math.max(0, fullPrice - 250);
-        priceEl.innerHTML = '<span class="price-old">' + fmt(shown(fullPrice)) + ' €</span> <span class="price-new">+ ' + fmt(shown(newP)) + ' €</span>';
+        priceEl.innerHTML = '<span class="price-old">' + eur(shown(fullPrice)) + '</span> <span class="price-new">+ ' + eur(shown(newP)) + '</span>';
       } else {
-        priceEl.innerHTML = "+ " + fmt(shown(fullPrice)) + " €";
+        priceEl.innerHTML = "+ " + eur(shown(fullPrice));
       }
     }
   });
@@ -2219,7 +2205,7 @@ function buildOptions() {
     row.innerHTML = `
       <span class="option-check"><svg viewBox="0 0 14 14"><polyline points="2,7 6,11 12,3"></polyline></svg></span>
       <span class="option-label">${opt.label}<span class="option-desc">${opt.desc}</span>${platformsHTML}</span>
-      <span class="option-price">+ ${fmt(shown(opt.price))} €</span>
+      <span class="option-price">+ ${eur(shown(opt.price))}</span>
     `;
     // Click sur la ligne = toggle de l'option (mais pas si c'est un tag plateforme)
     row.addEventListener("click", e => {
@@ -2525,10 +2511,10 @@ function syncFormFields() {
   const durLabel = CONFIG.durations[state.duration].label;
   const mH = getMontageH();
   const optionLines = r.lines.map(o =>
-    "  • " + o.label + " : " + (o.isFree ? "INCLUDED" : fmt(o.price) + " € (excl. VAT)")
+    "  • " + o.label + " : " + (o.isFree ? "INCLUDED" : eur(o.price) + " (excl. VAT)")
   );
   const addonLines = (r.addonLines || []).map(a =>
-    "  • " + a.label + " : " + fmt(a.price) + " € (excl. VAT)"
+    "  • " + a.label + " : " + eur(a.price) + " (excl. VAT)"
   );
 
   // Build the recap text message (read by envoyer.php into $message)
@@ -2543,7 +2529,7 @@ function syncFormFields() {
   if (optionLines.length) { lines.push("", "Selected options:"); lines.push.apply(lines, optionLines); }
   if (addonLines.length) { lines.push("", "Post-event content:"); lines.push.apply(lines, addonLines); }
   lines.push("", "Technical setup: " + mH + "h on site");
-  lines.push("", "ESTIMATE: " + fmt(r.totalHT) + " € (excl. VAT) (" + fmt(Math.round(r.totalHT * TVA)) + " € incl. VAT)");
+  lines.push("", "ESTIMATE: " + eur(r.totalHT) + " (excl. VAT) (" + eur(Math.round(r.totalHT * TVA)) + " incl. VAT)");
   if (state.isAgence) lines.push("", "→ WHITE-LABEL REQUEST (agency)");
 
   // User-visible fields already bound to the form via name=, only fill hidden fields here
@@ -2552,10 +2538,10 @@ function syncFormFields() {
   set("h-message", lines.join("\n"));
   set("h-is-agence", state.isAgence ? "1" : "");
   set("h-cfg-duration", durLabel);
-  set("h-cfg-options", r.lines.map(o => o.label + (o.isFree ? " (included)" : " (" + fmt(o.price) + "€)")).join(" | "));
-  set("h-cfg-addons", (r.addonLines || []).map(a => a.label + " (" + fmt(a.price) + "€)").join(" | "));
+  set("h-cfg-options", r.lines.map(o => o.label + (o.isFree ? " (included)" : " (" + eur(o.price) + ")")).join(" | "));
+  set("h-cfg-addons", (r.addonLines || []).map(a => a.label + " (" + eur(a.price) + ")").join(" | "));
   set("h-cfg-partner", state.partnerCode || "");
-  set("h-cfg-total", fmt(r.totalHT) + " € (excl. VAT)");
+  set("h-cfg-total", eur(r.totalHT) + " (excl. VAT)");
   set("h-cfg-platforms", state.platforms.join(", "));
 }
 
@@ -2637,19 +2623,15 @@ buildAddons();
 syncFormFields();
 render();
 
-// ═══ Tech view switch: drives detailed kit display (base set + under each ticked option/add-on) ═══
-// Toggles body.classList "tech-mode" which reveals:
-//   - <div id="tech-base-details"> block (base set kit)
-//   - <div class="option-material"> under each ticked option (CSS rule .tech-mode .option.active .option-material)
-//   - <div class="addon-material"> under each ticked add-on (CSS rule .tech-mode .addon-card.active .addon-material)
-// Also drives .active class on the Tech view banner for visual feedback (cyan border, cyan slider).
+// ═══ Switch "Vue technique" : pilote l'affichage du détail matos (plateau base + sous chaque option) ═══
+// Active body.classList "tech-mode" qui révèle :
+//   - le bloc <div id="tech-base-details"> (matos plateau de base)
+//   - les <div class="option-material"> sous chaque option cochée (CSS rule .tech-mode .option.active .option-material)
 function setTechMode(on) {
   const switchInput = document.getElementById("tech-switch");
   const baseDetails = document.getElementById("tech-base-details");
-  const banner = document.getElementById("tech-banner-label");
   if (switchInput) switchInput.checked = !!on;
   if (baseDetails) baseDetails.style.display = on ? "block" : "none";
-  if (banner) banner.classList.toggle("active", !!on);
   document.body.classList.toggle("tech-mode", !!on);
 }
 (function() {
