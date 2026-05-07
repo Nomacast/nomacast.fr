@@ -4,12 +4,19 @@
 // Port JS de envoyer.php : Turnstile + Honeypot + Origin + Anti-spam
 // Anti-flood via Cloudflare KV (binding RATE_LIMIT)
 // Envoi des emails via Resend API
+// Multi-lingue FR/EN : redirige vers /merci.html ou /en/thank-you.html selon le champ caché `lang`
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ALLOWED_ORIGINS = ['https://www.nomacast.fr', 'https://nomacast.fr'];
-const PAGE_MERCI      = 'https://nomacast.fr/merci.html';
-const PAGE_ERREUR     = 'https://nomacast.fr/index.html#contact';
 const DOMAINE         = 'nomacast.fr';
+
+// Pages de redirection FR (par défaut)
+const PAGE_MERCI_FR   = 'https://nomacast.fr/merci.html';
+const PAGE_ERREUR_FR  = 'https://nomacast.fr/index.html#contact';
+
+// Pages de redirection EN (visiteurs depuis /en/*.html, identifiés par hidden field lang=en)
+const PAGE_MERCI_EN   = 'https://nomacast.fr/en/thank-you.html';
+const PAGE_ERREUR_EN  = 'https://nomacast.fr/en/index.html#contact';
 
 const COPIE_ARCHIVAGE = 'jerome.bouquillon@ik.me';
 const EMAIL_GENERAL   = 'evenement@nomacast.fr';
@@ -71,8 +78,16 @@ export async function onRequestPost(context) {
     formData = await request.formData();
   } catch (err) {
     console.error('[Nomacast] formData parse error:', err);
-    return redirect(PAGE_ERREUR + '?error=invalid');
+    // Fallback FR si on ne peut pas lire le formData (donc lang inconnu)
+    return redirect(PAGE_ERREUR_FR + '?error=invalid');
   }
+
+  // ── 0. DÉTECTION LANGUE ───────────────────────────────────────────────────
+  // Champ caché `lang=en` injecté dans tous les formulaires des pages /en/*.
+  // Absence du champ ou valeur autre que "en" → fallback FR.
+  const isEn = String(formData.get('lang') ?? '').toLowerCase() === 'en';
+  const PAGE_MERCI  = isEn ? PAGE_MERCI_EN  : PAGE_MERCI_FR;
+  const PAGE_ERREUR = isEn ? PAGE_ERREUR_EN : PAGE_ERREUR_FR;
 
   // ── 1. HONEYPOT ───────────────────────────────────────────────────────────
   if (formData.get('website')) {
@@ -196,9 +211,11 @@ export async function onRequestPost(context) {
     : [EMAIL_GENERAL, COPIE_ARCHIVAGE];
 
   // ── 9. CONSTRUCTION DU MAIL ───────────────────────────────────────────────
+  const tagLang   = isEn ? '[EN] ' : '';
   const tagAgence = isAgence ? '[AGENCE] ' : '';
   const tagSource = source ? `[${source}] ` : '';
   const subject =
+    tagLang +
     `Demande de devis - ${tagAgence}${tagSource}` +
     (societe || nom || 'Contact') +
     ' [nomacast.fr]';
@@ -211,7 +228,8 @@ export async function onRequestPost(context) {
   });
 
   let body = 'Nouvelle demande de devis reçue depuis nomacast.fr\n';
-  if (isAgence) body += 'ATTENTION : DEMANDE AGENCE (marque blanche)\n';
+  if (isEn)     body += 'LANGUE     : EN (visiteur depuis /en/)\n';
+  if (isAgence) body += 'ATTENTION  : DEMANDE AGENCE (marque blanche)\n';
   if (source)   body += `Provenance : ${source}\n`;
   body += sep + '\n\n';
   body += `Nom & prénom  : ${nom       || '—'}\n`;
