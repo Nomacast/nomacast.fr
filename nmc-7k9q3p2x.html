@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 18:45 -->
+<!-- Last update: 2026-05-07 19:15 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -80,6 +80,9 @@
   .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
   .pill-active { background: rgba(74, 222, 128, 0.15); color: var(--green); }
   .pill-inactive { background: rgba(148, 163, 184, 0.15); color: var(--ink-faint); }
+  .pill-legacy-on { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+  .pill-legacy-off { background: rgba(148, 163, 184, 0.15); color: var(--ink-faint); }
+  .pill-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
   .pill-type-standard { background: rgba(148, 163, 184, 0.15); color: var(--ink-faint); }
   .pill-type-premium-reperage { background: rgba(34, 211, 238, 0.15); color: var(--cyan); }
   .pill-type-premium-reperage-montage { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
@@ -199,6 +202,10 @@
         <input type="checkbox" id="f-active" checked>
         <label for="f-active">Partenaire actif</label>
       </div>
+      <div class="field field-checkbox">
+        <input type="checkbox" id="f-legacy">
+        <label for="f-legacy">Autoriser l'ancien lien <code>?code=</code> (rétro-compat)</label>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn btn-primary" id="form-submit">Enregistrer</button>
@@ -292,6 +299,8 @@ function render() {
     const entry = store.codes[code];
     const token = tokenForCode(code);
     const isActive = entry.active !== false;
+    // Sémantique : champ absent = activé par défaut (pour les 24 partenaires migrés). Seul `false` désactive.
+    const isLegacyEnabled = entry.legacyEnabled !== false;
     const typeLabel = {
       "standard": "Standard",
       "premium-reperage": "Premium repérage",
@@ -303,7 +312,7 @@ function render() {
     html += `<td data-label="Code"><span class="mono">${escapeHtml(code)}</span></td>`;
     html += `<td data-label="Token"><span class="mono">${token || '—'}</span></td>`;
     html += `<td data-label="Type"><span class="pill pill-type-${entry.type}">${typeLabel}</span></td>`;
-    html += `<td data-label="État"><span class="pill ${isActive ? 'pill-active' : 'pill-inactive'}">${isActive ? 'Actif' : 'Inactif'}</span></td>`;
+    html += `<td data-label="État"><div class="pill-stack"><span class="pill ${isActive ? 'pill-active' : 'pill-inactive'}">${isActive ? 'Actif' : 'Inactif'}</span><span class="pill ${isLegacyEnabled ? 'pill-legacy-on' : 'pill-legacy-off'}" title="${isLegacyEnabled ? 'Ancien lien ?code= fonctionne' : 'Ancien lien ?code= désactivé'}">Legacy ${isLegacyEnabled ? 'ON' : 'OFF'}</span></div></td>`;
     html += `<td data-label="Lien"><button class="copy-btn" onclick="copyLink('${escapeHtml(code)}', this)">Copier</button></td>`;
     html += `<td data-label="Actions"><div class="actions">`;
     html += `<button class="btn btn-secondary btn-icon" onclick="openModal('${escapeHtml(code)}')">Modifier</button>`;
@@ -336,10 +345,14 @@ function openModal(codeToEdit) {
     codeInput.disabled = true;
     document.getElementById("f-type").value = entry.type;
     document.getElementById("f-active").checked = entry.active !== false;
+    // Sémantique : champ absent = activé par défaut (pour les 24 partenaires migrés)
+    document.getElementById("f-legacy").checked = entry.legacyEnabled !== false;
   } else {
     document.getElementById("form").reset();
     codeInput.disabled = false;
     document.getElementById("f-active").checked = true;
+    // Pour un nouveau partenaire : décoché par défaut (sécurité, le partenaire n'a jamais reçu d'ancien lien)
+    document.getElementById("f-legacy").checked = false;
   }
   
   document.getElementById("modal").classList.add("open");
@@ -373,7 +386,8 @@ async function savePartner() {
     code: document.getElementById("f-code").value.trim(),
     displayName: document.getElementById("f-displayName").value.trim(),
     type: document.getElementById("f-type").value,
-    active: document.getElementById("f-active").checked
+    active: document.getElementById("f-active").checked,
+    legacyEnabled: document.getElementById("f-legacy").checked
   };
   
   try {
@@ -426,7 +440,18 @@ function copyLink(code, btn) {
   const useLegacy = document.getElementById("use-legacy-link").checked;
   let link;
   if (useLegacy) {
-    // Format ancien : ?code=NOMCODE (rétro-compat indéfinie)
+    // Vérifier que le partenaire autorise l'ancien lien
+    const entry = store.codes[code];
+    if (entry && entry.legacyEnabled === false) {
+      btn.textContent = "Legacy OFF";
+      btn.title = "L'ancien lien ?code= est désactivé pour ce partenaire. Décoche le toggle global ou modifie le partenaire.";
+      setTimeout(() => {
+        btn.textContent = "Copier";
+        btn.title = "";
+      }, 2000);
+      return;
+    }
+    // Format ancien : ?code=NOMCODE (rétro-compat)
     link = `https://nomacast.fr/tarifs.html?code=${code}`;
   } else {
     // Format nouveau : ?p=token (token opaque, par défaut)
@@ -454,6 +479,7 @@ function translateError(code) {
     "invalid_code": "Code interne invalide (majuscules + chiffres uniquement, 2 à 30 caractères)",
     "invalid_display_name": "Nom invalide (1 à 60 caractères)",
     "invalid_type": "Type de remise invalide",
+    "invalid_legacyEnabled": "Valeur invalide pour le flag rétro-compat",
     "code_already_exists": "Ce code existe déjà",
     "code_not_found": "Partenaire introuvable",
     "kv_read_error": "Erreur lecture base",
