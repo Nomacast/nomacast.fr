@@ -467,13 +467,14 @@ nav.scrolled {
 .lang-switch .lang-sep { color: var(--ink-faint); font-weight: 400; user-select: none; }
 
 .mobile-lang-switch {
+  position: absolute;
+  bottom: 76px;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 14px;
-  margin: 18px 0 8px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,0.1);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -1741,7 +1742,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <li><a href="#faq">FAQ</a></li>
     <li><a href="#contact" class="nav-cta">Quote within 24h</a></li>
     <li class="lang-switch" aria-label="Choose language">
-      <a href="/index.html" hreflang="fr" lang="fr">FR</a>
+      <a href="/" hreflang="fr" lang="fr">FR</a>
       <span class="lang-sep" aria-hidden="true">·</span>
       <a href="" class="active" aria-current="page">EN</a>
     </li>
@@ -1770,7 +1771,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a href="tel:+33660541732">+33 6 60 54 17 32</a> · <a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
   </div>
   <div class="mobile-lang-switch" aria-label="Choose language">
-    <a href="/index.html" hreflang="fr" lang="fr">FR</a>
+    <a href="/" hreflang="fr" lang="fr">FR</a>
     <span class="lang-sep" aria-hidden="true">·</span>
     <a href="" class="active" aria-current="page">EN</a>
   </div>
@@ -1841,7 +1842,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a href="#cas-clients" class="btn-ghost">See case studies</a>
   </div>
   <p style="margin-top:18px;font-size:14px;color:rgba(255,255,255,.55);">
-    or <a href="pricing.html" style="color:rgba(255,255,255,.85);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;">want a price right away? Get a 30-second estimate</a>
+    or <a href="pricing.html" style="color:rgba(255,255,255,.85);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;">Want a price right away? Get a 30-second estimate</a>
   </p>
 
   </div></section>
@@ -2552,7 +2553,7 @@ const SITE_DATA = {
     { nom: "Global Industrie", logo_url: "https://nomacast.fr/images/logos/global-industrie.png", alt: "Global Industrie", cas_url: "case-gl-events.html" },
     { nom: "Brainsonic", logo_url: "https://nomacast.fr/images/logos/brainsonic.png", alt: "Brainsonic" },
     { nom: "Swapcard", logo_url: "https://nomacast.fr/images/logos/swapcard.png", alt: "Swapcard" },
-    { nom: "Partie Socialiste", logo_url: "https://nomacast.fr/images/logos/parti-socialiste.png", alt: "Partie Socialiste" },
+    { nom: "Parti Socialiste", logo_url: "https://nomacast.fr/images/logos/parti-socialiste.png", alt: "Parti Socialiste" },
     { nom: "ESRI", logo_url: "https://nomacast.fr/images/logos/esri.jpeg", alt: "Esri" },
     { nom: "DEXT", logo_url: "https://nomacast.fr/images/logos/dext.png", alt: "DEXT" },
     { nom: "Peech Studio", logo_url: "https://nomacast.fr/images/logos/peech-studio.png", alt: "Peech Studio" },
