@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 14:45 -->
+<!-- Last update: 2026-05-07 15:30 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -2072,9 +2072,9 @@ function render() {
       const fullPrice = opt.dayMultiplied ? Math.round(opt.price * dayMult) : opt.price;
       if (opt.id === "son" && sonDuplex.sonPrice !== null) {
         const newP = Math.max(0, fullPrice - 250);
-        priceEl.innerHTML = '<span class="price-old">' + fmt(fullPrice) + ' €</span> <span class="price-new">+ ' + fmt(newP) + ' €</span>';
+        priceEl.innerHTML = '<span class="price-old">' + fmt(shown(fullPrice)) + ' €</span> <span class="price-new">+ ' + fmt(shown(newP)) + ' €</span>';
       } else {
-        priceEl.innerHTML = "+ " + fmt(fullPrice) + " €";
+        priceEl.innerHTML = "+ " + fmt(shown(fullPrice)) + " €";
       }
     }
   });
@@ -2135,7 +2135,7 @@ function buildOptions() {
     row.innerHTML = `
       <span class="option-check"><svg viewBox="0 0 14 14"><polyline points="2,7 6,11 12,3"></polyline></svg></span>
       <span class="option-label">${opt.label}<span class="option-desc">${opt.desc}</span>${platformsHTML}</span>
-      <span class="option-price">+ ${fmt(opt.price)} €</span>
+      <span class="option-price">+ ${fmt(shown(opt.price))} €</span>
     `;
     // Click sur la ligne = toggle de l'option (mais pas si c'est un tag plateforme)
     row.addEventListener("click", e => {
