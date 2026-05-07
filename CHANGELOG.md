@@ -1,3 +1,70 @@
+## 2026-05-06 (suite), Migration codes partenaires en Pages Function + ajout 13 codes
+
+### Architecture mise en place
+
+Les codes partenaires ne sont plus stockés en clair dans `tarifs.html`. Ils vivent dans une variable d'environnement Cloudflare Pages (`PARTNER_CODES_JSON`, type Plaintext) et sont validés via une Pages Function `/api/validate-code`.
+
+Fichiers concernés :
+- `functions/api/validate-code.js` (nouvelle Pages Function, sert l'endpoint `/api/validate-code?code=XXX`)
+- `tarifs.html` (objet `PARTNER_CODES = {}` désormais vide à l'init, peuplé dynamiquement après appel API ; `applyPartnerCode` rendue async)
+
+C�té client, `applyPartnerCode(raw)` fait un `fetch('/api/validate-code?code=' + raw)`. Si la réponse est `{valid:true, code, data}`, l'objet `data` est mis en cache local dans `PARTNER_CODES[code]` pour la session, puis le rendu se fait normalement. Si invalide, `state.partnerCode` reste à `null`.
+
+C�té serveur, la Pages Function valide la regex `/^[A-Z0-9]{2,30}$/`, parse `context.env.PARTNER_CODES_JSON`, fait un lookup, renvoie 200 ou 404. Header `Cache-Control: no-store` pour éviter qu'un attaquant devine les codes via le cache CDN.
+
+### Décision : Plaintext et non Secret
+
+La variable `PARTNER_CODES_JSON` est en Plaintext (pas Secret). Raison : compte Cloudflare solo, donc Secret n'apporte aucune protection supplémentaire et empêche l'édition in-place (la valeur n'est pas affichée après save). Plaintext permet d'éditer le JSON directement dans le dashboard sans tout recoller. Côté sécurité publique, identique à Secret : la valeur ne sort jamais des serveurs Cloudflare.
+
+### Procédure pour ajouter un code partenaire (à utiliser dans toute conversation future)
+
+1. Cloudflare → Workers & Pages → projet nomacast-fr → Settings → Variables and Secrets
+2. Ligne `PARTNER_CODES_JSON` → Edit
+3. Ajouter une nouvelle entrée dans le JSON. Pour un code standard (95% des cas), copier exactement le bloc d'un code existant comme `INWINK` ou `WOJO` (qui ont la grille standard partagée par tous les codes "non spéciaux").
+4. Save
+5. **Étape obligatoire** : redéployer pour que la Pages Function voie la nouvelle variable. Cloudflare → Deployments → trois points sur le dernier déploiement → Retry deployment. Attendre ~30s.
+6. Tester : `https://nomacast.fr/api/validate-code?code=NOUVEAUCODE` doit renvoyer `{"valid":true,...}`.
+7. Le lien partenaire à envoyer : `https://nomacast.fr/tarifs.html?code=NOUVEAUCODE`.
+
+### Structure du JSON (référence)
+
+Tous les codes ont la forme :
+```
+"NOMCODE": {
+  "durations": { "half": 1500, "full": 1750, "2days": 2250, "3days": 3000 },
+  "forceOptions": [],
+  "discountTiers": [...11 paliers de 1500 à 6000...],
+  "description": "Tarif partenaire + remise par palier"
+}
+```
+
+Variantes existantes :
+- Codes standards (PEECH, FIGMA, SODEXO, PLISSKEN, GALLERIA, AGENCE, CONSTELLATION, HVH, NEXTON, RATECARD, GS1, PRACHE, V3, BEARIDEAS, EKOSS, ESRI, WOJO, ACTITO, INWINK) : `forceOptions: []`, description "Tarif partenaire + remise par palier".
+- MORNING : `forceOptions: ["reperage","veille","5g","montage_tc"]`, description spécifique.
+- SOLARIS : `forceOptions: ["reperage","veille","5g"]`, description spécifique.
+
+Validation côté serveur : nom du code doit matcher `/^[A-Z0-9]{2,30}$/`. Donc majuscules + chiffres, 2 à 30 caractères, pas de tirets ni d'underscore.
+
+### Codes actifs au 2026-05-06
+
+21 codes : MORNING, SOLARIS, PEECH, FIGMA, SODEXO, PLISSKEN, GALLERIA, AGENCE, CONSTELLATION, HVH, NEXTON, RATECARD, GS1, PRACHE, V3, BEARIDEAS, EKOSS, ESRI, WOJO, ACTITO, INWINK.
+
+### Décisions techniques actées
+
+- Codes partenaires : architecture Pages Function + variable d'env Cloudflare. Plus jamais en clair dans le HTML servi.
+- Variable `PARTNER_CODES_JSON` : type Plaintext (compte solo, pas besoin de Secret, édition in-place plus pratique).
+- Modifier la variable nécessite TOUJOURS un redéploiement Cloudflare Pages (Retry deployment dans le dashboard) sinon la Pages Function ne voit pas la nouvelle valeur.
+- Endpoint `/api/validate-code` : GET only, header `Cache-Control: no-store` obligatoire pour empêcher la divination par cache.
+- Convention de nommage des codes : majuscules et chiffres uniquement, 2 à 30 caractères, validé regex côté serveur.
+
+### Fichiers livrés
+
+- `tarifs.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-06 18:00 -->`)
+- `functions/api/validate-code.js` (nouvelle Pages Function)
+- Variable Cloudflare `PARTNER_CODES_JSON` créée en Plaintext
+
+---
+
 ## 2026-05-06 (suite), Fix codes partenaires FIGMA / SODEXO + masquage bouton agence
 
 ### Bug fix : codes partenaires FIGMA, SODEXO, AGENCE non fonctionnels
@@ -34,4 +101,3 @@ Drag-drop dans `G:\Mon Drive\NOMACAST\` → Apps Script v2 pousse sur GitHub `ma
 - Vérifier qu'avec le bouton agence coché PUIS saisie d'un code, le state agence est bien reset (pas de double mode actif)
 
 ---
-
