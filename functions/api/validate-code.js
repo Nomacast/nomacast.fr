@@ -1,31 +1,78 @@
-// /api/validate-code?code=FIGMA
+// /api/validate-code?p=token   (nouveau, lien partenaire opaque)
+// /api/validate-code?code=CODE  (rétro-compat, ancien lien)
+//
 // Cette fonction tourne sur les serveurs Cloudflare (jamais dans le navigateur).
-// Elle reçoit un code partenaire, vérifie s'il est valide dans la liste stockée
-// dans la variable d'environnement PARTNER_CODES_JSON, et renvoie au site
-// les infos du code (remises, options forcées, etc) ou une erreur si invalide.
+// Elle lit la base partenaires dans le KV namespace bindé sous PARTNERS, clé "data".
+// Format attendu de la valeur KV (clé "data") :
+//   { "tokens": { "abc123": "FIGMA", ... }, "codes": { "FIGMA": { displayName, type, active, durations, forceOptions, discountTiers, description }, ... } }
+// Renvoie au site : { valid:true, code, displayName, data:{durations, forceOptions, discountTiers, description} } ou { valid:false } selon le cas.
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
-  const rawCode = (url.searchParams.get("code") || "").toUpperCase().trim();
+  const tokenParam = (url.searchParams.get("p") || "").toLowerCase().trim();
+  const codeParam = (url.searchParams.get("code") || "").toUpperCase().trim();
 
-  // Validation basique : alphanumérique uniquement, 2 à 30 caractères
-  if (!/^[A-Z0-9]{2,30}$/.test(rawCode)) {
+  // Au moins un des deux paramètres doit être fourni
+  if (!tokenParam && !codeParam) {
     return jsonResponse({ valid: false }, 400);
   }
 
-  let codes;
-  try {
-    codes = JSON.parse(context.env.PARTNER_CODES_JSON || "{}");
-  } catch (e) {
-    return jsonResponse({ valid: false, error: "config" }, 500);
+  // Validation des entrées avant lookup (anti-injection, anti-fuzzing)
+  if (tokenParam && !/^[a-z0-9]{4,12}$/.test(tokenParam)) {
+    return jsonResponse({ valid: false }, 400);
+  }
+  if (codeParam && !/^[A-Z0-9]{2,30}$/.test(codeParam)) {
+    return jsonResponse({ valid: false }, 400);
   }
 
-  const match = codes[rawCode];
-  if (!match) {
+  // Lecture KV
+  let store;
+  try {
+    const raw = await context.env.PARTNERS.get("data");
+    if (!raw) {
+      return jsonResponse({ valid: false, error: "no_data" }, 500);
+    }
+    store = JSON.parse(raw);
+  } catch (e) {
+    return jsonResponse({ valid: false, error: "kv_error" }, 500);
+  }
+
+  // Résolution : token → code interne, ou code direct (rétro-compat)
+  let internalCode;
+  if (tokenParam) {
+    internalCode = store.tokens && store.tokens[tokenParam];
+    if (!internalCode) {
+      return jsonResponse({ valid: false }, 404);
+    }
+  } else {
+    internalCode = codeParam;
+  }
+
+  // Lookup du code dans le mapping principal
+  const entry = store.codes && store.codes[internalCode];
+  if (!entry) {
     return jsonResponse({ valid: false }, 404);
   }
 
-  return jsonResponse({ valid: true, code: rawCode, data: match }, 200);
+  // Vérification du flag actif (permet de désactiver un partenaire sans le supprimer)
+  if (entry.active === false) {
+    return jsonResponse({ valid: false, reason: "inactive" }, 410);
+  }
+
+  // Construction de la réponse : on n'expose que les champs utiles au client
+  const responseData = {
+    durations: entry.durations,
+    forceOptions: entry.forceOptions,
+    discountTiers: entry.discountTiers,
+    description: entry.description
+  };
+
+  return jsonResponse({
+    valid: true,
+    code: internalCode,
+    displayName: entry.displayName || internalCode,
+    data: responseData
+  }, 200);
 }
 
 function jsonResponse(body, status) {
