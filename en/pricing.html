@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 23:15 -->
+<!-- Last update: 2026-05-07 23:45 -->
 <html lang="en-GB">
 <head>
 <!-- Google Tag Manager -->
@@ -307,15 +307,24 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .option-material-list li { padding-left: 12px; position: relative; }
 .option-material-list li::before { content: "•"; position: absolute; left: 0; color: var(--cyan); font-weight: 700; }
 /* Switch "Vue technique" : interrupteur on/off élégant */
-.tech-switch { display: inline-flex; align-items: center; gap: 10px; margin-top: 16px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
-.tech-switch input { position: absolute; opacity: 0; pointer-events: none; }
-.tech-switch-text { font-size: 13px; font-weight: 500; color: var(--ink-muted); transition: color .2s ease; }
-.tech-switch-slider { position: relative; width: 38px; height: 22px; background: var(--border); border-radius: 22px; transition: background .25s ease; flex-shrink: 0; }
-.tech-switch-slider::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .25s ease; }
-.tech-switch input:checked ~ .tech-switch-slider { background: var(--cyan); }
-.tech-switch input:checked ~ .tech-switch-slider::before { transform: translateX(16px); }
-.tech-switch input:checked + .tech-switch-slider { background: var(--cyan); }
-.tech-switch:hover .tech-switch-text { color: var(--ink); }
+/* Tech view banner: global toggle that reveals detailed kit in Step 02, 03 and 04. Dark inverted look to contrast against the white configurator page. */
+.tech-banner { display: flex; align-items: center; gap: 16px; padding: 18px 22px; background: linear-gradient(135deg, #1a2332, #0f1825); border: 1px solid rgba(14,165,233,.3); border-radius: 14px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; transition: border-color .2s ease; }
+.tech-banner::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 0% 0%, rgba(14,165,233,.12), transparent 60%); pointer-events: none; }
+.tech-banner:hover { border-color: rgba(14,165,233,.5); }
+.tech-banner.active { border-color: var(--cyan); }
+.tech-banner input { position: absolute; opacity: 0; pointer-events: none; }
+.tech-banner-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.tech-banner-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; letter-spacing: -0.005em; }
+.tech-banner-desc { font-size: 12.5px; color: rgba(255,255,255,.62); font-weight: 400; line-height: 1.5; }
+.tech-banner-slider { position: relative; width: 38px; height: 22px; background: rgba(255,255,255,.18); border-radius: 22px; transition: background .25s ease; flex-shrink: 0; z-index: 1; }
+.tech-banner-slider::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .25s ease; }
+.tech-banner.active .tech-banner-slider { background: var(--cyan); }
+.tech-banner.active .tech-banner-slider::before { transform: translateX(16px); }
+@media (max-width: 540px) {
+  .tech-banner { padding: 16px 18px; gap: 12px; }
+  .tech-banner-title { font-size: 14px; }
+  .tech-banner-desc { font-size: 12px; }
+}
 .tech-base-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
 .tech-base-list { list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink-muted); }
 .tech-base-list li { padding-left: 14px; position: relative; }
@@ -491,8 +500,10 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .step { animation: fadeUp .5s ease both; }
 .step:nth-child(1) { animation-delay: 0s; }
 .step:nth-child(2) { animation-delay: .08s; }
-.step:nth-child(3) { animation-delay: .16s; }
+/* nth-child(3) is now the Tech view banner (animated via .tech-banner) */
+.tech-banner { animation: fadeUp .5s ease both; animation-delay: .16s; }
 .step:nth-child(4) { animation-delay: .24s; }
+.step:nth-child(5) { animation-delay: .32s; }
 .summary { animation: fadeUp .5s ease .3s both; }
 
 /* Bandeau économie partenaire : proéminent sous le total */
@@ -724,12 +735,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="included-row"><svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>Final video delivered at the end of the event</div>
               <div class="included-row"><svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>Paris: free transport · Provinces and international quoted separately</div>
             </div>
-            <!-- Tech view switch: shows detailed kit list of base set + each ticked option. Auto-enabled when "I'm an agency" is ticked. -->
-            <label class="tech-switch" id="tech-switch-label" for="tech-switch">
-              <span class="tech-switch-text">Tech view</span>
-              <input type="checkbox" id="tech-switch">
-              <span class="tech-switch-slider"></span>
-            </label>
             <div id="tech-base-details" style="display:none;margin-top:14px;padding:14px 16px;background:rgba(14,165,233,.05);border:1px solid rgba(14,165,233,.15);border-radius:10px;">
               <div class="tech-base-title">Gallery &amp; filming kit</div>
               <ul class="tech-base-list">
@@ -774,6 +779,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </div>
         </div>
+
+        <!-- Tech view banner: global toggle that reveals detailed kit in Step 02, 03 and 04 (base set + under each ticked option and add-on). Auto-enabled when "I'm an agency" is ticked. -->
+        <label class="tech-banner" id="tech-banner-label" for="tech-switch">
+          <div class="tech-banner-body">
+            <div class="tech-banner-title">See included equipment</div>
+            <div class="tech-banner-desc">Mics, tripods, computer, cabling… the technical kit included for every part of your setup.</div>
+          </div>
+          <input type="checkbox" id="tech-switch">
+          <span class="tech-banner-slider"></span>
+        </label>
 
         <!-- 03 -->
         <div class="step">
@@ -2622,15 +2637,19 @@ buildAddons();
 syncFormFields();
 render();
 
-// ═══ Switch "Vue technique" : pilote l'affichage du détail matos (plateau base + sous chaque option) ═══
-// Active body.classList "tech-mode" qui révèle :
-//   - le bloc <div id="tech-base-details"> (matos plateau de base)
-//   - les <div class="option-material"> sous chaque option cochée (CSS rule .tech-mode .option.active .option-material)
+// ═══ Tech view switch: drives detailed kit display (base set + under each ticked option/add-on) ═══
+// Toggles body.classList "tech-mode" which reveals:
+//   - <div id="tech-base-details"> block (base set kit)
+//   - <div class="option-material"> under each ticked option (CSS rule .tech-mode .option.active .option-material)
+//   - <div class="addon-material"> under each ticked add-on (CSS rule .tech-mode .addon-card.active .addon-material)
+// Also drives .active class on the Tech view banner for visual feedback (cyan border, cyan slider).
 function setTechMode(on) {
   const switchInput = document.getElementById("tech-switch");
   const baseDetails = document.getElementById("tech-base-details");
+  const banner = document.getElementById("tech-banner-label");
   if (switchInput) switchInput.checked = !!on;
   if (baseDetails) baseDetails.style.display = on ? "block" : "none";
+  if (banner) banner.classList.toggle("active", !!on);
   document.body.classList.toggle("tech-mode", !!on);
 }
 (function() {
