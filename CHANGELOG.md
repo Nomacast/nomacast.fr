@@ -1,3 +1,43 @@
+## 2026-05-07, Fix affichage TTC sur les prix d'options du configurateur
+
+### Bug
+
+Quand on activait le toggle TTC sur la page `tarifs.html`, le total et les lignes du panneau récap (Options, Add-ons, remise partenaire) basculaient bien en TTC, mais les prix affichés sur les cartes d'options à cocher dans le formulaire (ex: "+ 250 €" sur chaque option) restaient en HT. Incohérence visuelle pour l'utilisateur.
+
+### Cause racine
+
+La fonction `shown(ht)` (qui retourne `Math.round(ht * TVA)` quand `state.ttc === true`, sinon `Math.round(ht)`) n'était pas appelée à trois endroits du rendu des prix d'options :
+
+- Ligne 2138 : initialisation de la liste d'options (template literal `+ ${fmt(opt.price)} €`)
+- Ligne 2075 : refresh des prix dans `render()` cas Pack sonorisation duplex (prix old/new)
+- Ligne 2077 : refresh des prix dans `render()` cas standard
+
+### Correctif
+
+Aux trois endroits, encapsulation des prix dans `shown()` avant le `fmt()` :
+- `fmt(opt.price)` → `fmt(shown(opt.price))`
+- `fmt(fullPrice)` → `fmt(shown(fullPrice))`
+- `fmt(newP)` → `fmt(shown(newP))`
+
+L'event listener du toggle TTC (ligne 2359) appelait déjà `render()`, donc aucune modif nécessaire sur le câblage. La conversion se fait maintenant systématiquement au moment du rendu.
+
+### Données HT volontairement préservées
+
+Les `fmt()` sans `shown()` restants sont volontaires et n'ont pas été touchés :
+- Lignes 2395, 2398 : texte récapitulatif copy-paste avec mention explicite "HT"
+- Lignes 2422, 2423, 2425 : hidden fields `h-cfg-options`, `h-cfg-addons`, `h-cfg-total` envoyés au formulaire et au back-office en HT pour la facturation, indépendants de l'affichage écran
+
+### Fichier livré
+
+- `tarifs.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-07 15:30 -->`)
+
+### Tests à faire post-déploiement
+
+- Sur `https://nomacast.fr/tarifs.html`, cocher quelques options, basculer le toggle HT/TTC. Vérifier que les prix sur les cartes d'options changent en cohérence avec le total et le breakdown.
+- Vérifier le cas Pack sonorisation : si duplex coché en premier, son passe à 500 € (HT) ou 600 € (TTC) avec le prix barré 750/900.
+
+---
+
 ## 2026-05-07, Ajout code partenaire DIXXIT
 
 Ajout du code `DIXXIT` (standard, mêmes barèmes que les codes "non spéciaux") à la variable `PARTNER_CODES_JSON` sur Cloudflare. Total désormais : 22 codes.
