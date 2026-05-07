@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 14:50 -->
+<!-- Last update: 2026-05-07 17:00 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -772,6 +772,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="addon-price">+ 300 €</div>
             </label>
 
+            <label class="addon-card" data-addon="photographe">
+              <input type="checkbox" id="addon-photographe" aria-describedby="addon-photographe-desc">
+              <div class="addon-check"><svg viewBox="0 0 14 14"><polyline points="2,7 6,11 12,3"></polyline></svg></div>
+              <div class="addon-body">
+                <div class="addon-label">Photographe événementiel</div>
+                <div class="addon-desc" id="addon-photographe-desc">Couverture photo professionnelle de votre événement. Plus de 100 photos éditées, livrées en 24 à 48h via lien de téléchargement.</div>
+              </div>
+              <div class="addon-price" id="addon-photographe-price">+ 1 150 €</div>
+            </label>
+
           </div>
         </div>
 
@@ -1109,7 +1119,8 @@ const PRICE_CADREUR_HF_BY_DUR = { half: 850, full: 850, "2days": 1700, "3days": 
 // Best-of varie selon la durée de l'événement (montage proportionnel à la matière tournée).
 const ADDON_PRICES = {
   bestof: { half: 1150, full: 1150, "2days": 1650, "3days": 2150 },
-  interviews: 300
+  interviews: 300,
+  photographe: { half: 1150, full: 1150, "2days": 1750, "3days": 2350 }
 };
 
 // Détail technique du matériel pour les add-ons, affiché dans la "Vue technique"
@@ -1130,6 +1141,12 @@ const ADDON_MATERIEL = {
     "Jusqu'à 3 interviews",
     "Montage léger inclus (cuts, raccord, étalonnage de base)",
     "Livraison J+1 en Full HD"
+  ],
+  photographe: [
+    "1× Canon EOS 5D Mark IV ou équivalent",
+    "3× objectifs",
+    "Édition",
+    "Livraison J+1/J+2 via weblink de 100+ photographies"
   ]
 };
 
@@ -1222,7 +1239,7 @@ function refreshTechOptions() {
   });
 }
 
-const state = { event:"conference", duration:"half", options:{}, addons:{ bestof:false, interviews:false }, ttc:false, partnerCode:null, partnerDisplayName:null, platforms:[], isAgence:false, activationOrder:[] };
+const state = { event:"conference", duration:"half", options:{}, addons:{ bestof:false, interviews:false, photographe:false }, ttc:false, partnerCode:null, partnerDisplayName:null, platforms:[], isAgence:false, activationOrder:[] };
 const fmt = n => Math.round(n).toLocaleString("fr-FR");
 const shown = ht => state.ttc ? Math.round(ht * TVA) : Math.round(ht);
 
@@ -1675,6 +1692,11 @@ function computeNaive(stateOverride) {
     addonsHT += ADDON_PRICES.interviews;
     addonLines.push({ id: "interviews", label: "Interviews post-événement", price: ADDON_PRICES.interviews });
   }
+  if (s.addons.photographe) {
+    const price = ADDON_PRICES.photographe[s.duration] || ADDON_PRICES.photographe.half;
+    addonsHT += price;
+    addonLines.push({ id: "photographe", label: "Photographe événementiel", price });
+  }
   totalHT += addonsHT;
 
   // ─── Cadreur HF : ajouté après le plafond et les addons (option premium hors mécanique) ───
@@ -2014,6 +2036,13 @@ function render() {
     bestofPriceEl.textContent = "+ " + fmt(shown(bestofPrice)) + " €";
   }
 
+  // ─── Mise à jour dynamique du prix Photographe dans la card (selon durée sélectionnée) ───
+  const photographePriceEl = document.getElementById("addon-photographe-price");
+  if (photographePriceEl) {
+    const photographePrice = ADDON_PRICES.photographe[state.duration] || ADDON_PRICES.photographe.half;
+    photographePriceEl.textContent = "+ " + fmt(shown(photographePrice)) + " €";
+  }
+
   // Mention "Setup technique sur site" : durée estimée selon la combinaison d'options.
   // getMontageH() retourne toujours ≥ 2h (base) et ≤ 4h (plafond).
   const setupTimeText = document.getElementById("setup-time-text");
@@ -2202,7 +2231,7 @@ function buildOptions() {
 // Mécanique séparée de buildOptions : pas de mécanique partenaire/charm/absorption.
 // Tarif fixe ajouté au total après toute la mécanique principale.
 function buildAddons() {
-  ["bestof", "interviews"].forEach(addonId => {
+  ["bestof", "interviews", "photographe"].forEach(addonId => {
     const card = document.querySelector('.addon-card[data-addon="' + addonId + '"]');
     if (!card) return;
     const checkbox = card.querySelector('input[type="checkbox"]');
@@ -2228,13 +2257,20 @@ function buildAddons() {
       render();
       // GA4 tracking
       const r = compute();
+      const addonLabels = {
+        bestof: "Best-of monté",
+        interviews: "Interviews post-événement",
+        photographe: "Photographe événementiel"
+      };
+      const addonPrice =
+        addonId === "interviews"
+          ? ADDON_PRICES.interviews
+          : (ADDON_PRICES[addonId][state.duration] || ADDON_PRICES[addonId].half);
       pushDataLayer("configurator_addon_toggle", {
         addon_id: addonId,
-        addon_label: addonId === "bestof" ? "Best-of monté" : "Interviews post-événement",
+        addon_label: addonLabels[addonId],
         action: state.addons[addonId] ? "check" : "uncheck",
-        price: addonId === "bestof"
-          ? (ADDON_PRICES.bestof[state.duration] || ADDON_PRICES.bestof.half)
-          : ADDON_PRICES.interviews,
+        price: addonPrice,
         cart_total: r.totalHT
       });
     });
