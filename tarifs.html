@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-06 18:00 -->
+<!-- Last update: 2026-05-07 14:45 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -731,7 +731,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="dur-price" id="price-2days"></div>
             </div>
             <div class="dur-card" data-value="3days">
-              <div class="dur-label">3 jours +</div>
+              <div class="dur-label">3 jours</div>
               <div class="dur-sublabel">événement étendu</div>
               <div class="dur-price" id="price-3days"></div>
             </div>
@@ -1046,20 +1046,20 @@ const CONFIG = {
   durations: {
     half:    { price: 1500, label: "Demi-journée", joursEq: 1 },
     full:    { price: 1750, label: "Journée",      joursEq: 1 },
-    "2days": { price: 2250, label: "2 jours",      joursEq: 2 },
-    "3days": { price: 3000, label: "3 jours+",     joursEq: 3 }
+    "2days": { price: 2500, label: "2 jours",      joursEq: 2 },
+    "3days": { price: 3250, label: "3 jours",      joursEq: 3 }
   }
 };
 
 // Multiplicateur de remise par durée, basé sur le delta entre tarif "plein" (1750/jour) et base réelle.
 // Sur demi-journée et journée : pas de delta, mult = 1.0.
-// Sur 2 jours : (1750 × 2) / 2250 = 1.556. Sur 3 jours+ : (1750 × 3) / 3000 = 1.75.
+// Sur 2 jours : (1750 × 2) / 2500 = 1.4. Sur 3 jours : (1750 × 3) / 3250 ≈ 1.615.
 // Effet : la remise effective est plus généreuse sur les multi-jours, exponentielle avec la durée.
 const REMISE_MULT = {
   half:   1.0,
   full:   1.0,
-  "2days": (1750 * 2) / 2250,
-  "3days": (1750 * 3) / 3000
+  "2days": (1750 * 2) / 2500,
+  "3days": (1750 * 3) / 3250
 };
 
 // Économie dégressive : delta entre tarif "plein" (1750 € / jour) et la base réelle facturée.
@@ -1068,13 +1068,13 @@ const REMISE_MULT = {
 // du tarif multi-jours. Affichée uniquement quand un code partenaire est actif.
 //   - Demi-journée : 0 (pas de notion de jour entier)
 //   - Journée : 0 (1 750 € facturé pour 1 jour, pas de delta)
-//   - 2 jours : 1 750 × 2 - 2 250 = 1 250 €
-//   - 3 jours+ : 1 750 × 3 - 3 000 = 2 250 €
+//   - 2 jours : 1 750 × 2 - 2 500 = 1 000 €
+//   - 3 jours : 1 750 × 3 - 3 250 = 2 000 €
 const DEGRESSIF_SAVINGS = {
   half: 0,
   full: 0,
-  "2days": 1750 * 2 - 2250,
-  "3days": 1750 * 3 - 3000
+  "2days": 1750 * 2 - 2500,
+  "3days": 1750 * 3 - 3250
 };
 
 // Liste des options proposées par le configurateur. dayMultiplied = prix multiplié selon la durée.
@@ -1332,7 +1332,7 @@ function getSonDuplexLogic() {
 //   - cadreur_hf exclu : option hors mécanique partenaire (s'ajoute après le plafond)
 // Le palier le plus bas requiert "au moins 1 option payante cochée" (≥1 option non offerte).
 // Le montant de la remise est ensuite multiplié par REMISE_MULT[duration] pour rendre la remise
-// exponentielle avec la durée (×1.0 demi-j et journée, ×1.556 sur 2j, ×1.75 sur 3j+).
+// exponentielle avec la durée (×1.0 demi-j et journée, ×1.4 sur 2j, ×1.615 sur 3j).
 // Renvoie { amount, plancher, charmAllowed } : montant de remise + plancher de marge à respecter.
 function getPartnerDiscount(baseHT, optsLines) {
   const code = state.partnerCode ? PARTNER_CODES[state.partnerCode] : null;
@@ -1375,7 +1375,7 @@ function getPartnerDiscount(baseHT, optsLines) {
     }
   }
   // Multiplicateur de remise par durée + arrondi au-dessus à la tranche de 5 €.
-  // Exemple : 150 × 1.556 = 233,4 → arrondi à 235 €. 150 × 1.75 = 262,5 → 265 €.
+  // Exemple : 150 × 1.4 = 210 €. 150 × 1.615 = 242,25 → arrondi à 245 €.
   amount = Math.ceil(amount * (REMISE_MULT[state.duration] || 1) / 5) * 5;
   // Plancher de marge : marge nette minimum + coûts réels des packs
   // Voir CHANGELOG.md, section "Plancher de rentabilité personnel" et "Coûts internes (sous-traitance)"
