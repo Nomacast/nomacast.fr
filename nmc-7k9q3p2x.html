@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 14:50 -->
+<!-- Last update: 2026-05-07 18:45 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 <title>Admin partenaires · Nomacast</title>
 <style>
@@ -119,6 +118,15 @@
   .loading { padding: 40px; text-align: center; color: var(--ink-faint); }
   
   .summary-row { display: flex; gap: 16px; padding: 16px; background: var(--panel-2); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  
+  .header-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .link-format-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); transition: all 0.15s ease; }
+  .link-format-toggle:hover { border-color: var(--cyan); }
+  .link-format-toggle input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: var(--cyan); }
+  .link-format-toggle-label { font-size: 13px; color: var(--ink-faint); }
+  .link-format-toggle:has(input:checked) { background: var(--cyan-dim); border-color: var(--cyan); }
+  .link-format-toggle:has(input:checked) .link-format-toggle-label { color: var(--cyan); }
+  .link-format-toggle code { font-family: var(--font-mono); font-size: 12px; padding: 1px 5px; background: rgba(0,0,0,0.3); border-radius: 3px; }
   .summary-stat { font-size: 13px; }
   .summary-stat strong { color: var(--ink); font-weight: 600; }
   .summary-stat span { color: var(--ink-faint); }
@@ -146,7 +154,13 @@
       <h1>Admin <span class="accent">·</span> Partenaires</h1>
       <div class="subtitle">Gestion des codes partenaires Nomacast (KV temps réel)</div>
     </div>
-    <button class="btn btn-primary" onclick="openModal()">+ Ajouter un partenaire</button>
+    <div class="header-actions">
+      <label class="link-format-toggle" title="Active la rétro-compat ?code=NOMCODE (ancien format) au lieu du token opaque ?p=xxx (nouveau format).">
+        <input type="checkbox" id="use-legacy-link">
+        <span class="link-format-toggle-label">Format ancien <code>?code=</code></span>
+      </label>
+      <button class="btn btn-primary" onclick="openModal()">+ Ajouter un partenaire</button>
+    </div>
   </header>
   
   <div class="panel">
@@ -278,7 +292,6 @@ function render() {
     const entry = store.codes[code];
     const token = tokenForCode(code);
     const isActive = entry.active !== false;
-    const link = `https://nomacast.fr/tarifs.html?p=${token}`;
     const typeLabel = {
       "standard": "Standard",
       "premium-reperage": "Premium repérage",
@@ -291,7 +304,7 @@ function render() {
     html += `<td data-label="Token"><span class="mono">${token || '—'}</span></td>`;
     html += `<td data-label="Type"><span class="pill pill-type-${entry.type}">${typeLabel}</span></td>`;
     html += `<td data-label="État"><span class="pill ${isActive ? 'pill-active' : 'pill-inactive'}">${isActive ? 'Actif' : 'Inactif'}</span></td>`;
-    html += `<td data-label="Lien"><button class="copy-btn" onclick="copyLink('${link}', this)">Copier</button></td>`;
+    html += `<td data-label="Lien"><button class="copy-btn" onclick="copyLink('${escapeHtml(code)}', this)">Copier</button></td>`;
     html += `<td data-label="Actions"><div class="actions">`;
     html += `<button class="btn btn-secondary btn-icon" onclick="openModal('${escapeHtml(code)}')">Modifier</button>`;
     html += `<button class="btn btn-secondary btn-icon" onclick="toggleActive('${escapeHtml(code)}', ${!isActive})">${isActive ? 'Désactiver' : 'Activer'}</button>`;
@@ -409,7 +422,22 @@ async function confirmDelete(code) {
   }
 }
 
-function copyLink(link, btn) {
+function copyLink(code, btn) {
+  const useLegacy = document.getElementById("use-legacy-link").checked;
+  let link;
+  if (useLegacy) {
+    // Format ancien : ?code=NOMCODE (rétro-compat indéfinie)
+    link = `https://nomacast.fr/tarifs.html?code=${code}`;
+  } else {
+    // Format nouveau : ?p=token (token opaque, par défaut)
+    const token = tokenForCode(code);
+    if (!token) {
+      btn.textContent = "Erreur";
+      setTimeout(() => { btn.textContent = "Copier"; }, 1500);
+      return;
+    }
+    link = `https://nomacast.fr/tarifs.html?p=${token}`;
+  }
   navigator.clipboard.writeText(link).then(() => {
     btn.textContent = "Copié";
     btn.classList.add("copied");
