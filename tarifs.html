@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 17:00 -->
+<!-- Last update: 2026-05-07 18:15 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -1040,6 +1040,8 @@ const PLATFORMS = ["YouTube","LinkedIn","Facebook","Twitch","Vimeo","Teams","Zoo
 // Codes partenaires : récupérés à la volée via /api/validate-code (Pages Function Cloudflare)
 // L'objet est peuplé dynamiquement après validation côté serveur, jamais en clair dans le HTML.
 const PARTNER_CODES = {};
+// Cache des display names jolis (renvoyés par l'API), indexé par code interne
+const PARTNER_DISPLAY_NAMES = {};
 
 const CONFIG = {
   base: 1500,
@@ -1219,7 +1221,7 @@ function refreshTechOptions() {
   });
 }
 
-const state = { event:"conference", duration:"half", options:{}, addons:{ bestof:false, interviews:false }, ttc:false, partnerCode:null, platforms:[], isAgence:false, activationOrder:[] };
+const state = { event:"conference", duration:"half", options:{}, addons:{ bestof:false, interviews:false }, ttc:false, partnerCode:null, partnerDisplayName:null, platforms:[], isAgence:false, activationOrder:[] };
 const fmt = n => Math.round(n).toLocaleString("fr-FR");
 const shown = ht => state.ttc ? Math.round(ht * TVA) : Math.round(ht);
 
@@ -2241,40 +2243,59 @@ function buildAddons() {
 // ─── Code partenaire : détecté UNIQUEMENT via URL ?code=XXX ───
 // Plus de saisie manuelle ; les partenaires reçoivent un lien direct.
 // Affichage passif : un badge "Code partenaire actif · XXX" sous le total quand un code est détecté.
-async function applyPartnerCode(raw) {
-  const code = (raw || "").toUpperCase().trim();
+async function applyPartnerCode(raw, kind) {
+  // Détection automatique du type si non fourni : un token est en lowercase alphanum 4-12 chars,
+  // un code interne est en uppercase alphanum 2-30 chars.
+  if (!kind) {
+    const trimmed = (raw || "").trim();
+    if (/^[a-z0-9]{4,12}$/.test(trimmed)) kind = "token";
+    else kind = "code";
+  }
 
-  // Si déjà chargé en cache local (même session), on évite l'appel API
-  if (PARTNER_CODES[code]) {
-    state.partnerCode = code;
+  const normalized = kind === "token"
+    ? (raw || "").toLowerCase().trim()
+    : (raw || "").toUpperCase().trim();
+
+  // Cache local pour les codes internes (pas pour les tokens : on revalide toujours côté serveur)
+  if (kind === "code" && PARTNER_CODES[normalized]) {
+    state.partnerCode = normalized;
+    state.partnerDisplayName = PARTNER_DISPLAY_NAMES[normalized] || normalized;
     updatePartnerDisplay();
-    pushDataLayer("configurator_partner_code", { partner_code: code });
+    pushDataLayer("configurator_partner_code", { partner_code: normalized });
     render();
     return;
   }
 
   // Sinon, on demande au serveur de valider
   try {
-    const res = await fetch("/api/validate-code?code=" + encodeURIComponent(code));
+    const apiUrl = kind === "token"
+      ? "/api/validate-code?p=" + encodeURIComponent(normalized)
+      : "/api/validate-code?code=" + encodeURIComponent(normalized);
+    const res = await fetch(apiUrl);
     if (!res.ok) {
       state.partnerCode = null;
+      state.partnerDisplayName = null;
       updatePartnerDisplay();
       return;
     }
     const payload = await res.json();
     if (!payload.valid) {
       state.partnerCode = null;
+      state.partnerDisplayName = null;
       updatePartnerDisplay();
       return;
     }
-    // Cache local pour le reste de la session
+    // Cache local pour le reste de la session, indexé par code interne
     PARTNER_CODES[payload.code] = payload.data;
+    PARTNER_DISPLAY_NAMES[payload.code] = payload.displayName || payload.code;
     state.partnerCode = payload.code;
+    state.partnerDisplayName = payload.displayName || payload.code;
     updatePartnerDisplay();
     pushDataLayer("configurator_partner_code", { partner_code: payload.code });
     render();
   } catch (e) {
     state.partnerCode = null;
+    state.partnerDisplayName = null;
     updatePartnerDisplay();
   }
 }
@@ -2292,7 +2313,7 @@ function updatePartnerDisplay() {
   if (!display) return;
   if (state.partnerCode) {
     display.style.display = "block";
-    if (txt) txt.textContent = "Code partenaire actif · " + state.partnerCode;
+    if (txt) txt.textContent = "Code partenaire actif · " + (state.partnerDisplayName || state.partnerCode);
     // Quand un code partenaire est appliqué, le bouton "Je suis une agence" devient
     // redondant (le tarif partenaire prend le dessus). On le masque et on reset l'état
     // si jamais il avait été coché avant l'application du code.
@@ -2315,7 +2336,7 @@ function updatePartnerDisplay() {
   }
 
   // ─── Remplissage automatique du champ "Société" du formulaire ───
-  // Quand un code partenaire est actif, on pré-remplit f-societe avec le nom du code.
+  // Quand un code partenaire est actif, on pré-remplit f-societe avec le displayName joli (ex: "Figma" pas "FIGMA").
   // On marque la valeur via data-auto-filled-by="partner-code" pour pouvoir distinguer
   // une valeur saisie manuellement par l'utilisateur (qu'on ne doit pas écraser).
   // Si l'utilisateur tape ensuite dans le champ, le tag est retiré (listener plus bas)
@@ -2325,7 +2346,7 @@ function updatePartnerDisplay() {
     if (state.partnerCode) {
       // Remplir si vide OU si déjà auto-rempli par un précédent code
       if (!fSociete.value || fSociete.dataset.autoFilledBy === "partner-code") {
-        fSociete.value = state.partnerCode;
+        fSociete.value = state.partnerDisplayName || state.partnerCode;
         fSociete.dataset.autoFilledBy = "partner-code";
       }
     } else {
@@ -2617,17 +2638,21 @@ function setTechMode(on) {
 
   // ═══ Auto-application d'un code partenaire depuis l'URL ═══
   // Permet d'avoir une URL dédiée par partenaire :
-  //   https://www.nomacast.fr/tarifs.html?code=MORNING  → Morning auto-appliqué
-  //   https://www.nomacast.fr/tarifs.html?code=AGENCE   → Agence auto-appliqué
-  // Le visiteur arrive avec son tarif déjà chargé, sans devoir saisir le code.
+  //   https://www.nomacast.fr/tarifs.html?p=e52vnc      → token opaque (nouveau format)
+  //   https://www.nomacast.fr/tarifs.html?code=MORNING  → code interne (rétro-compat des anciens liens)
+  // Le visiteur arrive avec son tarif déjà chargé, sans devoir saisir quoi que ce soit.
   try {
     const params = new URLSearchParams(window.location.search);
+    const tokenParam = (params.get("p") || "").toLowerCase().trim();
     const codeParam = (params.get("code") || params.get("partner") || "").toUpperCase().trim();
-    if (codeParam) {
-      // Léger délai pour s'assurer que tous les listeners sont attachés
-      // applyPartnerCode valide via /api/validate-code et n'applique que si OK
+    // Priorité au token opaque s'il est présent (format moderne), sinon fallback au code
+    if (tokenParam) {
       setTimeout(() => {
-        applyPartnerCode(codeParam);
+        applyPartnerCode(tokenParam, "token");
+      }, 50);
+    } else if (codeParam) {
+      setTimeout(() => {
+        applyPartnerCode(codeParam, "code");
       }, 50);
     }
   } catch(e) { /* silent : pas de URLSearchParams = très vieux navigateur */ }
