@@ -1,3 +1,33 @@
+## 2026-05-07, Ajout add-on Photographe événementiel dans le simulateur tarifs
+
+### Contexte
+
+Ajout d'une troisième prestation post-événement dans la Step 04 du configurateur, aux côtés du Best-of monté et des Interviews post-événement. Cible les clients souhaitant compléter la captation vidéo par une couverture photo professionnelle livrée rapidement.
+
+### Modification appliquée
+
+Nouvel add-on `photographe` dans `tarifs.html` :
+
+- **Card HTML** ajoutée dans la grille `.addons-grid` de la Step 04 (après la card Interviews).
+- **State** : `state.addons.photographe = false` ajouté à l'objet d'état initial.
+- **Tarif** : grille par durée dans `ADDON_PRICES.photographe` = `{ half: 1150, full: 1150, "2days": 1750, "3days": 2350 }`. Logique : 1 150 €/jour, +600 € par jour additionnel. Pas de tarif spécifique demi-journée (aligné sur Best-of : `half = full`).
+- **Vue technique** (`ADDON_MATERIEL.photographe`) : `1× Canon EOS 5D Mark IV ou équivalent`, `3× objectifs`, `Édition`, `Livraison J+1/J+2 via weblink de 100+ photographies`. Visible uniquement quand l'add-on est coché ET la Vue technique active (même comportement que les deux autres add-ons).
+- **Compute** : nouvelle branche dans `compute()` pour ajouter le prix au total après la mécanique partenaire (pas de remise sur cette ligne, comme pour les autres add-ons).
+- **buildAddons()** : photographe ajouté dans le `forEach`. Le tracking GA4 a été refactoré en map `addonLabels` + lookup générique sur `ADDON_PRICES` pour éviter d'empiler des ternaires à chaque nouvel add-on.
+- **render()** : mise à jour dynamique du prix affiché dans la card selon la durée sélectionnée (même mécanique que Best-of).
+
+### Décisions techniques actées
+
+- Add-ons post-événement : trois prestations distinctes (Best-of monté, Interviews post-événement, Photographe événementiel). Chaque add-on est calculé en dehors de la mécanique partenaire (pas de remise grille A, pas de charm, pas d'absorption). Tarif fixe ajouté au total final.
+- Tarif photographe : 1 150 €/jour, +600 €/jour additionnel. Le tarif demi-journée n'est pas distinct du tarif jour entier (aligné sur la logique Best-of, parce que la prestation et le livrable sont les mêmes : 100+ photos éditées, livraison J+1/J+2).
+- Refactor du tracking GA4 dans `buildAddons()` : map `addonLabels` + lookup `ADDON_PRICES[addonId]` au lieu de ternaires en cascade. À reproduire pour tout futur add-on (4ème, 5ème, etc.) sans toucher à la structure.
+
+### Fichier livré
+
+- `tarifs.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-07 17:00 -->`)
+
+---
+
 ## 2026-05-07, Ajout favicon SVG sur toutes les pages
 
 ### Contexte
