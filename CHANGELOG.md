@@ -1,3 +1,37 @@
+## 2026-05-07, Ajout favicon SVG sur toutes les pages
+
+### Contexte
+
+Le site n'avait pas de favicon. Ajout d'un favicon SVG monochrome (lettre N blanche sur fond cercle bleu `#5FA3D9`) sur l'ensemble des 37 pages HTML du site, plus dépôt du fichier `favicon.svg` à la racine.
+
+### Modification appliquée
+
+Insertion de la balise suivante dans le `<head>` de chaque page, juste après `<meta name="viewport">` :
+
+```html
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+```
+
+Format SVG retenu (vs PNG/ICO multi-tailles) : un seul fichier vectoriel, supporté par tous les navigateurs récents (Chrome, Firefox, Safari, Edge), netteté parfaite à toutes les tailles, poids négligeable (262 octets). Pas de fallback PNG/ICO ajouté pour l'instant : à reconsidérer uniquement si une stat montre du trafic significatif depuis IE11 ou des très anciens Safari (peu probable sur cible B2B 2026).
+
+### Périmètre
+
+37 pages HTML modifiées (toutes les pages de la racine, y compris la page admin `nmc-7k9q3p2x.html`, les pages `noindex` mentions/merci/404, et `plan-du-site.html` qui n'avait pas encore de timestamp `Last update`).
+
+Fichiers non modifiés : `BingSiteAuth.xml`, `sitemap.xml`, fichiers du dossier `functions/`.
+
+### Fichiers livrés
+
+- `favicon.svg` (à déposer à la racine du repo)
+- 37 fichiers HTML modifiés (timestamp DOCTYPE `<!-- Last update: 2026-05-07 14:50 -->`)
+
+### Décisions techniques actées
+
+- Favicon : un seul fichier SVG à la racine (`/favicon.svg`), pas de variantes PNG/ICO multi-tailles. Si besoin futur (Apple Touch Icon, manifeste PWA), on étendra à ce moment-là sans toucher au SVG existant.
+- Le favicon s'inscrit dans l'identité visuelle Nomacast : N blanc sur cercle bleu `#5FA3D9` (même bleu que la charte du site).
+
+---
+
 ## 2026-05-07, Migration codes partenaires en Cloudflare KV + tokens opaques + back-office admin
 
 ### Contexte et motivation
