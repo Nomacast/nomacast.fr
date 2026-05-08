@@ -1,3 +1,52 @@
+## 2026-05-08 (post-audit), Ré-application des modifs du 7 mai sur tarifs.html et pricing.html après régression silencieuse
+
+### Contexte
+
+Constat utilisateur en session : ouverture des fichiers `tarifs.html` (timestamp `2026-05-08 08:56`) et `pricing.html` (timestamp `2026-05-07 23:15`) — les modifications du 7 mai (add-on Photographe événementiel + bandeau "Vue technique" dark variant A) ne sont plus présentes dans `tarifs.html` et partiellement absentes dans `pricing.html`. L'entrée CHANGELOG du 7 mai documente bien ces modifications, mais les fichiers livrés ne les portent plus.
+
+Diagnostic : régression silencieuse pendant la session d'audit du 8 mai matin. Probablement une édition de `tarifs.html` à partir d'une base antérieure au 7 mai 18:00 (avant la livraison Photographe + bandeau), qui a écrasé les changements sans s'en apercevoir. `pricing.html` a conservé l'add-on Photographer (déjà en place avant l'audit) mais a perdu le bandeau.
+
+### État pré-ré-application
+
+| Fichier | Add-on Photographe | Bandeau Vue technique |
+|---|---|---|
+| `tarifs.html` (FR) | Absent | Ancien `tech-switch` en Step 02 |
+| `pricing.html` (EN) | Présent | Ancien `tech-switch` en Step 02 |
+
+### Modifications ré-appliquées
+
+#### tarifs.html (FR) — ré-application complète
+
+- **Add-on Photographe** : card HTML dans `.addons-grid` Step 04, `state.addons.photographe = false`, `ADDON_PRICES.photographe = { half: 1150, full: 1150, "2days": 1750, "3days": 2350 }`, `ADDON_MATERIEL.photographe` (Canon EOS 5D Mark IV, 3 objectifs, édition, livraison J+1/J+2), branche `compute()` ajoutant le prix au total après mécanique partenaire, `photographePriceEl` dans `render()` pour MAJ dynamique selon durée.
+- **buildAddons()** : `forEach` sur les 3 add-ons (`bestof`, `interviews`, `photographe`). Tracking GA4 refactoré en map `addonLabels` + lookup générique sur `ADDON_PRICES[addonId]` (au lieu de ternaires en cascade).
+- **Bandeau Vue technique** : retrait du `<label class="tech-switch">` du bas de Step 02, insertion du `<label class="tech-banner">` dark inversé sans icône entre Step 02 et Step 03 (3e enfant de `.steps`). Wording : `Voir le matériel inclus` + `Micros, trépieds, ordinateur, câblage… le matériel technique prévu pour chaque partie du dispositif.`
+- **CSS** : nouveau bloc `.tech-banner.*` (gradient slate `#1a2332` → `#0f1825`, bordure cyan fine, glow radial cyan, titre blanc, description blanc 62%, slider blanc 18% → cyan en mode actif). Ancien bloc `.tech-switch.*` retiré.
+- **Animation chain** : `.steps` a 5 enfants. `.tech-banner` hérite de `animation-delay: .16s`, Step 03 passe à `.24s` (nth-child(4)), Step 04 à `.32s` (nth-child(5)).
+- **`setTechMode()`** : ajout du toggle `.active` sur `#tech-banner-label` pour feedback visuel.
+- **Timestamp** : `<!-- Last update: 2026-05-08 19:00 -->`.
+
+#### pricing.html (EN) — bandeau seulement
+
+- **Add-on Photographer** : déjà en place, intact, pas d'intervention.
+- **Bandeau Tech view** : mêmes modifications structurelles que sur `tarifs.html` (retrait `tech-switch`, insertion `tech-banner` dark sans icône, CSS, animation chain, `setTechMode()`).
+- **Wording EN** : `See included equipment` + `Mics, tripods, computer, cabling… the technical kit included for every part of your setup.` Choix de "kit" en cohérence avec "Make use of the kit already on site" déjà présent dans la description Interviews.
+- **Commentaires JS `setTechMode()`** : traduits en anglais à l'occasion (étaient restés en français dans `pricing.html`).
+- **Timestamp** : `<!-- Last update: 2026-05-08 19:00 -->`.
+
+### Décisions techniques actées
+
+- **Garde-fou anti-régression** : avant toute session d'édition substantielle sur `tarifs.html` ou `pricing.html`, vérifier que les modifications de la dernière entrée CHANGELOG sont bien présentes dans le fichier. Diff rapide : `grep -c "data-addon=\"photographe\"" tarifs.html` doit retourner `1`, `grep -c "class=\"tech-banner\"" tarifs.html` doit retourner `1`. Si zéro, la base utilisée est antérieure et il faut récupérer la bonne version avant d'éditer.
+- **Validation post-livraison** : le timestamp DOCTYPE seul ne garantit pas l'intégrité du contenu (un fichier peut être bumpé sans avoir reçu les modifs). Ajouter une vérification systématique sur 2-3 marqueurs structurels après livraison (ex. présence de `data-addon="photographe"`, `class="tech-banner"`, `id="tech-banner-label"`).
+- **Parité FR/EN** (rappel, déjà acté le 7 mai) : toute modif structurelle doit être propagée aux deux fichiers dans la même session. Cette session de ré-application confirme l'utilité de la règle : les deux fichiers ont divergé pendant l'audit du 8 mai sur des dimensions différentes (tarifs.html a perdu plus que pricing.html).
+- Aucun changement de logique métier ou de tarif dans cette ré-application : c'est strictement le rétablissement de l'état du 7 mai 18:00 / 23:45.
+
+### Fichiers livrés
+
+- `tarifs.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-08 19:00 -->`)
+- `pricing.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-08 19:00 -->`)
+
+---
+
 ## 2026-05-08 (audit), Audit complet FR/EN post-déploiement + correctifs Lots A/B/C — switcher mobile, terminologie, résidus FR
 
 ### Contexte
