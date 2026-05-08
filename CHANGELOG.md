@@ -1,3 +1,63 @@
+## 2026-05-08 (hotfix), Fix mobile-lang-switch positionnement + masquage float-call quand menu mobile ouvert
+
+### Contexte
+
+Bug remonté en QA après déploiement de la session principale du 2026-05-08 : sur mobile, quand on ouvre le menu burger, le switcher de langue `FR · EN` est mal positionné et le bouton tel flottant `.float-call` (bulle bleue à droite) le recouvre. Visible sur la page index et les pages avec mobile-overlay (cas clients, services, blog, agences).
+
+Diagnostic :
+
+1. **Mobile-lang-switch dans le flux normal du DOM** : mon script `fr_switcher_patch.py` injectait le switcher avant `<div class="mobile-overlay-footer">` dans le DOM, mais le footer est en `position:absolute; bottom:32px;`. Du coup le switcher était dans le flux centré du `display:flex; justify-content:center;` du mobile-overlay, alors que le footer est ancré en bas. Les deux ne sont jamais alignés correctement, et le switcher peut se retrouver sous le `.mobile-overlay-links` sans alignement vertical garanti par rapport au footer.
+
+2. **`.float-call` (bouton tel flottant) reste affiché par-dessus le mobile-overlay** : ce bouton est en `position:fixed; bottom:24px; right:24px; z-index:50;` et pas de règle `body.menu-open .float-call { display:none }` n'était présente. Du coup quand le menu burger est ouvert, le bouton tel flottant recouvre le coin droit de l'écran, masquant la moitié droite du switcher (le `EN` notamment).
+
+### Fix appliqué
+
+CSS du `mobile-lang-switch` repositionné en `position:absolute` ancré au-dessus du footer :
+
+```css
+.mobile-lang-switch{
+  position:absolute;
+  bottom:80px;       /* footer est à bottom:32px, switcher au-dessus avec marge */
+  left:0; right:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:14px;
+  padding:14px 32px 0;
+  border-top:1px solid rgba(255,255,255,.1);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:.04em;
+}
+body.menu-open .float-call{display:none!important}
+```
+
+Le `padding-top` reste pour conserver la séparation visuelle (la border-top fait office de filet de séparation au-dessus du switcher). Le `margin` initial est retiré car inutile en `position:absolute`.
+
+La règle `body.menu-open .float-call{display:none!important}` est ajoutée systématiquement (même sur les pages sans `.float-call`, où elle est sans effet — coût zéro).
+
+### Pages patchées
+
+- **35 pages FR** (toutes celles avec `mobile-lang-switch` injecté lors de la session principale) — patches appliqués sur le CSS via `fix_mobile_lang_switch.py`
+- **13 pages EN avec `.float-call`** (4k-video-recording, b2b-event-filming-provider, conference-seminar-filming, corporate-event-filming, corporate-live-show, corporate-video-production, event-live-streaming, event-video-production, index, interview-roundtable-filming, multi-platform-streaming, multi-site-live-streaming, quote-live-streaming-paris) — règle `body.menu-open .float-call` ajoutée via `fix_en_float_call.py`. Note : les pages EN services n'avaient pas de `mobile-lang-switch` à corriger (le `lang-switch` desktop est dans `nav-links` qui est cachée en mobile, donc pas de switcher visible en mobile sur ces pages — limitation connue à corriger dans une itération future).
+
+### Fichiers livrés (hotfix)
+
+- `nomacast-fr-pages-patched.zip` (434 KB, 35 fichiers HTML) — re-livré avec le fix CSS appliqué. À déposer à la racine `G:\Mon Drive\NOMACAST\` (écrase la version précédente de la session du jour).
+- `nomacast-en-pages-fix-floatcall.zip` (179 KB, 13 fichiers HTML) — pages EN avec ajout de la règle `body.menu-open .float-call`. À déposer dans `G:\Mon Drive\NOMACAST\en\` (écrase les versions précédentes).
+
+### Limitation résiduelle (à traiter dans une itération future)
+
+Sur les pages EN services hub (10 pages : `4k-video-recording`, `b2b-event-filming-provider`, `conference-seminar-filming`, `corporate-event-filming`, `corporate-live-show`, `corporate-video-production`, `event-live-streaming`, `event-video-production`, `interview-roundtable-filming`, `multi-platform-streaming`, `multi-site-live-streaming`), il n'y a pas de switcher dans le mobile-overlay. Le `lang-switch` est uniquement dans `<ul class="nav-links">` qui est cachée en mobile. L'utilisateur EN sur mobile ne peut pas revenir au FR depuis le menu burger.
+
+À corriger : injecter un `mobile-lang-switch` côté EN dans le mobile-overlay-links avec le même CSS `position:absolute; bottom:80px;` + règle `body.menu-open .float-call`. Pas critique tant que l'utilisateur peut switcher depuis desktop ou qu'il arrive directement sur la version EN via Google.
+
+### Scripts conservés
+
+- `fix_mobile_lang_switch.py` (35 pages FR + détection EN avec ancien CSS)
+- `fix_en_float_call.py` (13 pages EN avec float-call)
+
+
 ## 2026-05-08, Chantier bilingue FR/EN — finalisation : Devis 7/7, Services 9/11 restants, patches FR 35/35, sitemap
 
 ### Contexte
