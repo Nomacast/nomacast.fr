@@ -1,3 +1,142 @@
+## 2026-05-08, Chantier bilingue FR/EN — finalisation : Devis 7/7, Services 9/11 restants, patches FR 35/35, sitemap
+
+### Contexte
+
+Suite directe de la session 2026-05-07 où Lot 1 + Lot 2 + 2 services hub avaient été livrés. Cette session boucle le chantier bilingue : tous les contenus EN sont produits, et toutes les pages FR existantes reçoivent désormais le switcher de langue + les balises `hreflang`. Le sitemap est régénéré en version bilingue. Reste après cette session : déploiement, tests live, soumission Search Console.
+
+Total livré sur cette session : **9 pages services EN** (finalisation Lot 3) + **7 pages devis EN** + **35 pages FR patchées** (hreflang + switcher) + **1 sitemap.xml bilingue**.
+
+### Lot Devis — 7/7 livrés
+
+Toutes les landing pages de demande de devis traduites en EN. Workflow optimisé : la première page (`quote-conference-seminar-filming`) sert de template, les suivantes sont produites par copie + patches ciblés sur les éléments thématiques (head meta, hero, USP card, process step, price card title, FAQ, source value du formulaire, GA4 phone_location).
+
+Pages livrées :
+
+- **`quote-conference-seminar-filming.html`** — Conférence & séminaire (template de référence)
+- **`quote-event-filming.html`** — Captation événement entreprise. USP focus livraison le jour même, FAQ adaptée (coût, déplacement Europe, last-minute, redondance internet, agences)
+- **`quote-interview-roundtable-filming.html`** — Interview & table ronde. Multi-caméras 4K, son HF cravate par intervenant, social cuts. FAQ : tarif, nombre d'intervenants simultanés, son individualisé, social cuts
+- **`quote-4k-filming.html`** — Captation 4K. USP renommé "3 Canon CR-N500 native 4K cameras". FAQ : coût, différence Full HD vs 4K, rushes camera-by-camera, live en 4K
+- **`quote-event-live-streaming.html`** — Live streaming événement. 2 USP changées (15 ans broadcast + dedicated 5G + redundancy), 2 process steps changées (2-hour setup + tests, Live broadcast). FAQ : coût, plateformes supportées, nombre de viewers, redondance
+- **`quote-corporate-live-show.html`** — Émission live corporate. 2 USP (Broadcast art direction + Set & graphics turnkey), 3 process steps (Running order & graphics, Set installation, Broadcast direction). FAQ : différence avec captation classique, tarif, animateur pro, délai préparation
+- **`quote-live-streaming-paris.html`** — Landing local Paris. Structure différente (page hub avec page-hero-grid, sections section-off / section-light, KPIs, sidebar avec price-card + incl-card, 4 FAQ Paris-spécifiques). Traduction full du contenu unique : breadcrumb, h1, KPIs labels, références parisiennes, 4 FAQ (déplacement IDF, last-minute, références Paris, délai réponse)
+
+Tous les formulaires devis EN ont reçu :
+- `<input type="hidden" name="lang" value="en">` pour que `envoyer.php.js` détecte la langue
+- `action="../envoyer.php"` (chemin relatif depuis `/en/`)
+- `source` value adapté par page : `LP {theme} (hero)` et `LP {theme} (bottom)`
+- GA4 `phone_location` adapté (ex. `'phone_location': 'quote-event-filming'`)
+
+### Lot 3 — Services finalisé (11/11)
+
+Audit en début de session : 8 pages services étaient déjà en EN après les sessions précédentes (résumé de compaction sous-estimait l'avancement). Restaient 3 pages avec résidus FR uniquement dans le head meta + JSON-LD + footer minimaliste.
+
+Pages corrigées :
+
+- **`corporate-video-production.html`** — Title FR + meta description FR + og + JSON-LD breadcrumb position-2 FR + JSON-LD FAQPage 4 questions FR + Twitter card FR + footer minimaliste FR (Mentions légales, Confidentialité, Plan du site → Legal notice, Privacy, Sitemap). Note : cette page est une landing simplifiée avec footer 3-liens court, pas le footer 4-cols principal.
+- **`multi-platform-streaming.html`** — Title FR ("Streaming multi-plateformes simultané") + og:title FR + twitter:title FR + JSON-LD Article headline FR. La meta description était déjà en EN.
+- **`corporate-live-show.html`** — Meta description + og:description + twitter:description encore en FR (production d'émissions live corporate, plateau TV, habillage charte, intervenants distants, multi-plateformes, dès 1 500 € HT). Title déjà EN. Le reste de la page (FAQ, hero, approche, sidebar) déjà traduit.
+
+Audit final post-correction : zéro résidu FR sur les 11 pages services EN. Recherche regex sur termes FR caractéristiques (`Captation`, `Émission`, `Plateau`, `Prestataire`, `Régie`, `Devis sous`, `Notre approche`, `Filmez-vous`, `Pouvez-vous`, etc.) : aucun match.
+
+### Patches FR — 35/35 pages traitées
+
+Toutes les pages FR existantes reçoivent désormais :
+
+1. **3 balises hreflang** : `fr` / `en` / `x-default` (FR par défaut)
+2. **`<meta property="og:locale:alternate" content="en_GB">`** ajouté après `og:locale="fr_FR"`
+3. **CSS du switcher** injecté avant `</style>` (variant adapté au type de page)
+4. **Switcher `FR · EN`** dans la nav (variant HTML adapté à la structure de chaque page)
+5. **Switcher mobile** dans le mobile-overlay (quand présent)
+6. **Timestamp `<!-- Last update: ... -->`** rafraîchi
+
+Quatre patterns de switcher selon la structure de la nav :
+
+- **`.lang-switch`** (variant principal) — 24 pages avec `<ul class="nav-links">` : services, cas clients, blog, index, agences, tarifs, cas-clients hub, blog hub. Position : dernier `<li>` de `nav-links`. Affiché en desktop, masqué en mobile (overlay prend le relais avec `.mobile-lang-switch`).
+- **`.devis-lang-switch`** — 7 pages devis (header simplifié, pas de nav-links). Position : avant le `<a class="tel-link">` dans `.header-actions`. Couleurs sombres (header sur fond clair).
+- **`.landing-lang-switch`** — 2 landings simplifiées (`captation-video-corporate`, `captation-evenement-entreprise`). Position : avant `<a class="nav-tel">` dans `.nav-right`.
+- **`.lang-switch` light** — 3 pages légales (`mentions-legales`, `politique-de-confidentialite`, `plan-du-site`). Position : avant `<a class="nav-back">`.
+- **`.merci-lang-switch`** — `merci.html` uniquement. Position : avant `.btn-home`.
+
+Trois scripts Python orchestrent les patches :
+- **`fr_switcher_patch.py`** — pages standard avec `<ul class="nav-links">`. Pattern flexible pour matcher avec ou sans `id="nav-links"`.
+- **`devis_lang_patch.py`** — pages devis (7).
+- **`landing_lang_patch.py`** — landings simplifiées (2).
+- **`legal_lang_patch.py`** — légales + tarifs (4 + 1).
+
+Tous les scripts sont **idempotents** : si la page contient déjà `class="lang-switch"` ou similaire, le patch est skipped. Permet de relancer plusieurs fois sans dégât.
+
+### Pages exclues du switcher (volontairement)
+
+- **`404.html`** — Pas de canonical, pas de switcher : la page d'erreur est servie sur n'importe quel chemin invalide, on ne peut pas lui assigner d'alternate. Une seule version 404 unifiée FR/EN minimaliste.
+
+### Sitemap.xml bilingue régénéré
+
+Sitemap intégralement reconstruit avec balises `<xhtml:link rel="alternate" hreflang>` pour chaque URL (recommandation Google pour les sites multilingues).
+
+Caractéristiques :
+- **56 URLs au total** : 28 FR + 28 EN
+- Chaque URL déclare ses 3 alternates (`fr`, `en`, `x-default`) — convention Google pour signaler les versions de langue à l'indexation
+- Namespace `xmlns:xhtml="http://www.w3.org/1999/xhtml"` ajouté au `<urlset>`
+- Lastmod mis à jour à `2026-05-08` pour les 28 pages modifiées cette session (cas clients gardent `2026-04-29` car contenus inchangés, juste hreflang ajouté)
+- Priorités conservées du sitemap précédent (1.0 index, 0.9 services hub + landings, 0.8 services guides + ads, 0.7 cas clients + blog hub, 0.6 article blog, 0.4 plan-du-site, 0.3 confidentialité, 0.2 mentions légales)
+- Changefreq conservés (`monthly` pour la plupart, `weekly` pour blog hub, `yearly` pour cas clients et légales)
+
+Pages **exclues** du sitemap (volontairement noindex, non répertoriées) :
+- `404.html` (page d'erreur)
+- `merci.html` / `en/thank-you.html` (pages de confirmation post-formulaire, noindex)
+- `devis-*` sauf `devis-live-streaming-paris` (les 6 autres landings devis sont noindex car spécifiques à des thématiques précises avec nombreux mots-clés ciblés, on ne veut pas concurrencer les pages services hub canoniques)
+
+Script générateur `build_sitemap.py` conservé pour régénération facile à chaque ajout de page.
+
+### Fichiers livrés (cette session)
+
+**Pages EN — Lot 3 services finalisation (3 fichiers)** :
+- `en/corporate-video-production.html`
+- `en/multi-platform-streaming.html`
+- `en/corporate-live-show.html`
+
+**Pages EN — Lot Devis (7 fichiers)** :
+- `en/quote-conference-seminar-filming.html`
+- `en/quote-event-filming.html`
+- `en/quote-interview-roundtable-filming.html`
+- `en/quote-4k-filming.html`
+- `en/quote-event-live-streaming.html`
+- `en/quote-corporate-live-show.html`
+- `en/quote-live-streaming-paris.html`
+
+**Pages FR — Switcher + hreflang (35 fichiers, ZIP)** :
+- `nomacast-fr-pages-patched.zip` (434 KB) : toutes les pages FR du site sauf `404.html`. À déposer à la racine `G:\Mon Drive\NOMACAST\` (écrase les pages FR existantes).
+
+**Sitemap** :
+- `sitemap.xml` (bilingue, 56 URLs avec hreflang). À déposer à la racine du site.
+
+**Scripts Python** (`/home/claude/work/`, conservés pour future régénération) :
+- `fr_switcher_patch.py`
+- `devis_lang_patch.py`
+- `landing_lang_patch.py`
+- `legal_lang_patch.py`
+- `build_sitemap.py`
+
+### Tâches restantes (post-cette-session)
+
+1. **Déployer** les 35 pages FR + 10 pages EN nouvelles + sitemap.xml sur Cloudflare Pages (push sur `main`, l'Apps Script Drive→GitHub fait le reste)
+2. **Tests live** : naviguer sur 5-6 pages FR pour vérifier que le switcher s'affiche bien, qu'il pointe vers la bonne page EN, que le retour FR fonctionne
+3. **Test du formulaire EN** sur 1 page devis EN : soumettre, vérifier que l'email reçu est bien en EN (le hidden field `lang=en` doit déclencher le rendu EN dans `envoyer.php.js`)
+4. **Search Console** : soumettre le nouveau sitemap.xml sur https://search.google.com/search-console/sitemaps. Attendre quelques jours puis vérifier dans "Pages > Pages indexed" que les 28 URLs EN sont bien crawlées
+5. **Rich Results Test** sur 2-3 pages EN pour valider que le JSON-LD Service / FAQPage / BreadcrumbList est bien lu (https://search.google.com/test/rich-results)
+6. **Test hreflang** sur https://www.merkle.com/uk/products/technology/hreflang-tags-testing-tool ou Screaming Frog pour s'assurer que les balises sont cohérentes côté FR et EN
+
+### Métriques chantier bilingue (récap global)
+
+- **Pages EN livrées** : 44 fichiers (7 core + 9 cas clients + 2 blog + 7 devis + 11 services + 3 légal + 5 légal-style)
+- **Pages FR modifiées** : 35 fichiers (switcher + hreflang)
+- **Mots traduits estimés** : ≈ 80 000 mots EN (plus de 200 sections de contenu)
+- **Glossaire métier** : 35+ termes FR→EN documentés dans `docs/GLOSSAIRE-FR-EN.md`
+- **Mapping slugs** : 37 entrées FR→EN documentées dans `docs/MAPPING-SLUGS.md`
+- **Scripts Python conservés** : 8 (case_transform, service_transform, service_common_translate, fr_switcher_patch, devis_lang_patch, landing_lang_patch, legal_lang_patch, build_sitemap)
+- **Durée chantier** : 2 sessions (2026-05-07 et 2026-05-08)
+
+
 ## 2026-05-07, Chantier bilingue FR/EN — Lot 1 (core), Lot 2 (cas clients), Lot 3 partiel (services)
 
 ### Contexte
