@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 23:55 -->
+<!-- Last update: 2026-05-08 13:50 -->
 <html lang="en-GB">
 <head>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -251,6 +251,14 @@ body.menu-open .mobile-overlay-links li:nth-child(5){transition-delay:.3s}
 .lang-switch a.active{color:var(--cyan);pointer-events:none}
 .lang-switch .lang-sep{color:var(--ink-faint);font-weight:400;user-select:none}
 @media(max-width:768px){.lang-switch{margin-left:0;margin-top:8px}}
+
+.mobile-lang-switch{display:flex;justify-content:center;align-items:center;gap:14px;width:100%;max-width:320px;margin:20px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;letter-spacing:.04em}
+.mobile-lang-switch a{color:rgba(255,255,255,.65);text-decoration:none;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s}
+.mobile-lang-switch a.active{color:var(--cyan);pointer-events:none}
+.mobile-lang-switch a:hover{color:#fff}
+.mobile-lang-switch .lang-sep{color:rgba(255,255,255,.3)}
+body.menu-open .mobile-overlay{padding-bottom:90px}
+body.menu-open .float-call{display:none!important}
 </style>
 </head>
 <body>
@@ -287,6 +295,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <li><a href="index.html#faq">FAQ</a></li>
     <li><a href="index.html#contact" class="mobile-cta">Quote in 24h</a></li>
   </ul>
+  <div class="mobile-lang-switch" aria-label="Choose language">
+    <a href="/blog-ag-mixte-presentiel-distanciel.html" hreflang="fr" lang="fr">FR</a>
+    <span class="lang-sep" aria-hidden="true">·</span>
+    <a href="" class="active" aria-current="page">EN</a>
+  </div>
   <div class="mobile-overlay-footer">
     <a href="tel:+33660541732">+33 6 60 54 17 32</a> · <a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
   </div>
