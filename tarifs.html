@@ -612,11 +612,11 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .lang-switch a:hover{color:var(--cyan);background:rgba(90,152,214,.08);text-decoration:none}
 .lang-switch a.active{color:var(--cyan);pointer-events:none}
 .lang-switch .lang-sep{color:var(--ink-faint);font-weight:400;user-select:none}
-.mobile-lang-switch{display:flex;justify-content:center;align-items:center;gap:14px;width:100%;max-width:320px;margin:20px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;letter-spacing:.04em}body.menu-open .mobile-overlay{padding-bottom:90px}body.menu-open .float-call{display:none!important}
-.mobile-lang-switch a{color:rgba(255,255,255,.65);text-decoration:none;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s}
-.mobile-lang-switch a.active{color:var(--cyan);pointer-events:none}
-.mobile-lang-switch a:hover{color:#fff}
-.mobile-lang-switch .lang-sep{color:rgba(255,255,255,.3)}
+body.menu-open .float-call{display:none!important}
+
+
+
+
 @media(max-width:768px){.lang-switch{display:none}}
 
 .lang-switch{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:6px 4px;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-muted);list-style:none}
@@ -624,12 +624,20 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .lang-switch a:hover{color:var(--cyan);background:rgba(90,152,214,.08);text-decoration:none}
 .lang-switch a.active{color:var(--cyan);pointer-events:none}
 .lang-switch .lang-sep{color:var(--ink-faint);font-weight:400;user-select:none}
-.mobile-lang-switch{display:flex;justify-content:center;align-items:center;gap:14px;margin:18px 0 8px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;letter-spacing:.04em}
-.mobile-lang-switch a{color:rgba(255,255,255,.65);text-decoration:none;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s}
-.mobile-lang-switch a.active{color:var(--cyan);pointer-events:none}
-.mobile-lang-switch a:hover{color:#fff}
-.mobile-lang-switch .lang-sep{color:rgba(255,255,255,.3)}
+
+
+
+
+
 @media(max-width:768px){.lang-switch{display:none}}
+
+.nav-lang-mobile{display:none}
+@media(max-width:768px){
+  .nav-lang-mobile{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;letter-spacing:.02em;margin-right:14px;list-style:none}
+  .nav-lang-mobile a{color:rgba(11,25,41,.55);text-decoration:none;padding:4px 5px;border-radius:4px;line-height:1}
+  .nav-lang-mobile a.active{color:var(--cyan,#5A98D6);pointer-events:none}
+  .nav-lang-mobile .lang-sep{color:rgba(11,25,41,.3);font-weight:400;user-select:none}
+}
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
@@ -656,6 +664,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="lang-sep" aria-hidden="true">·</span>
       <a href="/en/pricing.html" hreflang="en" lang="en">EN</a>
     </li>
+  </ul>
+  <ul class="nav-lang-mobile" aria-label="Choisir la langue">
+    <li><a href="" class="active" aria-current="page">FR</a></li>
+    <li><span class="lang-sep" aria-hidden="true">·</span></li>
+    <li><a href="/en/pricing.html" hreflang="en" lang="en">EN</a></li>
   </ul>
   <button class="burger-btn" id="burger-btn" aria-label="Ouvrir le menu" aria-expanded="false">
     <span></span><span></span><span></span>
