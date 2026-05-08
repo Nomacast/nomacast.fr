@@ -466,19 +466,7 @@ nav.scrolled {
 .lang-switch a.active { color: var(--cyan); pointer-events: none; }
 .lang-switch .lang-sep { color: var(--ink-faint); font-weight: 400; user-select: none; }
 
-.mobile-lang-switch {
-  position: absolute;
-  bottom: 76px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
+.mobile-lang-switch{display:flex;justify-content:center;align-items:center;gap:14px;width:100%;max-width:320px;margin:20px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;letter-spacing:.04em}
 .mobile-lang-switch a {
   color: rgba(255,255,255,0.65);
   text-decoration: none;
@@ -1725,6 +1713,7 @@ body.menu-open .mobile-overlay-links li:nth-child(5){transition-delay:.3s}
 
 
 body.menu-open .float-call{display:none!important}
+body.menu-open .mobile-overlay{padding-bottom:90px}body.menu-open .float-call{display:none!important}
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
