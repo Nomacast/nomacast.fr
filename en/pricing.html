@@ -632,6 +632,14 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .footer-bottom-links { display: flex; gap: 18px; flex-wrap: wrap; }
 .footer-bottom-links a { color: rgba(255,255,255,.4); text-decoration: none; transition: color .2s ease; }
 .footer-bottom-links a:hover { color: rgba(255,255,255,.8); }
+
+.nav-lang-mobile{display:none}
+@media(max-width:768px){
+  .nav-lang-mobile{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;letter-spacing:.02em;margin-right:14px;list-style:none}
+  .nav-lang-mobile a{color:rgba(11,25,41,.55);text-decoration:none;padding:4px 5px;border-radius:4px;line-height:1}
+  .nav-lang-mobile a.active{color:var(--cyan,#5A98D6);pointer-events:none}
+  .nav-lang-mobile .lang-sep{color:rgba(11,25,41,.3);font-weight:400;user-select:none}
+}
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
@@ -658,6 +666,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="lang-sep" aria-hidden="true">·</span>
       <a href="" class="active" aria-current="page">EN</a>
     </li>
+  </ul>
+  <ul class="nav-lang-mobile" aria-label="Choose language">
+    <li><a href="/tarifs.html" hreflang="fr" lang="fr">FR</a></li>
+    <li><span class="lang-sep" aria-hidden="true">·</span></li>
+    <li><a href="" class="active" aria-current="page">EN</a></li>
   </ul>
   <button class="burger-btn" id="burger-btn" aria-label="Open menu" aria-expanded="false">
     <span></span><span></span><span></span>
