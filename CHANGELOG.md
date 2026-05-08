@@ -1,3 +1,224 @@
+## 2026-05-08 (audit), Audit complet FR/EN post-déploiement + correctifs Lots A/B/C — switcher mobile, terminologie, résidus FR
+
+### Contexte
+
+Session d'audit déclenchée par deux observations utilisateur post-déploiement :
+
+1. **Question UX mobile** : sur l'index, le switcher de langue `FR · EN` est centré entre le logo et le burger via le `justify-content:space-between` du nav. L'utilisateur souhaite le rapprocher du burger menu pour une meilleure lecture du groupe d'actions à droite.
+2. **Suspicion de version drift** : impression que certaines pages n'ont pas reçu les dernières modifications (constat fondé visuellement sur des screenshots mobiles d'`agences-partenaires.html`).
+
+L'audit a confirmé plusieurs incohérences réelles entre les pages FR et EN, ainsi que quelques résidus de migration non finalisés. Cinq lots de correctifs ont été identifiés (A à E), trois ont été appliqués (A, B, C), deux ont été délibérément skippés (D faux positif, E acceptable en l'état).
+
+### Diagnostic d'audit
+
+#### Côté FR (35 pages)
+
+**Modèles de switcher mobile coexistants** (incohérence d'expérience utilisateur) :
+- **24 pages standard** avec `<ul class="nav-lang-mobile">` injecté dans le top nav (visible sur mobile fermé, à côté du burger) — index, services, cas clients, blog, agences, etc.
+- **11 pages spéciales** avec `<ul class="mobile-lang-switch">` dans le mobile-overlay uniquement (visible que quand le burger est ouvert) — devis-* (sauf paris), captation-evenement-entreprise, captation-video-corporate, mentions-legales, merci, plan-du-site, politique-de-confidentialite
+
+→ Pas réellement bloquant (les deux modèles fonctionnent) mais asymétrie d'UX entre familles de pages. Harmonisation reportée à une itération future.
+
+**Résidus terminologiques détectés** :
+- `tarifs.html` (JSON-LD FAQ ligne 179) : "France entière, Europe, ponctuellement au-delà" — non aligné sur la guideline validée.
+- `captation-video-evenement.html` (FAQ ligne 497) : "à la clôture de l'événement" — la convention validée est "dès la fin de l'événement" (formulation moins formelle, plus fluide).
+- `cas-client-digital-benchmark-berlin.html` ligne 414 : "à la clôture du vendredi" — usage légitime de "clôture" au sens propre (fermeture d'un événement de 3 jours), conservé.
+
+**Wording CTA "Devis gratuit" non migré vers "Devis sous 24h"** :
+- `captation-evenement-entreprise.html` : 5 CTA boutons + 1 form-title (nav-cta-sm "Devis gratuit", btn-primary hero "Devis gratuit sous 24h", form-title "Devis gratuit sous 24h", sticky CTA "Obtenir mon devis gratuit", btn-primary cta-band "Devis gratuit sous 24h")
+- `captation-video-corporate.html` : 5 CTA boutons + 1 form-title (mêmes positions)
+- `prestataire-captation-evenement.html` : 1 CTA sticky bottom card (ligne 524)
+- `devis-live-streaming-paris.html` : 1 CTA sticky bottom card (ligne 490)
+
+→ Le texte descriptif `Devis gratuit et personnalisé sous 24h` (contact-pitch) sur 10 pages standards a été **conservé volontairement** : il s'agit de prose commerciale où le mot "gratuit" est un argument de réassurance, pas un libellé de bouton.
+
+#### Côté EN (35 pages)
+
+**Résidus français sur `corporate-video-production.html`** (page EN avec contenu FR oublié) :
+- Ligne 290 : `<a class="nav-cta-sm">Devis gratuit</a>`
+- Ligne 552 : `<h2 class="cta-title">Votre prochain contenu corporate,<br>produit avec les standards professionnels.</h2>`
+- Ligne 553 : `<p class="cta-sub">Interview, table ronde, émission live, AG : devis gratuit sous 24h.</p>`
+- Ligne 555 : `Devis gratuit sous 24h` (btn-primary cta-band)
+
+→ Cette page avait visiblement été partiellement oubliée lors du chantier bilingue de la session précédente.
+
+**Pages EN sans aucun switcher de langue UI** (asymétrie avec les équivalents FR) :
+- `legal-notice.html` (équivalent FR `mentions-legales.html` a `.lang-switch` desktop + `.mobile-lang-switch`)
+- `privacy-policy.html` (équivalent FR `politique-de-confidentialite.html` a switcher complet)
+- `sitemap.html` (équivalent FR `plan-du-site.html` a switcher complet)
+- `thank-you.html` (équivalent FR `merci.html` a `merci-lang-switch`)
+
+→ Les hreflang sont présents (Google sait), mais aucun bouton FR/EN visible : un utilisateur EN sur ces pages ne pouvait pas revenir au FR via l'UI. Bug de l'injection EN qui avait omis ces 4 pages utility.
+
+**Pages EN avec switcher "fallback" mobile mal calé** :
+- `corporate-event-filming.html`, `corporate-video-production.html` (landings simples)
+- `quote-*` (7 pages devis EN)
+
+→ Sur ces 9 pages, `.lang-switch` reste visible en mobile mais avec `margin-top:8px` (wrap sous le tel). Côté FR équivalent, ces pages utilisent `.mobile-lang-switch` dans l'overlay. Asymétrie de design, non corrigée dans cette session (acceptable visuellement).
+
+**Wording CTA EN inconsistent** (5 variantes coexistantes) :
+| Variante | Occurrences |
+|---|---|
+| "Quote in 24h" | 58 |
+| "Quote within 24h" | 33 |
+| "Request a quote" | 31 |
+| "Free quote" | 13 |
+| "Get a quote" | 2 |
+
+→ Toutes ces formulations sont valides en anglais britannique (`<html lang="en-GB">`). Pas critique. Harmonisation reportée (lot E skippé en accord avec l'utilisateur).
+
+#### Faux positif d'audit
+
+L'audit initial avait flaggé l'absence de `og:locale:alternate` sur 8 pages utility (4 FR + 4 EN). Vérification en profondeur : ces pages **n'ont AUCUNE balise Open Graph** (pas de `og:title`, `og:description`, `og:type`, `og:locale`, `og:image`). C'est cohérent par design : ces pages sont en `<meta name="robots" content="noindex, follow">`, donc elles ne sont pas faites pour être partagées sur les réseaux sociaux. Ajouter uniquement `og:locale:alternate` sans le reste serait incohérent. **Non-anomalie confirmée**, lot D skippé.
+
+### Lot A — Résidus FR + ajout switcher 4 pages utility EN
+
+**Fichier 1 : `en/corporate-video-production.html`** (4 traductions FR → EN)
+
+| Ligne | Avant (FR) | Après (EN) |
+|---|---|---|
+| 290 | `Devis gratuit` (nav-cta-sm) | `Free quote` |
+| 552 | `Votre prochain contenu corporate,<br>produit avec les standards professionnels.` | `Your next corporate content,<br>produced to professional standards.` |
+| 553 | `Interview, table ronde, émission live, AG : devis gratuit sous 24h.` | `Interview, round table, live show, AGM: free quote within 24h.` |
+| 555 | `Devis gratuit sous 24h` (btn-primary cta-band) | `Free quote within 24h` |
+
+→ Wording aligné sur `corporate-event-filming.html` (autre landing simple EN déjà bien traduite). Cohérence assurée entre les 2 landings simples.
+
+**Fichiers 2-5 : `en/legal-notice.html`, `en/privacy-policy.html`, `en/sitemap.html`, `en/thank-you.html`** (ajout switcher FR/EN)
+
+CSS `.lang-switch` ajouté avant `</style>` sur les 4 pages :
+```css
+.lang-switch{display:inline-flex;align-items:center;gap:6px;margin-left:auto;margin-right:12px;padding:6px 4px;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-muted);list-style:none}
+.lang-switch a{color:var(--ink-muted);text-decoration:none;padding:4px 6px;border-radius:4px;transition:color .15s,background .15s}
+.lang-switch a:hover{color:var(--cyan);background:rgba(90,152,214,.08);text-decoration:none}
+.lang-switch a.active{color:var(--cyan);pointer-events:none}
+.lang-switch .lang-sep{color:var(--ink-faint);font-weight:400;user-select:none}
+@media(max-width:600px){.lang-switch{margin-left:0;margin-right:8px;font-size:12px}}
+```
+
+HTML switcher injecté entre `nav-logo` et `nav-back` (3 pages avec nav classique) :
+```html
+<ul class="lang-switch" aria-label="Choose language">
+  <li><a href="/{fr-page}.html" hreflang="fr" lang="fr">FR</a></li>
+  <li><span class="lang-sep" aria-hidden="true">·</span></li>
+  <li><a href="" class="active" aria-current="page">EN</a></li>
+</ul>
+```
+
+Sur `thank-you.html` (structure centrée sans nav), variant inline injecté avant le `btn-home`, en miroir du pattern `merci-lang-switch` côté FR (CSS `margin-bottom:24px`, sans `margin-left:auto`).
+
+URLs de retour vers la version FR :
+- `/en/legal-notice.html` → `/mentions-legales.html`
+- `/en/privacy-policy.html` → `/politique-de-confidentialite.html`
+- `/en/sitemap.html` → `/plan-du-site.html`
+- `/en/thank-you.html` → `/merci.html`
+
+**Note** : la règle `@media(max-width:768px){.lang-switch{display:none}}` utilisée côté FR (qui s'appuie sur le fallback `.mobile-lang-switch` de l'overlay) **n'a pas été reproduite** ici, car ces 4 pages EN n'ont pas de mobile-overlay. À la place, le `@media(max-width:600px)` réduit la taille (12px au lieu de 13px) pour s'intégrer proprement avec le `nav-back`.
+
+### Lot B — `margin-left:auto` sur `.nav-lang-mobile` (46 pages)
+
+Demande utilisateur initiale : sur mobile, le switcher `FR · EN` est centré entre logo et burger à cause du `justify-content:space-between` du nav. Le rapprocher du burger améliore la lecture du groupe d'actions à droite.
+
+**Fix appliqué** sur le bloc CSS unique `.nav-lang-mobile{display:inline-flex;...}` à l'intérieur de `@media(max-width:768px){...}` :
+
+```css
+/* Avant */
+.nav-lang-mobile{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;letter-spacing:.02em;margin-right:14px;list-style:none}
+
+/* Après */
+.nav-lang-mobile{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;letter-spacing:.02em;margin-left:auto;margin-right:12px;list-style:none}
+```
+
+Le `margin-left:auto` consume tout l'espace flex disponible à gauche du switcher, ce qui le pousse contre le burger. Le `margin-right` est légèrement réduit (14px → 12px) pour resserrer un peu plus le couple `FR · EN | burger`.
+
+**Effet visuel sur mobile** :
+```
+Avant : ● Nomacast        FR · EN        ☰
+Après : ● Nomacast                FR · EN ☰
+```
+
+**Pages patchées** (46 au total — application via Python avec recherche-remplacement exacte du bloc CSS, pattern strictement identique sur toutes les pages) :
+
+- **23 pages FR** : agences-partenaires, blog, blog-ag-mixte-presentiel-distanciel, captation-4k, captation-conference-seminaire, captation-interview-table-ronde, captation-video-evenement, cas-client-* (7 pages), cas-clients, devis-live-streaming-paris, emission-live-corporate, index, live-streaming-evenement, prestataire-captation-evenement, streaming-multi-plateformes, streaming-multiplex-multi-sites, tarifs.
+- **23 pages EN** : 4k-video-recording, b2b-event-filming-provider, blog, blog-hybrid-agm-in-person-remote, case-* (7 pages), case-studies, conference-seminar-filming, corporate-live-show, event-live-streaming, event-video-production, index, interview-roundtable-filming, multi-platform-streaming, multi-site-live-streaming, partner-agencies, pricing, quote-live-streaming-paris.
+
+**Pages non concernées** (n'ont pas de `.nav-lang-mobile` dans leur structure) : 11 pages FR avec `.mobile-lang-switch` dans l'overlay (devis-* sauf paris, captation-evenement-entreprise, captation-video-corporate, légales, merci, plan-du-site) + les 12 pages EN équivalentes (quote-*, corporate-event-filming, corporate-video-production, legal-notice, privacy-policy, sitemap, thank-you).
+
+### Lot C — Terminologie (6 pages FR)
+
+**Migration "Devis gratuit" → "Devis sous 24h" sur les CTA boutons** (4 pages FR, 12 occurrences) :
+
+- `captation-evenement-entreprise.html` (5 modifs) :
+  - L315 nav-cta-sm : `Devis gratuit` → `Devis sous 24h`
+  - L337 btn-primary hero : `Devis gratuit sous 24h` → `Devis sous 24h`
+  - L342 form-title : `Devis gratuit sous 24h` → `Devis sous 24h`
+  - L453 sticky CTA : `Obtenir mon devis gratuit` → `Devis sous 24h`
+  - L582 btn-primary cta-band : `Devis gratuit sous 24h` → `Devis sous 24h`
+- `captation-video-corporate.html` (5 modifs aux mêmes positions logiques : nav-cta-sm L307, btn-primary hero L328, form-title L333, sticky CTA L484, btn-primary cta-band L571)
+- `prestataire-captation-evenement.html` (1 modif) : L524 sticky CTA bottom card
+- `devis-live-streaming-paris.html` (1 modif) : L490 sticky CTA bottom card
+
+**Conservé volontairement** :
+- 10 occurrences `Devis gratuit et personnalisé sous 24h` dans `<p class="contact-pitch">` (texte descriptif, pas un CTA bouton)
+- 3 occurrences "Devis gratuit sous 24h" dans les meta `description` / `og:description` / `twitter:description` de `captation-evenement-entreprise.html` (SEO, "gratuit" est un argument de différenciation)
+- Texte descriptif `Devis gratuit sous 24h, souvent répondu dans la journée. Ou appelez directement.` (cta-sub L580 captation-evenement-entreprise) et `Interview, table ronde, émission live, AG : devis gratuit sous 24h.` (cta-sub L569 captation-video-corporate) → prose, pas un bouton
+
+**Migration "à la clôture de l'événement" → "dès la fin de l'événement"** :
+
+- `captation-video-evenement.html` ligne 497 : FAQ "Combien de temps pour recevoir le fichier après l'événement ?" — réponse "Le fichier est remis le soir même, à la clôture de l'événement..." → "...dès la fin de l'événement..."
+
+**Migration "France entière" → "France et Europe"** sur `tarifs.html` :
+
+- Ligne 179 (JSON-LD FAQ "Le déplacement est-il inclus dans le tarif ?") : `"Pour les événements en province ou à l'international (France entière, Europe, ponctuellement au-delà)..."` → `"Pour les événements hors Paris (France et Europe, ponctuellement au-delà)..."`
+
+→ Aligné sur la guideline géographique validée : **"France & Europe"** est le terme principal, **"Paris"** est ajouté de manière cohérente pour le référencement (pattern `Paris · France · Europe` dans la zone footer, `Paris, France et Europe` dans la prose).
+
+### Lot D — Skip (faux positif d'audit)
+
+Voir section "Diagnostic d'audit > Faux positif" ci-dessus. Les 8 pages utility (4 FR + 4 EN) n'ont aucune balise Open Graph par design, cohérent avec leur statut `noindex`. Ajouter uniquement `og:locale:alternate` sans le reste de l'OG serait incohérent. Décision : ne rien faire.
+
+### Lot E — Skip (variabilité acceptable)
+
+Les 5 variantes de wording CTA EN ("Quote in 24h", "Quote within 24h", "Request a quote", "Free quote", "Get a quote") cohabitent sur 17 pages EN. Toutes sont des formulations valides en anglais britannique. Effort d'harmonisation jugé non prioritaire en accord avec l'utilisateur. Reporté à une éventuelle itération future si besoin de cohérence renforcée pour le branding ou le testing publicitaire.
+
+### Décisions de cadrage validées en cours de session
+
+1. **`tarifs.html` n'a pas besoin du CTA standard "Devis sous 24h"** : c'est un simulateur où le formulaire est lui-même le mécanisme de conversion. Ajouter un CTA générique au-dessus du simulateur ferait doublon et perturberait le flow. Le footer plus court (3 colonnes au lieu de 4, sans section "Agences") est aussi cohérent pour une page-outil. Mon audit initial avait flaggé ces points comme anomalies, requalifiés en intentionnels.
+
+2. **Guideline géographique nuancée** : "France & Europe" est le terme principal validé, et "Paris" est ajouté de manière cohérente pour le SEO. Patterns confirmés :
+   - Zone footer : `Paris · France · Europe` (avec point médian)
+   - Prose : `Paris, France et Europe` ou `Paris, France & Europe` (meta description anglaise)
+   - À éviter : `France entière`
+
+3. **Asymétrie switcher mobile FR/EN reste tolérée** sur les 11 pages FR avec `mobile-lang-switch` (overlay) et 9 pages EN avec `lang-switch` margin-top fallback. Migration vers le modèle uniforme `nav-lang-mobile` reportée à une itération future. Bloquer cette session sur cette harmonisation aurait retardé les correctifs critiques (résidus FR, pages EN sans switcher).
+
+### Fichier livré
+
+- **`NOMACAST_final.zip`** (859 KB, 72 fichiers HTML) — structure réorganisée pour la lisibilité de la livraison :
+  ```
+  NOMACAST_final.zip
+  ├── fr/  (37 fichiers .html — racine du site)
+  └── en/  (35 fichiers .html — sous-dossier /en/)
+  ```
+  À déployer sur LWS : copier les fichiers du dossier `fr/` à la racine du serveur, et les fichiers du dossier `en/` dans `/en/`. Les fichiers non-HTML (sitemap.xml, robots.txt, functions/, images/, favicon.svg, og-image.jpg, _redirects, BingSiteAuth.xml, llms.txt, 2438d00ec5944f38979efedc262f1dc0.txt) **ne sont pas inclus** dans cette livraison car non modifiés depuis la session précédente — la version déployée actuellement reste valide.
+
+### Limitations résiduelles (à traiter dans une itération future)
+
+1. **Asymétrie de switcher mobile FR/EN** : 11 pages FR utilisent `.mobile-lang-switch` dans le mobile-overlay alors que 24 autres utilisent `.nav-lang-mobile` dans le top nav. Côté EN, 9 pages utilisent `.lang-switch` avec `margin-top:8px` en fallback mobile au lieu de `nav-lang-mobile`. Migration vers un modèle uniforme à prévoir si la cohérence d'UX devient un sujet.
+
+2. **Wording CTA EN non harmonisé** : 5 variantes coexistent. Si harmonisation souhaitée, recommandation est `Quote within 24h` (cohérent avec `<html lang="en-GB">`) sauf sur `corporate-event-filming.html` et `corporate-video-production.html` (landings simples) où `Free quote within 24h` reste pertinent (le mot "free" est un argument commercial sur ces formats de conversion).
+
+3. **`corporate-video-production.html` — incohérence interne mineure** : suite à mes traductions (Lot A), la page utilise désormais `Free quote within 24h` sur le btn-primary cta-band (ligne 555) mais `Free quote in 24h` sur les autres CTA du formulaire intégré (lignes 311, 316, 468 — déjà existants en EN avant cette session). Cette inconsistance fait partie du Lot E global (harmonisation EN). Non bloquante.
+
+### Tests recommandés post-déploiement
+
+1. Sur `index.html` mobile : confirmer que `FR · EN` est bien collé au burger à droite (et non centré entre logo et burger).
+2. Sur les 4 pages utility EN (`legal-notice`, `privacy-policy`, `sitemap`, `thank-you`) : cliquer "FR" et vérifier la redirection vers la version FR équivalente.
+3. Sur `captation-evenement-entreprise.html` et `captation-video-corporate.html` : vérifier que tous les CTA boutons (nav, hero, form-title, sticky card, cta-band) affichent désormais "Devis sous 24h" et plus "Devis gratuit".
+4. Sur `tarifs.html` : la FAQ "Le déplacement est-il inclus dans le tarif ?" mentionne désormais "France et Europe (ponctuellement au-delà)" et plus "France entière".
+5. Sur `captation-video-evenement.html` : la FAQ "Combien de temps pour recevoir le fichier après l'événement ?" mentionne "dès la fin de l'événement" et plus "à la clôture de l'événement".
+
+
 ## 2026-05-08 (hotfix), Fix mobile-lang-switch positionnement + masquage float-call quand menu mobile ouvert
 
 ### Contexte
