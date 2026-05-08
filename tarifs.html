@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-08 08:56 -->
+<!-- Last update: 2026-05-08 19:00 -->
 <html lang="fr">
 <head>
 <!-- Google Tag Manager -->
@@ -307,15 +307,24 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .option-material-list li { padding-left: 12px; position: relative; }
 .option-material-list li::before { content: "•"; position: absolute; left: 0; color: var(--cyan); font-weight: 700; }
 /* Switch "Vue technique" : interrupteur on/off élégant */
-.tech-switch { display: inline-flex; align-items: center; gap: 10px; margin-top: 16px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
-.tech-switch input { position: absolute; opacity: 0; pointer-events: none; }
-.tech-switch-text { font-size: 13px; font-weight: 500; color: var(--ink-muted); transition: color .2s ease; }
-.tech-switch-slider { position: relative; width: 38px; height: 22px; background: var(--border); border-radius: 22px; transition: background .25s ease; flex-shrink: 0; }
-.tech-switch-slider::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .25s ease; }
-.tech-switch input:checked ~ .tech-switch-slider { background: var(--cyan); }
-.tech-switch input:checked ~ .tech-switch-slider::before { transform: translateX(16px); }
-.tech-switch input:checked + .tech-switch-slider { background: var(--cyan); }
-.tech-switch:hover .tech-switch-text { color: var(--ink); }
+/* Bandeau "Vue technique" : toggle global qui révèle le matériel détaillé en Step 02, 03 et 04. Visuel dark inversé pour contraster sur la page blanche du configurateur. */
+.tech-banner { display: flex; align-items: center; gap: 16px; padding: 18px 22px; background: linear-gradient(135deg, #1a2332, #0f1825); border: 1px solid rgba(14,165,233,.3); border-radius: 14px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; transition: border-color .2s ease; }
+.tech-banner::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 0% 0%, rgba(14,165,233,.12), transparent 60%); pointer-events: none; }
+.tech-banner:hover { border-color: rgba(14,165,233,.5); }
+.tech-banner.active { border-color: var(--cyan); }
+.tech-banner input { position: absolute; opacity: 0; pointer-events: none; }
+.tech-banner-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.tech-banner-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; letter-spacing: -0.005em; }
+.tech-banner-desc { font-size: 12.5px; color: rgba(255,255,255,.62); font-weight: 400; line-height: 1.5; }
+.tech-banner-slider { position: relative; width: 38px; height: 22px; background: rgba(255,255,255,.18); border-radius: 22px; transition: background .25s ease; flex-shrink: 0; z-index: 1; }
+.tech-banner-slider::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .25s ease; }
+.tech-banner.active .tech-banner-slider { background: var(--cyan); }
+.tech-banner.active .tech-banner-slider::before { transform: translateX(16px); }
+@media (max-width: 540px) {
+  .tech-banner { padding: 16px 18px; gap: 12px; }
+  .tech-banner-title { font-size: 14px; }
+  .tech-banner-desc { font-size: 12px; }
+}
 .tech-base-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
 .tech-base-list { list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink-muted); }
 .tech-base-list li { padding-left: 14px; position: relative; }
@@ -491,8 +500,10 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .step { animation: fadeUp .5s ease both; }
 .step:nth-child(1) { animation-delay: 0s; }
 .step:nth-child(2) { animation-delay: .08s; }
-.step:nth-child(3) { animation-delay: .16s; }
+/* nth-child(3) est désormais le bandeau Vue technique (animé via .tech-banner) */
+.tech-banner { animation: fadeUp .5s ease both; animation-delay: .16s; }
 .step:nth-child(4) { animation-delay: .24s; }
+.step:nth-child(5) { animation-delay: .32s; }
 .summary { animation: fadeUp .5s ease .3s both; }
 
 /* Bandeau économie partenaire : proéminent sous le total */
@@ -735,12 +746,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="included-row"><svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>Vidéo finale remise dès la fin de l'événement</div>
               <div class="included-row"><svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>Paris : 0 € de transport · Province et international au devis</div>
             </div>
-            <!-- Switch "Vue technique" : déploie le matériel détaillé du plateau de base + sous chaque option cochée. Activé automatiquement quand "Je suis une agence" est coché. -->
-            <label class="tech-switch" id="tech-switch-label" for="tech-switch">
-              <span class="tech-switch-text">Vue technique</span>
-              <input type="checkbox" id="tech-switch">
-              <span class="tech-switch-slider"></span>
-            </label>
             <div id="tech-base-details" style="display:none;margin-top:14px;padding:14px 16px;background:rgba(14,165,233,.05);border:1px solid rgba(14,165,233,.15);border-radius:10px;">
               <div class="tech-base-title">Matériel régie &amp; captation</div>
               <ul class="tech-base-list">
@@ -786,6 +791,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
+        <!-- Bandeau "Vue technique" : toggle global qui révèle le matériel détaillé en Step 02, 03 et 04 (plateau base + sous chaque option et add-on cochés). Activé automatiquement quand "Je suis une agence" est coché. -->
+        <label class="tech-banner" id="tech-banner-label" for="tech-switch">
+          <div class="tech-banner-body">
+            <div class="tech-banner-title">Voir le matériel inclus</div>
+            <div class="tech-banner-desc">Micros, trépieds, ordinateur, câblage… le matériel technique prévu pour chaque partie du dispositif.</div>
+          </div>
+          <input type="checkbox" id="tech-switch">
+          <span class="tech-banner-slider"></span>
+        </label>
+
         <!-- 03 -->
         <div class="step">
           <div class="step-header"><span class="step-num">03</span><h3 class="step-title">Options techniques</h3></div>
@@ -817,6 +832,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="addon-desc" id="addon-interviews-desc">Profitez du dispositif déjà en place pour capter des interviews de dirigeants ou collaborateurs. Jusqu'à 3 interviews.</div>
               </div>
               <div class="addon-price">+ 300 €</div>
+            </label>
+
+            <label class="addon-card" data-addon="photographe">
+              <input type="checkbox" id="addon-photographe" aria-describedby="addon-photographe-desc">
+              <div class="addon-check"><svg viewBox="0 0 14 14"><polyline points="2,7 6,11 12,3"></polyline></svg></div>
+              <div class="addon-body">
+                <div class="addon-label">Photographe événementiel</div>
+                <div class="addon-desc" id="addon-photographe-desc">Couverture photo professionnelle de votre événement. Plus de 100 photos éditées, livrées en 24 à 48h via lien de téléchargement.</div>
+              </div>
+              <div class="addon-price" id="addon-photographe-price">+ 1 150 €</div>
             </label>
 
           </div>
@@ -1156,7 +1181,8 @@ const PRICE_CADREUR_HF_BY_DUR = { half: 850, full: 850, "2days": 1700, "3days": 
 // Best-of varie selon la durée de l'événement (montage proportionnel à la matière tournée).
 const ADDON_PRICES = {
   bestof: { half: 1150, full: 1150, "2days": 1650, "3days": 2150 },
-  interviews: 300
+  interviews: 300,
+  photographe: { half: 1150, full: 1150, "2days": 1750, "3days": 2350 }
 };
 
 // Détail technique du matériel pour les add-ons, affiché dans la "Vue technique"
@@ -1177,6 +1203,12 @@ const ADDON_MATERIEL = {
     "Jusqu'à 3 interviews",
     "Montage léger inclus (cuts, raccord, étalonnage de base)",
     "Livraison J+1 en Full HD"
+  ],
+  photographe: [
+    "1× Canon EOS 5D Mark IV ou équivalent",
+    "3× objectifs",
+    "Édition",
+    "Livraison J+1/J+2 via weblink de 100+ photographies"
   ]
 };
 
@@ -1269,7 +1301,7 @@ function refreshTechOptions() {
   });
 }
 
-const state = { event:"conference", duration:"half", options:{}, addons:{ bestof:false, interviews:false }, ttc:false, partnerCode:null, partnerDisplayName:null, platforms:[], isAgence:false, activationOrder:[] };
+const state = { event:"conference", duration:"half", options:{}, addons:{ bestof:false, interviews:false, photographe:false }, ttc:false, partnerCode:null, partnerDisplayName:null, platforms:[], isAgence:false, activationOrder:[] };
 const fmt = n => Math.round(n).toLocaleString("fr-FR");
 const shown = ht => state.ttc ? Math.round(ht * TVA) : Math.round(ht);
 
@@ -1722,6 +1754,11 @@ function computeNaive(stateOverride) {
     addonsHT += ADDON_PRICES.interviews;
     addonLines.push({ id: "interviews", label: "Interviews post-événement", price: ADDON_PRICES.interviews });
   }
+  if (s.addons.photographe) {
+    const price = ADDON_PRICES.photographe[s.duration] || ADDON_PRICES.photographe.half;
+    addonsHT += price;
+    addonLines.push({ id: "photographe", label: "Photographe événementiel", price });
+  }
   totalHT += addonsHT;
 
   // ─── Cadreur HF : ajouté après le plafond et les addons (option premium hors mécanique) ───
@@ -2061,6 +2098,13 @@ function render() {
     bestofPriceEl.textContent = "+ " + fmt(shown(bestofPrice)) + " €";
   }
 
+  // ─── Mise à jour dynamique du prix Photographe dans la card (selon durée sélectionnée) ───
+  const photographePriceEl = document.getElementById("addon-photographe-price");
+  if (photographePriceEl) {
+    const photographePrice = ADDON_PRICES.photographe[state.duration] || ADDON_PRICES.photographe.half;
+    photographePriceEl.textContent = "+ " + fmt(shown(photographePrice)) + " €";
+  }
+
   // Mention "Setup technique sur site" : durée estimée selon la combinaison d'options.
   // getMontageH() retourne toujours ≥ 2h (base) et ≤ 4h (plafond).
   const setupTimeText = document.getElementById("setup-time-text");
@@ -2249,7 +2293,7 @@ function buildOptions() {
 // Mécanique séparée de buildOptions : pas de mécanique partenaire/charm/absorption.
 // Tarif fixe ajouté au total après toute la mécanique principale.
 function buildAddons() {
-  ["bestof", "interviews"].forEach(addonId => {
+  ["bestof", "interviews", "photographe"].forEach(addonId => {
     const card = document.querySelector('.addon-card[data-addon="' + addonId + '"]');
     if (!card) return;
     const checkbox = card.querySelector('input[type="checkbox"]');
@@ -2275,13 +2319,20 @@ function buildAddons() {
       render();
       // GA4 tracking
       const r = compute();
+      const addonLabels = {
+        bestof: "Best-of monté",
+        interviews: "Interviews post-événement",
+        photographe: "Photographe événementiel"
+      };
+      const addonPrice =
+        addonId === "interviews"
+          ? ADDON_PRICES.interviews
+          : (ADDON_PRICES[addonId][state.duration] || ADDON_PRICES[addonId].half);
       pushDataLayer("configurator_addon_toggle", {
         addon_id: addonId,
-        addon_label: addonId === "bestof" ? "Best-of monté" : "Interviews post-événement",
+        addon_label: addonLabels[addonId],
         action: state.addons[addonId] ? "check" : "uncheck",
-        price: addonId === "bestof"
-          ? (ADDON_PRICES.bestof[state.duration] || ADDON_PRICES.bestof.half)
-          : ADDON_PRICES.interviews,
+        price: addonPrice,
         cart_total: r.totalHT
       });
     });
@@ -2600,11 +2651,15 @@ render();
 // Active body.classList "tech-mode" qui révèle :
 //   - le bloc <div id="tech-base-details"> (matos plateau de base)
 //   - les <div class="option-material"> sous chaque option cochée (CSS rule .tech-mode .option.active .option-material)
+//   - les <div class="addon-material"> sous chaque add-on coché (CSS rule .tech-mode .addon-card.active .addon-material)
+// Pilote aussi la classe .active sur le bandeau Vue technique pour le feedback visuel (bordure cyan, slider cyan).
 function setTechMode(on) {
   const switchInput = document.getElementById("tech-switch");
   const baseDetails = document.getElementById("tech-base-details");
+  const banner = document.getElementById("tech-banner-label");
   if (switchInput) switchInput.checked = !!on;
   if (baseDetails) baseDetails.style.display = on ? "block" : "none";
+  if (banner) banner.classList.toggle("active", !!on);
   document.body.classList.toggle("tech-mode", !!on);
 }
 (function() {
