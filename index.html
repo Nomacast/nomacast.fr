@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-08 08:56 -->
+<!-- Last update: 2026-05-07 19:00 -->
 <html lang="fr">
 <head>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -358,6 +358,8 @@ body {
   color: var(--ink);
   background: var(--white);
   line-height: 1.65;
+  overflow-x: hidden;
+  max-width: 100vw;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -438,6 +440,54 @@ nav.scrolled {
   transition: background 0.2s, transform 0.15s !important;
 }
 .nav-cta:hover { background: var(--cyan-hover) !important; transform: translateY(-1px); }
+
+/* Switcher de langue FR/EN */
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding: 6px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+  list-style: none;
+}
+.lang-switch a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.lang-switch a:hover { color: var(--cyan); background: var(--cyan-light); }
+.lang-switch a.active { color: var(--cyan); pointer-events: none; }
+.lang-switch .lang-sep { color: var(--ink-faint); font-weight: 400; user-select: none; }
+
+.mobile-lang-switch {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0 8px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.mobile-lang-switch a {
+  color: rgba(255,255,255,0.65);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.mobile-lang-switch a.active { color: var(--cyan); pointer-events: none; }
+.mobile-lang-switch a:hover { color: #fff; }
+.mobile-lang-switch .lang-sep { color: rgba(255,255,255,0.3); }
 
 /* ════════════════════════════════
    HERO
@@ -1672,19 +1722,6 @@ body.menu-open .mobile-overlay-links li:nth-child(5){transition-delay:.3s}
 @media(max-width:768px){.burger-btn{display:flex}}
 @media(min-width:769px){.mobile-overlay{display:none!important}body.menu-open{overflow:auto!important}}
 
-
-/* Switcher de langue FR/EN */
-.lang-switch{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:6px 4px;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-muted);list-style:none}
-.lang-switch a{color:var(--ink-muted);text-decoration:none;padding:4px 6px;border-radius:4px;transition:color .15s,background .15s}
-.lang-switch a:hover{color:var(--cyan);background:rgba(90,152,214,.08);text-decoration:none}
-.lang-switch a.active{color:var(--cyan);pointer-events:none}
-.lang-switch .lang-sep{color:var(--ink-faint);font-weight:400;user-select:none}
-.mobile-lang-switch{display:flex;justify-content:center;align-items:center;gap:14px;margin:18px 0 8px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;letter-spacing:.04em}
-.mobile-lang-switch a{color:rgba(255,255,255,.65);text-decoration:none;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s}
-.mobile-lang-switch a.active{color:var(--cyan);pointer-events:none}
-.mobile-lang-switch a:hover{color:#fff}
-.mobile-lang-switch .lang-sep{color:rgba(255,255,255,.3)}
-@media(max-width:768px){.lang-switch{display:none}}
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
@@ -1703,7 +1740,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <li><a href="#agences">Agences</a></li>
     <li><a href="#faq">FAQ</a></li>
     <li><a href="#contact" class="nav-cta">Devis sous 24h</a></li>
-      <li class="lang-switch" aria-label="Choisir la langue">
+    <li class="lang-switch" aria-label="Choisir la langue">
       <a href="" class="active" aria-current="page">FR</a>
       <span class="lang-sep" aria-hidden="true">·</span>
       <a href="/en/index.html" hreflang="en" lang="en">EN</a>
@@ -1729,13 +1766,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <li><a href="#faq">FAQ</a></li>
     <li><a href="#contact" class="mobile-cta">Devis sous 24h</a></li>
   </ul>
-    <div class="mobile-lang-switch" aria-label="Choisir la langue">
+  <div class="mobile-overlay-footer">
+    <a href="tel:+33660541732">06 60 54 17 32</a> · <a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
+  </div>
+  <div class="mobile-lang-switch" aria-label="Choisir la langue">
     <a href="" class="active" aria-current="page">FR</a>
     <span class="lang-sep" aria-hidden="true">·</span>
     <a href="/en/index.html" hreflang="en" lang="en">EN</a>
-  </div>
-  <div class="mobile-overlay-footer">
-    <a href="tel:+33660541732">06 60 54 17 32</a> · <a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
   </div>
 </div>
 
@@ -2515,7 +2552,7 @@ const SITE_DATA = {
     { nom: "Global Industrie", logo_url: "https://nomacast.fr/images/logos/global-industrie.png", alt: "Global Industrie", cas_url: "cas-client-gl-events.html" },
     { nom: "Brainsonic", logo_url: "https://nomacast.fr/images/logos/brainsonic.png", alt: "Brainsonic" },
     { nom: "Swapcard", logo_url: "https://nomacast.fr/images/logos/swapcard.png", alt: "Swapcard" },
-    { nom: "Partie Socialiste", logo_url: "https://nomacast.fr/images/logos/parti-socialiste.png", alt: "Partie Socialiste" },
+    { nom: "Parti Socialiste", logo_url: "https://nomacast.fr/images/logos/parti-socialiste.png", alt: "Parti Socialiste" },
     { nom: "ESRI", logo_url: "https://nomacast.fr/images/logos/esri.jpeg", alt: "Esri" },
     { nom: "DEXT", logo_url: "https://nomacast.fr/images/logos/dext.png", alt: "DEXT" },
     { nom: "Peech Studio", logo_url: "https://nomacast.fr/images/logos/peech-studio.png", alt: "Peech Studio" },
