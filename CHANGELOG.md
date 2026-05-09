@@ -1,3 +1,122 @@
+# Nomacast — Diffs complémentaires du 9 mai 2026 (LOT 2 — pages thank-you)
+
+Ce complément patche `merci.html` et `en/thank-you.html` après audit du tracking de conversion. À déployer en plus du premier zip `nomacast-patches-2026-05-09.zip`.
+
+---
+
+## Bug détecté
+
+**Constat** : 1 conversion enregistrée dans Google Ads sur `devis-captation-evenement.html` mais **aucun mail Resend reçu**. Pourtant les tests directs depuis `index.html` reçoivent bien le mail.
+
+**Cause** : le script de tracking sur `merci.html` et `en/thank-you.html` poussait `dataLayer.push({event:'form_submit'})` à **chaque chargement de la page**, peu importe la provenance. Donc :
+
+- Une visite directe de `/merci.html` (vieux bookmark, lien partagé Slack/email, robot crawler ignorant le `noindex`) déclenchait l'event GTM
+- La balise Google Ads se déclenchait → conversion comptée
+- Mais aucun formulaire n'avait été soumis → `envoyer.php` jamais appelé → **pas de mail**
+
+**Preuve** : la Pages Function `envoyer.php.js` redirige toujours avec un paramètre `?type=devis` ou `?type=agence` après une vraie soumission validée (Turnstile + honeypot + champs). Donc une visite SANS ce paramètre = pas une vraie soumission.
+
+---
+
+## Fix appliqué — `merci.html` et `en/thank-you.html`
+
+### 1. Garde-fou anti-conversion fantôme
+
+Le script ne déclenche désormais l'event `form_submit` **que si** le paramètre `type` est présent dans l'URL :
+
+```js
+// AVANT
+var formType = params.get('type') || 'devis'; // par défaut 'devis'
+window.dataLayer.push({event:'form_submit', form_type:formType});
+
+// APRÈS
+var formType = params.get('type');
+if (!formType) return; // visite directe sans soumission valide → pas de conversion
+window.dataLayer.push({event:'form_submit', form_type:formType});
+```
+
+**Effet** : seules les vraies soumissions (qui passent par `envoyer.php` et sont redirigées avec `?type=...`) déclencheront une conversion. Plus aucune conversion fantôme.
+
+### 2. Suppression du switcher de langue visible
+
+L'UI affichait un toggle `FR · EN` qui n'avait pas de sens sur ces pages destinations one-way (l'utilisateur a soumis en FR, aucune raison qu'il bascule en EN). Bloc HTML supprimé sur les deux pages.
+
+### 3. Suppression des balises `hreflang` dans le `<head>`
+
+Sans effet SEO réel (les pages sont en `noindex, nofollow`) mais incohérent avec le retrait du switcher visible. 3 balises supprimées par fichier :
+```html
+<link rel="alternate" hreflang="fr" ...>
+<link rel="alternate" hreflang="en" ...>
+<link rel="alternate" hreflang="x-default" ...>
+```
+
+`<link rel="canonical">` est conservé (utile en cas de partage de l'URL).
+
+---
+
+## Routage FR / EN automatique : déjà en place
+
+**Confirmation après audit des 31 formulaires du site** : la mécanique de redirection automatique fonctionne déjà via la Pages Function `envoyer.php.js`.
+
+Audit synthétique :
+- **Toutes les pages FR** : `<form action="envoyer.php">` sans field `lang` → fallback FR par défaut → redirection vers `merci.html` ✓
+- **Toutes les pages EN** : `<form action="../envoyer.php">` avec `<input type="hidden" name="lang" value="en">` → redirection vers `en/thank-you.html` ✓
+- Turnstile présent sur 100 % des formulaires ✓
+- Honeypot présent sur 100 % des formulaires ✓
+
+**Aucune action requise** sur les formulaires des autres pages.
+
+---
+
+## Test recommandé après déploiement
+
+1. **Test 1 — soumission FR** : aller sur `https://www.nomacast.fr/index.html`, remplir le formulaire de bas de page, soumettre.
+   - Attendu : redirection vers `merci.html?type=devis`
+   - Vérifier : mail reçu côté `evenement@nomacast.fr` (et `agences@nomacast.fr` si is_agence=1)
+   - Vérifier dans GA4 (Temps réel) : event `form_submit` avec `form_type=devis`
+
+2. **Test 2 — soumission EN** : aller sur `https://www.nomacast.fr/en/`, remplir, soumettre.
+   - Attendu : redirection vers `en/thank-you.html?type=devis`
+   - Vérifier : mail reçu avec préfixe `[EN]` au sujet
+   - Vérifier dans GA4 : event `form_submit` avec `form_type=devis`
+
+3. **Test 3 — visite directe** (validation du fix) : aller directement sur `https://www.nomacast.fr/merci.html` (sans paramètre URL).
+   - Attendu : aucun event `form_submit` dans GA4 / aucune conversion comptée dans Ads
+   - Vérifier dans GTM Preview que la balise Form Submit ne s'est PAS déclenchée
+
+---
+
+## Effet attendu sur les rapports
+
+- Les conversions Ads vont devenir **plus précises** (plus de comptage fantôme)
+- Le ratio "conversions Ads ↔ mails Resend reçus" devrait être de 1:1 (à 5 % près sur les blocages CDN/cookies)
+- À surveiller : si le compteur de conversions chute brutalement, c'est qu'une part significative venait des fantômes — confirmé par les data Resend (qui sont la vérité absolue : 1 mail = 1 vraie soumission).
+
+---
+
+## Entrée CHANGELOG suggérée (à ajouter à celle du LOT 1)
+
+```markdown
+## Lot 2 — Fix tracking conversion fantôme + nettoyage pages thank-you
+
+**Bug détecté** : conversion Google Ads comptée sur `devis-captation-evenement.html` sans mail Resend reçu. Cause : script de `merci.html` / `en/thank-you.html` qui poussait l'event `form_submit` à chaque chargement de page, peu importe la provenance (vieux bookmark, lien partagé, robot ignorant le noindex → conversion fantôme).
+
+**Fix** : ajout d'un garde-fou — l'event `form_submit` ne se déclenche QUE si le paramètre `?type=` est présent dans l'URL (paramètre ajouté par `envoyer.php` après validation serveur Turnstile + honeypot + champs). Une visite directe sans soumission valide ne compte plus comme conversion.
+
+**Nettoyage UX** : suppression du switcher de langue visible (FR · EN) sur ces 2 pages destinations one-way. L'utilisateur n'a aucune raison de basculer de langue après soumission. Suppression aussi des 3 balises `<link rel="alternate" hreflang="...">` dans le `<head>` (sans effet SEO sur des pages noindex, mais cohérent).
+
+**Routage FR/EN automatique** : confirmé déjà en place via la Pages Function `envoyer.php.js` qui lit le field caché `lang=en` (présent sur toutes les pages EN, absent sur FR = fallback FR par défaut). Audit complet des 31 formulaires du site validé.
+
+## Décision technique actée
+
+- **Garde-fou anti-conversion fantôme** : règle générale pour toute page de remerciement post-soumission. Le tracking client (GTM dataLayer.push) doit se déclencher conditionnellement selon un signal serveur (paramètre URL, cookie, ou nonce signé) pour distinguer les vraies soumissions des visites directes
+- **`merci.html` et `en/thank-you.html` sont des destinations one-way** : pas de switcher de langue, pas de hreflang dans le `<head>`. Cohérent avec leur statut `noindex, nofollow`
+```
+
+---
+
+**Fin du LOT 2.**
+
 # Nomacast — Diffs du 9 mai 2026
 
 Ce document récapitule l'ensemble des modifications HTML / sitemap appliquées en une session après l'audit complet du 9 mai 2026.
