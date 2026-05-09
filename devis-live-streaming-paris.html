@@ -399,6 +399,7 @@ a:hover { color: var(--cyan-hover); }
 }
 
 /* CLIENTS LOGOS RAIL */
+/* CLIENTS LOGOS RAIL */
 .clients-bar {
   border-bottom: 1px solid var(--border-light);
   padding: 48px var(--h-pad);
@@ -454,6 +455,73 @@ a:hover { color: var(--cyan-hover); }
   width: auto;
   height: auto;
   object-fit: contain;
+}
+
+/* TESTIMONIALS — repris du style index */
+.testimonials-section {
+  padding: clamp(60px, 10vw, 100px) var(--h-pad);
+  background: var(--off-white);
+}
+.testimonials-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+}
+.temoignages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-top: 48px;
+  background: var(--border-light);
+  border-radius: 12px;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .temoignages-grid { grid-template-columns: 1fr; }
+}
+.temo-card {
+  background: var(--white);
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.temo-card:hover { background: #fafcff; }
+.temo-quote {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.65;
+  flex: 1;
+  font-style: italic;
+}
+.temo-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+}
+.temo-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--border-light);
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.temo-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.temo-role {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink-muted);
+  line-height: 1.3;
 }
 
 /* SECTION GENERIC */
@@ -1165,6 +1233,46 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 </div>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-section">
+  <div class="testimonials-inner">
+    <p class="section-eyebrow">Ils en parlent</p>
+    <h2 class="section-title">La parole<br>à mes clients.</h2>
+    <div class="temoignages-grid">
+      <div class="temo-card">
+        <p class="temo-quote">« Un événement d'exception au Louvre ! Nomacast s'est affirmé comme un partenaire exemplaire pour la réalisation et la captation live streaming. Les retours, unanimement positifs, témoignent de la rigueur et de l'excellence des services fournis. »</p>
+        <div class="temo-author">
+          <img class="temo-avatar" src="https://www.nomacast.fr/images/references/haagensen.jpeg" alt="Nils Haagensen" loading="lazy">
+          <div>
+            <div class="temo-name">Nils Haagensen</div>
+            <div class="temo-role">Producteur / Gérant, HVH</div>
+          </div>
+        </div>
+      </div>
+      <div class="temo-card">
+        <p class="temo-quote">« Nomacast est notre partenaire de confiance depuis cinq ans pour les captations et le live streaming. Les retours sont toujours très positifs, témoignant de la qualité des services fournis. »</p>
+        <div class="temo-author">
+          <img class="temo-avatar" src="https://www.nomacast.fr/images/references/marchand.jpeg" alt="Charlotte Marchand" loading="lazy">
+          <div>
+            <div class="temo-name">Charlotte Marchand</div>
+            <div class="temo-role">Directrice événementiel, Morning</div>
+          </div>
+        </div>
+      </div>
+      <div class="temo-card">
+        <p class="temo-quote">« Nous avons travaillé avec Nomacast sur plusieurs de nos projets marketing. Leurs vidéos ajoutent de la valeur à nos initiatives. Une collaboration efficace que nous souhaitons renouveler. »</p>
+        <div class="temo-author">
+          <img class="temo-avatar" src="https://www.nomacast.fr/images/references/dubuisson.jpeg" alt="Adrien Buisson" loading="lazy">
+          <div>
+            <div class="temo-name">Adrien Buisson</div>
+            <div class="temo-role">Directeur Marketing, Figma France &amp; Espagne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- USPs -->
 <section class="section">
