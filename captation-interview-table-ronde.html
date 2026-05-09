@@ -471,10 +471,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </a>
 <section class="page-hero">
   <div class="hero-video-bg" aria-hidden="true">
-    <video autoplay muted loop playsinline preload="auto">
-      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4" type="video/mp4">
-    </video>
+    <video id="heroVideo" autoplay muted loop playsinline preload="auto"></video>
   </div>
+  <script>
+    /* lot2-perf : choix de la source selon viewport (desktop full / mobile compressé), fallback auto */
+    (function(){
+      var v = document.getElementById('heroVideo');
+      if (!v) return;
+      var R2 = 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/';
+      var isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+      var s = document.createElement('source');
+      s.src = R2 + (isMobile ? 'mashup-mobile.mp4' : 'mashup.mp4');
+      s.type = 'video/mp4';
+      s.addEventListener('error', function(){
+        if (isMobile && s.src.indexOf('mashup-mobile') !== -1) {
+          v.removeChild(s);
+          var fb = document.createElement('source');
+          fb.src = R2 + 'mashup.mp4';
+          fb.type = 'video/mp4';
+          v.appendChild(fb);
+          v.load();
+          var p2 = v.play();
+          if (p2 && typeof p2.catch === 'function') p2.catch(function(){});
+        }
+      });
+      v.appendChild(s);
+      v.load();
+      var p = v.play();
+      if (p && typeof p.catch === 'function') p.catch(function(){});
+    })();
+  </script>
   <div class="hero-video-overlay" aria-hidden="true"></div>
   <div class="page-hero-grid" aria-hidden="true"></div>
   <div class="page-hero-inner">
