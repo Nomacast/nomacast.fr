@@ -1,3 +1,83 @@
+## 2026-05-09, Audit hreflang/canonical pré-soumission sitemap + correction des deux homepages FR/EN (mismatch /index.html ↔ /)
+
+### Contexte
+
+Suite à la finalisation du chantier bilingue (entrée 2026-05-08), question utilisateur sur la re-soumission du `sitemap.xml` à Google Search Console et Bing Webmaster Tools. Avant soumission, audit complet de cohérence entre `sitemap.xml` (56 URLs : 28 FR + 28 EN), les 35 fichiers EN du zip livré le 2026-05-08, et la home FR `index.html`.
+
+L'audit a remonté un seul écart structurel mais qui se manifestait dans plusieurs balises : la home EN canonicalisait vers `/en/index.html` alors que le sitemap déclarait `/en/`. Effet miroir partiel côté FR (canonical OK sur `/`, mais `hreflang="en"` et lien de nav EN pointaient vers `/en/index.html`).
+
+### Diagnostic d'audit
+
+#### Cross-check sitemap ↔ fichiers EN (28 URLs déclarées)
+
+- **27 / 28 pages EN** : `<loc>` du sitemap ↔ `canonical` HTML ↔ `hreflang="en"` parfaitement alignés ✓
+- **1 / 28 — homepage EN** : mismatch
+  - `sitemap.xml` : `<loc>https://www.nomacast.fr/en/</loc>`
+  - `en/index.html` : `<link rel="canonical" href="https://www.nomacast.fr/en/index.html">`
+  - Idem pour `hreflang="en"`, `og:url`, schema.org WebSite `url`, schema.org BreadcrumbList `item` (5 occurrences au total dans le `<head>` et les blocs JSON-LD)
+  - Risque : avertissement GSC "Indexée mais avec une URL canonique différente" → consolidation des signaux sur `/en/index.html`, sitemap considéré comme désaligné
+
+#### Pages exclues du sitemap (vérification noindex)
+
+- **6 pages `quote-*`** (devis-* equivalents) : toutes `<meta name="robots" content="noindex, follow">` ✓
+- **`thank-you.html`** : `<meta name="robots" content="noindex, nofollow">` ✓
+- **`quote-live-streaming-paris.html`** (seule quote-* présente dans le sitemap, landing Ads Paris) : `<meta name="robots" content="index, follow">` ✓
+- Comptage cohérent : 35 fichiers EN livrés − 7 noindex = 28 URLs EN dans le sitemap ✓
+
+#### Audit côté FR (home uniquement)
+
+`index.html` analysée :
+- `canonical` → `https://www.nomacast.fr/` ✓ (déjà propre, sans `/index.html`)
+- `og:url` → `https://www.nomacast.fr/` ✓
+- schema.org `url` → `https://www.nomacast.fr/` ✓
+- ⚠️ `hreflang="en"` → `https://www.nomacast.fr/en/index.html` (devrait être `/en/`)
+- ⚠️ Lien de nav `<a hreflang="en">EN</a>` (header) → `href="/en/index.html"` (devrait être `/en/`)
+
+→ 2 occurrences à corriger pour parité avec le sitemap et la nouvelle canonical EN.
+
+### Modifications appliquées
+
+#### `index.html` (FR home) — 2 corrections
+
+- **L21** : `<link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/">` (était `/en/index.html`)
+- **L1717** : `<a href="/en/" hreflang="en" lang="en">EN</a>` (était `/en/index.html`)
+- Timestamp DOCTYPE : `<!-- Last update: 2026-05-09 11:00 -->`
+
+#### `en/index.html` (EN home) — 5 corrections
+
+- **L19** : `<link rel="canonical" href="https://www.nomacast.fr/en/">`
+- **L21** : `<link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/">`
+- **L25** : `<meta property="og:url" content="https://www.nomacast.fr/en/">`
+- **L189** (JSON-LD WebSite) : `"url": "https://www.nomacast.fr/en/"`
+- **L215** (JSON-LD BreadcrumbList, position 1 "Home") : `"item": "https://www.nomacast.fr/en/"`
+- Timestamp DOCTYPE : `<!-- Last update: 2026-05-09 11:00 -->`
+
+Vérification post-édition : `grep -c 'en/index\.html'` → 0 dans les deux fichiers. Le seul résidu textuel `nomacast.fr/en/pricing.html` mentionné dans la FAQ ligne 311 d'`en/index.html` est une URL de page différente (page Pricing), pas un lien vers la home — non concerné.
+
+### Décisions techniques actées
+
+- **Convention canonique pour les homepages** : la home FR utilise la forme courte `https://www.nomacast.fr/`, la home EN utilise `https://www.nomacast.fr/en/`. Aucune référence (canonical, hreflang, og:url, schema.org `url`, schema.org BreadcrumbList `item`, liens de nav internes) ne doit utiliser `/index.html` pour les homepages. Cette règle ne s'applique qu'aux homepages — toutes les autres pages utilisent leur slug `.html` complet et étaient déjà conformes.
+- **Garde-fou pour futures sessions** : avant toute re-soumission de sitemap, faire tourner un cross-check `<loc>` sitemap ↔ `canonical` HTML pour chaque URL déclarée. Le mismatch homepage est passé à travers la livraison du 2026-05-08 (chantier bilingue) précisément parce qu'aucune vérification ne croisait sitemap et HTML.
+- **Cloudflare** (hosting actuel, depuis 2026-05-06) : après chaque changement structurel sur les homepages ou le sitemap, purger le cache au minimum sur `index.html`, `en/index.html` et `sitemap.xml` (Caching → Configuration → Purge Cache). Page Rule recommandée : `Cache Level: Bypass` sur `sitemap.xml` pour éviter qu'une version périmée soit servie à Googlebot.
+- **Page Rules anti-duplicate-content recommandées** (à ajouter dans Cloudflare) : 301 de `*nomacast.fr/index.html` → `*nomacast.fr/` et `*nomacast.fr/en/index.html` → `*nomacast.fr/en/`. Élimine définitivement tout risque de double indexation sur les variantes avec `/index.html`.
+
+### Prochaines étapes (post-déploiement)
+
+1. **Déployer** les 2 fichiers via le workflow Apps Script Drive → GitHub `main` → Cloudflare Pages auto-deploy
+2. **Purger le cache Cloudflare** sur `/`, `/en/`, `/index.html`, `/en/index.html`, `/sitemap.xml`
+3. **Soumettre `sitemap.xml`** à Google Search Console (Sitemaps → Submit) et Bing Webmaster Tools
+4. **Inspecter / demander indexation** dans GSC pour les pages clés EN (homepage, pricing, 2-3 services hub) — accélère la découverte au-delà du sitemap
+5. **Test hreflang** facultatif via https://www.merkle.com/uk/products/technology/hreflang-tags-testing-tool sur `/`, `/en/`, et 2-3 paires de sous-pages pour validation finale
+
+### Fichiers livrés
+
+- `index.html` (FR home, timestamp DOCTYPE `<!-- Last update: 2026-05-09 11:00 -->`)
+- `en/index.html` (EN home, timestamp DOCTYPE `<!-- Last update: 2026-05-09 11:00 -->`)
+
+Aucune modification sur `sitemap.xml` : le fichier est déjà correct, c'est le HTML des deux homepages qui devait s'aligner sur lui.
+
+---
+
 ## 2026-05-08 (post-audit), Ré-application des modifs du 7 mai sur tarifs.html et pricing.html après régression silencieuse
 
 ### Contexte
