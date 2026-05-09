@@ -24,6 +24,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- lot2-perf : preload du poster vidéo (LCP element) -->
 <link rel="preload" as="image" href="../og-image.jpg" fetchpriority="high">
 
+<!-- nomacast-video-v2 : preload conditionnel selon viewport (browser fetch 1 seule version) -->
+<link rel="preload" as="video" type="video/mp4" href="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4" media="(min-width: 769px)">
+<link rel="preload" as="video" type="video/mp4" href="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup-mobile.mp4" media="(max-width: 768px)">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.nomacast.fr/en/">
 <meta property="og:title" content="Nomacast — Corporate event filming &amp; live streaming">
@@ -506,6 +509,12 @@ nav.scrolled {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+/* nomacast-video-v2 : affichage conditionnel des vidéos hero */
+.hero-video-mobile { display: none; }
+@media (max-width: 768px) {
+  .hero-video-desktop { display: none; }
+  .hero-video-mobile { display: block; }
 }
 .hero-video-overlay {
   position: absolute;
@@ -1790,41 +1799,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section id="accueil" aria-label="Nomacast introduction">
   <div class="hero-video-bg" aria-hidden="true">
-    <!-- lot2-perf : adaptive video desktop/mobile, source picked by JS, automatic fallback -->
-    <video id="heroVideo" autoplay muted loop playsinline preload="metadata" poster="../og-image.jpg"></video>
+    <!-- nomacast-video-v2 : 2 balises vidéo, CSS gère l'affichage selon viewport -->
+    <video class="hero-video-desktop" autoplay muted loop playsinline preload="metadata" poster="../og-image.jpg">
+      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4" type="video/mp4">
+    </video>
+    <video class="hero-video-mobile" autoplay muted loop playsinline preload="metadata" poster="../og-image.jpg">
+      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup-mobile.mp4" type="video/mp4">
+    </video>
   </div>
-  <script>
-    /* lot2-perf : pick source based on viewport
-       - desktop (>768px) : mashup.mp4 (full quality)
-       - mobile  (≤768px) : mashup-mobile.mp4 (compressed ~720p)
-       - auto fallback to mashup.mp4 if mashup-mobile.mp4 not found */
-    (function(){
-      var v = document.getElementById('heroVideo');
-      if (!v) return;
-      var R2 = 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/';
-      var isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-      var s = document.createElement('source');
-      s.src = R2 + (isMobile ? 'mashup-mobile.mp4' : 'mashup.mp4');
-      s.type = 'video/mp4';
-      s.addEventListener('error', function(){
-        // fallback : if mashup-mobile.mp4 is not (yet) on R2
-        if (isMobile && s.src.indexOf('mashup-mobile') !== -1) {
-          v.removeChild(s);
-          var fb = document.createElement('source');
-          fb.src = R2 + 'mashup.mp4';
-          fb.type = 'video/mp4';
-          v.appendChild(fb);
-          v.load();
-          var p2 = v.play();
-          if (p2 && typeof p2.catch === 'function') p2.catch(function(){});
-        }
-      });
-      v.appendChild(s);
-      v.load();
-      var p = v.play();
-      if (p && typeof p.catch === 'function') p.catch(function(){});
-    })();
-  </script>
   <div class="hero-video-overlay" aria-hidden="true"></div>
 
   <div class="hero-grid-bg" aria-hidden="true"></div>
@@ -2353,7 +2335,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <label style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px;background:rgba(90,152,214,0.06);border:1px solid rgba(90,152,214,0.2);border-radius:8px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.8);line-height:1.5;">
         <input type="checkbox" id="is_agence" name="is_agence" value="1" style="margin-top:2px;accent-color:var(--cyan);flex-shrink:0;">
-        <span>I represent an <strong style="color:#fff;">event or production agency</strong> and would like white-label services. <a href="partner-agencies.html" style="color:var(--cyan);text-decoration:underline;">Learn more</a></span>
+        <span>I represent an <strong style="color:#fff;">event or production agency</strong> and would like white-label services. <a href="partner-agencies.html" style="color:var(--cyan);text-decoration:underline;">See our white-label offer</a></span>
       </label>
       <!-- Cloudflare Turnstile: anti-bot protection -->
       <div class="cf-turnstile" data-sitekey="0x4AAAAAADFA3CK0v2Nj6np8" data-theme="dark" style="margin: 16px 0;"></div>
