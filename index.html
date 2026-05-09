@@ -21,6 +21,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/">
 <link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/">
 
+<!-- lot2-perf : preload du poster vidéo (LCP element) -->
+<link rel="preload" as="image" href="og-image.jpg" fetchpriority="high">
+
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.nomacast.fr/">
 <meta property="og:title" content="Nomacast — Tournage vidéo d'événement d'entreprise">
@@ -325,7 +328,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- lot2-perf : chargement async des Google Fonts (gain ~350ms FCP mobile) -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1762,10 +1767,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section id="accueil" aria-label="Présentation Nomacast">
   <div class="hero-video-bg" aria-hidden="true">
-    <video autoplay muted loop playsinline preload="metadata" poster="og-image.jpg">
-      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4" type="video/mp4">
-    </video>
+    <!-- lot2-perf : video adaptive desktop/mobile, source choisie par JS, fallback automatique -->
+    <video id="heroVideo" autoplay muted loop playsinline preload="metadata" poster="og-image.jpg"></video>
   </div>
+  <script>
+    /* lot2-perf : choix de la source selon viewport
+       - desktop (>768px) : mashup.mp4 (qualité full)
+       - mobile  (≤768px) : mashup-mobile.mp4 (compressé ~720p)
+       - fallback auto sur mashup.mp4 si mashup-mobile.mp4 introuvable */
+    (function(){
+      var v = document.getElementById('heroVideo');
+      if (!v) return;
+      var R2 = 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/';
+      var isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+      var s = document.createElement('source');
+      s.src = R2 + (isMobile ? 'mashup-mobile.mp4' : 'mashup.mp4');
+      s.type = 'video/mp4';
+      s.addEventListener('error', function(){
+        // fallback : si mashup-mobile.mp4 n'est pas (encore) sur R2
+        if (isMobile && s.src.indexOf('mashup-mobile') !== -1) {
+          v.removeChild(s);
+          var fb = document.createElement('source');
+          fb.src = R2 + 'mashup.mp4';
+          fb.type = 'video/mp4';
+          v.appendChild(fb);
+          v.load();
+          var p2 = v.play();
+          if (p2 && typeof p2.catch === 'function') p2.catch(function(){});
+        }
+      });
+      v.appendChild(s);
+      v.load();
+      var p = v.play();
+      if (p && typeof p.catch === 'function') p.catch(function(){});
+    })();
+  </script>
   <div class="hero-video-overlay" aria-hidden="true"></div>
 
   <div class="hero-grid-bg" aria-hidden="true"></div>
