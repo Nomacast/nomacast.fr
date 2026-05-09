@@ -440,6 +440,13 @@ nav.scrolled {
   transition: background 0.2s, transform 0.15s !important;
 }
 .nav-cta:hover { background: var(--cyan-hover) !important; transform: translateY(-1px); }
+/* nav-cta-fix-v1 — Fix bouton Devis sous 24h header (769-1024px wrap) */
+.nav-links a, .nav-cta { white-space: nowrap; }
+.nav-cta { flex-shrink: 0; }
+@media (max-width: 1024px) and (min-width: 769px) {
+  .nav-links { gap: 18px; }
+}
+
 
 /* Switcher de langue FR/EN */
 .lang-switch {
