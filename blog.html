@@ -66,6 +66,13 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .nav-links a{font-size:14px;color:var(--ink-muted);text-decoration:none}
 .nav-links a:hover{color:var(--ink);text-decoration:none}
 .nav-cta{background:var(--cyan)!important;color:#fff!important;padding:10px 22px!important;border-radius:6px!important;font-weight:600!important}
+/* nav-cta-fix-v1 — Fix bouton Devis sous 24h header (769-1024px wrap) */
+.nav-links a, .nav-cta { white-space: nowrap; }
+.nav-cta { flex-shrink: 0; }
+@media (max-width: 1024px) and (min-width: 769px) {
+  .nav-links { gap: 18px; }
+}
+
 
 .page-hero{padding:140px var(--h-pad) 70px;background:var(--navy);position:relative;overflow:hidden}
 .page-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(14,165,233,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.06) 1px,transparent 1px);background-size:48px 48px;opacity:.7}
