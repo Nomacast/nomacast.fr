@@ -54,6 +54,13 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .nav-links a:hover{color:var(--ink)}
 .nav-cta{background:var(--cyan)!important;color:var(--white)!important;padding:10px 22px!important;border-radius:6px!important;font-weight:600!important;font-size:14px!important;transition:background .2s,transform .15s!important}
 .nav-cta:hover{background:var(--cyan-hover)!important;transform:translateY(-1px)}
+/* nav-cta-fix-v1 — Fix bouton Devis sous 24h header (769-1024px wrap) */
+.nav-links a, .nav-cta { white-space: nowrap; }
+.nav-cta { flex-shrink: 0; }
+@media (max-width: 1024px) and (min-width: 769px) {
+  .nav-links { gap: 18px; }
+}
+
 .nav-tel-mobile{display:none;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--cyan);text-decoration:none}
 .nav-tel-mobile svg{width:16px;height:16px}
 .float-call{display:none;position:fixed;bottom:24px;right:20px;z-index:99;background:var(--cyan);color:#fff;border-radius:100px;padding:14px 20px;font-family:var(--font-body);font-size:15px;font-weight:600;text-decoration:none;box-shadow:0 4px 24px rgba(14,165,233,.45);align-items:center;gap:8px;transition:transform .2s}
