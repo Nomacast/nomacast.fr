@@ -1,99 +1,208 @@
-## 2026-05-09 (Google Ads + landing pages), Refonte des 7 pages devis-* et optimisation de la campagne FR (Nomacast | Conversions)
+# 2026-05-09 — Campagne Google Ads EN créée + raffinements FR + dispositif complet
 
-### Contexte
+## Contexte
 
-Audit Google Ads FR sur la fenêtre 12 avr – 8 mai 2026 : 211 impressions, 13 clics, CTR 6,16 %, **0 conversion**. Session combinée pages d'atterrissage + paramètres campagne. Objectifs : aligner toutes les LP ads sur un template conversion-first (form en haut, KPIs, testimonials, tracking précis), puis finaliser la configuration de la campagne FR avant lancement Phase 2 (campagne EN).
+Seconde session du jour, prolongement direct de la session précédente qui a finalisé l'optimisation de la campagne FR (cf. entrée `2026-05-09-google-ads`). Trois objectifs : (1) créer ex nihilo la campagne en anglais pour adresser les marchés EN-speaking, (2) corriger les imperfections relevées par Jérôme sur les sitelinks FR après recul d'usage, (3) cadrer le calendrier annuel intégrant l'arrêt estival (juillet-août) et la haute saison de rentrée. La session aboutit à un dispositif Google Ads complet sur les 2 campagnes (FR et EN), prêt à tourner jusqu'à la pause estivale.
 
-### Refonte des 7 pages devis-*
+## Modifications appliquées
 
-Template unique appliqué :
-- Hero navy avec vidéo `mashup.mp4` en fond + overlay aligné sur l'index (`.65/.50/.75`) + poster `og-image.jpg` pour first paint instantané
-- 3 KPI pills façon index (À partir de 1 500 € HT / Installation en 2h / Devis sous 24h)
-- Section testimonials (3 quotes par page choisis parmi les 7 du fichier d'index, adaptés à la thématique)
-- JS amélioré : capture URL params (gclid, utm_source/medium/campaign/term/content, referrer, landing_page) → injection dans champs cachés du formulaire ; smart prefill du `<select name="type">` selon `utm_term` (ex. `[ag live streaming]` → "Assemblée générale" pré-sélectionné) ; focus auto sur email après clic CTA `#contact` ; bouton submit en état "Envoi en cours…" pour éviter les double-clics
-- `phone_location` dataLayer adapté à chaque page
+### Création de la campagne "Nomacast | Conversions EN"
 
-Pages livrées (FR) :
-- `devis-live-streaming-paris.html` (refonte complète depuis l'ancien template, H1 nouveau "Live streaming d'événement d'entreprise à Paris.")
-- `devis-live-streaming-evenement.html`
-- `devis-captation-conference-seminaire.html`
-- `devis-captation-evenement.html`
-- `devis-emission-live-corporate.html`
-- `devis-captation-table-ronde.html`
-- `devis-captation-4k.html`
+Campagne Search dédiée au marché anglophone, construite from scratch via le wizard Google Ads.
 
-Sur la page Paris : "Live streaming multi-plateformes" déplacé de la liste "Sur demande" vers "Toujours compris" (cohérent avec la thématique de la page) ; FAQ enrichie avec deux nouvelles questions critiques pour le live streaming ("Et si la connexion internet du lieu est défaillante ?" → routeur 5G dédié multi-opérateurs + Starlink en secours ; "Sur quelles plateformes peut-on diffuser ?" → YouTube, LinkedIn, Vimeo, RTMP/SRT privé, etc.).
+**Paramètres globaux**
 
-Versions EN miroir mises à jour côté Jérôme pour cohérence brand.
+- Type : Search, objectif "Prospects" (Leads)
+- Stratégie d'enchère : "Maximiser les clics", CPC max **2,50 €** (vs 2,00 € sur la FR — le marché EN est plus compétitif, notamment sur les requêtes combinant "Paris" et un service)
+- Réseau Display et partenaires de recherche désactivés
+- Langue cible : **English only** (français explicitement décoché)
+- Budget : **8 €/jour** (~240 €/mois). Refus volontaire de la recommandation Google à 13,76 €/jour pour valider d'abord le funnel avant escalade. La recommandation est basée sur les budgets concurrents, pas sur des performances Nomacast inexistantes à ce stade.
 
-### Optimisation de la campagne Google Ads FR (Nomacast | Conversions, groupe Captation)
+**Ciblage géographique** — 19 zones en mode "Présence ou intérêt"
 
-**Annonces RSA**
-- 2e RSA créée (axe confiance/références) en complément de la 1re (axe produit/prix). Chemins à afficher différenciés : 1re annonce → `captation/entreprise`, 2e annonce → `captation/paris`. Mots-clés populaires intégrés dans les titres pour passer le check Google "Insérez des mots clés populaires" : "Captation conférence Paris", "Captation séminaire Paris", "Live streaming événement".
+France entière + 18 villes internationales : Londres, Dublin, Berlin, Munich, Frankfurt, Amsterdam, Bruxelles, Zurich, Genève, Madrid, Barcelone, Milan, Rome, New York, San Francisco, Los Angeles, Toronto, Montréal. Le mode "Présence ou intérêt" capture aussi les prospects qui s'intéressent à un événement à Paris depuis une autre ville.
 
-**Composants (extensions)**
-- 7 sitelinks reconfigurés, **tous pointés vers les pages devis-* convertissantes** (initialement plusieurs pointaient vers les pages SEO long-form sans formulaire en haut, identifié comme un trou dans le funnel). Mapping final : Captation événement → /devis-captation-evenement, Live streaming → /devis-live-streaming-evenement, Captation conférence → /devis-captation-conference-seminaire, Captation table ronde → /devis-captation-table-ronde, Demander un devis → /devis-live-streaming-paris, Contact rapide → /devis-emission-live-corporate, Notre matériel pro → /devis-captation-4k. Descriptions optimisées (≤ 35 caractères chacune).
-- 11 callouts préexistants (mostly génériques, à enrichir ultérieurement avec des accroches plus chiffrées comme "Devis sous 24h", "Connexion 5G dédiée", "15 ans dans le broadcast")
-- 2 extraits structurés actifs (préexistants)
-- **Lead form asset : reporté** (pas activé maintenant — volume insuffisant pour gérer le tri des leads moins qualifiés, à reconsidérer dans 4-6 semaines)
+**Calendrier de diffusion** : Lun-Ven 24h à 100 % (multi-fuseaux internationaux), Sam-Dim à -30 %.
 
-**URL au niveau mot-clé**
-- `[webcast paris]` basculé de `streaming-multi-plateformes.html` (page service SEO) vers `devis-emission-live-corporate.html` (page devis convertissante). Toutes les autres associations URL ↔ mot-clé vérifiées comme cohérentes.
+**Modèle de suivi UTM** identique à la FR :
 
-**Calendrier de diffusion**
-- Lun-Ven 8h-20h : 100 % bid
-- Lun-Ven 20h-8h : -50 % bid
-- Sam et Dim toute la journée : -50 % bid
-- Justification : public B2B essentiellement actif en heures de bureau, économie de budget sur les off-hours moins qualifiés (sans pause totale pour ne pas rater les rares décideurs qui cherchent le week-end).
+```
+{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}
+```
 
-**Valeur de conversion**
-- 200 € par lead (estimation : tarif moyen 1 500 € HT × marge 60 % ÷ taux de transformation lead→client de 1/4 = 225 € arrondi à 200 € par prudence). Indispensable pour la future bascule en stratégie d'enchères automatique.
+### Mots-clés EN (14 au total)
 
-**Règle automatisée "filet de sécurité"**
-- Pause automatique de la campagne si `Coût > 275 €` ET `Conversions < 1` sur fenêtre **30 jours glissants**, déclenchement quotidien 16h-17h, notification email à production@matliveprod.com. Sous le seuil de tolérance utilisateur de 300 €/mois. Note : le plafond Google natif (30,4 × budget journalier) limite déjà la dépense à ~198 €/mois avec le budget actuel de 6,50 €/jour, mais la règle est conservée pour les cas de hausse future du budget.
+10 en correspondance exacte (haute intention, géo-ciblés Paris) : `[live streaming paris]`, `[event live streaming paris]`, `[corporate live streaming]`, `[event filming paris]`, `[video production paris]`, `[conference filming paris]`, `[corporate video paris]`, `[event videographer paris]`, `[webcast paris]`, `[live event production paris]`.
 
-**Tracking template UTM au niveau campagne**
-- Template configuré : `{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}`
-- Test Google passé (4/4 échantillons validés)
-- Couplé au JS injecté dans les 7 pages devis-* qui capture ces UTMs et les met dans les champs cachés du formulaire → réception dans le mail de devis avec source précise du lead (mot-clé exact qui a converti)
+4 en expression exacte (variantes plus larges) : `"live streaming events"`, `"corporate event filming"`, `"professional live streaming"`, `"event production paris"`.
 
-**Audiences en mode Observation (7 segments)**
-- Mode Observation = collecte de données sans restriction de diffusion (vs Ciblage qui restreint).
-- Très grande entreprise (10 000+) [démographie] · Voyageurs d'affaires [affinité] · Services de publicité et de marketing [in-market] · Services événementiels [in-market] · Planification d'événements professionnels [in-market] · Emplois de cadres [démographie] · Secteur de la technologie [démographie]
-- "Petite entreprise (1-249)" volontairement écartée (trop large, inclut les TPE qui n'ont pas le budget pour le tarif de départ à 1 500 €).
-- Données démographiques par âge déjà visibles dans les rapports : tranche **35-44 ans = meilleure performance** (10 % CTR), cohérent avec un profil DAF/DirCom/Resp. événementiel.
+Aucun mot-clé en requête large, par cohérence avec la stratégie de précision FR.
 
-**Sécurité / contrôle**
-- "Recommandations appliquées automatiquement" désactivées (Google ne peut plus modifier la campagne sans validation manuelle).
-- DSA (Annonces Dynamiques du Réseau de Recherche) : vérifié comme **non actives**. Le libellé "Ciblage automatique sur le Réseau de Recherche" affiché dans les paramètres campagne est un texte par défaut (le champ Website source est vide et aucun groupe d'annonces de type Dynamic n'existe — la fonctionnalité ne peut donc pas servir).
-- Composants créés automatiquement, mots-clés en requête large : déjà désactivés (préexistant, conservé).
+### 2 annonces RSA EN dans le groupe "Captation"
 
-### Décisions techniques actées
+**Annonce 1 — Axe produit/prix**
+- URL finale : `/en/quote-live-streaming-paris.html`
+- Chemin affiché : `streaming/paris`
+- 15 titres, 4 descriptions
+- Argumentaires : tarif (€1,500), équipement (3x 4K + 5G), délai (24h), formats de diffusion
 
-- **Pages devis-* en `noindex, follow`** : accessibles aux ads (URL directes) mais cachées du SEO. Les pages SEO long-form (sans préfixe `devis-`, ex. `captation-conference-seminaire.html` vs `devis-captation-conference-seminaire.html`) restent indexables pour le trafic organique. Séparation structurelle volontaire entre LP ads et pages SEO.
-- **Stratégie d'enchères "Maximiser les clics" maintenue** jusqu'à atteindre 15-30 conversions sur 30 jours. Bascule prévue vers "Maximiser les conversions" à ce moment-là — le compteur de conversion (via GTM) et la valeur 200 €/conv sont déjà configurés pour permettre cette bascule sans perte de signal.
-- **Tracking template UTM ≠ tag de conversion Google Ads via GTM** (complémentaires, pas redondants) : le tag GTM dit à Google **combien** de leads (alimente l'optimisation algorithmique), le tracking template dit à Jérôme **quel mot-clé exact** a apporté chaque lead (alimente le pilotage commercial via la lecture du mail de devis). Les deux sont indispensables et n'occupent pas la même fonction.
-- **Lead form asset reporté** : non activé. Avantages connus (+15-25 % conversions B2B documenté, capture des leads mobile qui rebondiraient) mais inconvénients prohibitifs au stade actuel (leads moins qualifiés, pas de tracking UTM côté CRM, téléchargement manuel ou webhook obligatoire). À reconsidérer après 4-6 semaines de données sur les pages refondues.
-- **Brand + Agences Partenaires** : groupes d'annonces conservés en pause. Brand à réactiver dès que des recherches "Nomacast" émergent dans le rapport "Termes de recherche" (probable d'ici 2-3 mois avec la croissance de la marque). Agences Partenaires à réactiver dans le cadre d'une campagne ABM dédiée plus tard.
-- **Règle de pause automatique calibrée à 275 €** : sous le seuil 300 € de tolérance utilisateur, marge de sécurité de 25 €. Fenêtre 30 jours glissants (pas "Toutes les données" — sinon l'historique pèse à vie et la règle se déclencherait abusivement). Si déclenchement, réactivation manuelle reste possible depuis l'interface.
+**Annonce 2 — Axe confiance/références** (complémentaire pour A/B test)
+- URL finale identique
+- Chemin affiché : `streaming/events` (différent d'Ad 1 pour distinction A/B)
+- 15 titres, 4 descriptions
+- Argumentaires : 15 ans de TV broadcast, références premium (Le Louvre, Figma, Comédie-Française, J&J), single point of contact, no subcontractors
 
-### Tests à effectuer post-déploiement (après propagation Cloudflare)
+Aucun titre épinglé : Google rotère librement les 15 × 4 combinaisons.
 
-- Soumission de formulaire sur prod avec URL test type `https://www.nomacast.fr/devis-captation-conference-seminaire.html?gclid=test123&utm_source=google&utm_medium=cpc&utm_term=ag+live+streaming` → vérifier que le mail reçu contient les nouveaux champs cachés (gclid, utm_term, utm_source, utm_campaign, landing_page) et que le select Type d'événement a été pré-sélectionné automatiquement sur "Assemblée générale".
-- Test de Turnstile : OK désormais sur prod (échouait en local `file://`, comportement attendu — la clé `0x4AAAAAADFA3CK0v2Nj6np8` est liée au domaine `nomacast.fr`).
+### Composants au niveau campagne EN
 
-### Fichiers livrés (déployés par Jérôme côté Cloudflare Pages)
+**7 sitelinks** (URLs vérifiées contre la liste réelle des fichiers `/en/quote-*.html` après que Jérôme ait fourni le listing du dossier — apprentissage de la session : ne plus déduire d'URL par pattern).
 
-- 7 pages FR : `devis-live-streaming-paris.html`, `devis-live-streaming-evenement.html`, `devis-captation-conference-seminaire.html`, `devis-captation-evenement.html`, `devis-emission-live-corporate.html`, `devis-captation-table-ronde.html`, `devis-captation-4k.html`
-- 7 pages EN miroir mises à jour côté Jérôme (alignement de structure)
+| Texte | URL |
+|---|---|
+| Event Filming | `/en/quote-event-filming.html` |
+| Conference Filming | `/en/quote-conference-seminar-filming.html` |
+| Event Live Streaming | `/en/quote-event-live-streaming.html` |
+| Corporate Live Show | `/en/quote-corporate-live-show.html` |
+| Roundtable Filming | `/en/quote-interview-roundtable-filming.html` |
+| Pricing Estimate | `/en/pricing.html` (simulateur = vraie page de conversion) |
+| Get a Quote | `/en/quote-live-streaming-paris.html` |
 
-### Prochaine étape
+**10 callouts** (info-bulles non cliquables) : Quote in 24 hours, Setup in 2 hours, From €1,500 (excl. VAT), 3x 4K cameras, 5G dedicated connection, Same-day delivery, 15 years broadcast TV, Single point of contact, Owned equipment 100%, Multi-platform streaming.
 
-Observation des résultats sur 7-10 jours. Selon les données :
-1. Conversions ≥ 5 sur 30 jours : continuer observation, préparer la bascule en "Maximiser les conversions" et l'enrichissement des callouts génériques par des accroches chiffrées
-2. Conversions = 0 sur 30 jours : la règle automatique pause la campagne au seuil 275 €, diagnostic approfondi (qualité du trafic ? page de destination ? formulaire ?)
-3. Lead form asset : à reconsidérer une fois le volume stabilisé
-4. Phase 2 — campagne EN : à lancer une fois la campagne FR stabilisée (document opérationnel `nomacast-google-ads-en-setup.md` déjà rédigé en début de session, prêt à exécution)
+**8 extraits structurés** sous l'en-tête "Services" : Event filming, Live streaming, Conference & seminar, Corporate live show, 4K filming, Multi-cam setup, Professional webcast, Roundtable & interview.
+
+### Audiences EN en mode Observation (7)
+
+7 audiences ajoutées au niveau campagne EN pour data exploratoire (mode Observation, pas Ciblage — aucune restriction de reach, juste enregistrement des perfs par segment) :
+
+1. Très grande entreprise (10 000+ employés)
+2. Voyageurs d'affaires
+3. Services publicitaires et marketing (in-market)
+4. Services évènementiels (in-market)
+5. Planification d'événements professionnels (in-market)
+6. Emplois de cadres
+7. Industrie technologique
+
+Niveau campagne (vs niveau groupe sur la FR) — différence cosmétique sans impact diffusion tant qu'il n'y a qu'un seul groupe d'annonces (Captation) dans la campagne EN.
+
+### Raffinements de la campagne FR
+
+Suite au retour terrain de Jérôme indiquant que **"4K" et "live streaming" seuls sont peu cherchés** par ses prospects réels, deux ajustements de précision sur les sitelinks FR :
+
+- **"Live streaming"** → renommé **"Live streaming événement"** (URL `/devis-live-streaming-evenement.html` inchangée). Texte plus spécifique, qui matche mieux la requête type B2B.
+- **"Notre matériel pro"** (qui pointait sur `/devis-captation-4k.html`) → remplacé par **"Calcul de devis"** pointant sur `/tarifs.html`. Le simulateur tarifs est une vraie page de conversion (formulaire intégré), beaucoup plus utile qu'un sitelink trompeur sur sa destination.
+
+### Extraits structurés ajoutés sur la campagne FR
+
+8 valeurs sous l'en-tête "Services" (pendant FR du bloc EN) : Captation événement, Live streaming, Conférence et séminaire, Émission live corporate, Captation 4K, Multi-caméras, Webcast professionnel, Table ronde et interview.
+
+### Expansion géographique de la campagne FR
+
+3 pays francophones européens premium ajoutés à la zone existante France + Île-de-France (+30 % de bid adjustment IDF maintenu) :
+
+- **Belgique** (pays entier, 0 % d'ajustement) — Bruxelles est un hub business UE majeur, capture les multinationales basées en Belgique organisant des événements à Paris
+- **Suisse** (pays entier, 0 % d'ajustement) — Genève + Lausanne (Romandie) = banking, pharma, organisations internationales, marché premium qui matche le positionnement Nomacast
+- **Luxembourg** (pays entier, 0 % d'ajustement) — petit marché mais ultra-rentable, multinationales et banques privées
+
+Quebec, Monaco et Maghreb francophone écartés (timezone, fit incertain, faible volume Paris).
+
+### Filet de sécurité — règle automatique multi-campagne
+
+La règle existante (initialement créée pour la campagne FR avec seuil 275 € sans conversion sur 30 jours roulants) a été étendue pour s'appliquer **à toutes les campagnes**, et non plus seulement à la FR.
+
+**Comportement** : Google évalue chaque campagne **indépendamment**, pas sur la somme. Donc :
+- FR seule dépasse 275 € sans conversion → FR pause
+- EN seule dépasse 275 € sans conversion → EN pause
+- Les deux campagnes sont protégées par la même règle, sans risque d'interaction croisée
+
+**Effet calibré différemment selon budget** :
+- FR (195 €/mois) : protection à 1,41× budget mensuel — déclenchement après ~6 semaines sans conversion
+- EN (240 €/mois) : protection à 1,15× budget mensuel — déclenchement après ~5 semaines sans conversion
+
+La protection plus stricte sur la EN est un effet de bord assumé : campagne nouvelle sans historique = freinage plus rapide pertinent. Pas de duplication de règle nécessaire.
+
+## Décisions techniques actées
+
+- **Aucune utilisation de l'IA generator Google** ni pour les mots-clés ni pour les composants — risque réel de pollution avec mots-clés en requête large et titres génériques. Configuration 100 % manuelle revendiquée.
+- **Sitelinks : URLs vérifiées avant saisie** contre la liste des fichiers réels du serveur. Seul `/en/quote-live-streaming-paris.html` figurait dans le sitemap (les 6 autres pages devis EN sont en `noindex, follow`, comportement intentionnel comme côté FR).
+- **`/pricing.html` (et `/tarifs.html` côté FR) promus comme cibles de sitelink** : ce sont des simulateurs avec formulaire intégré, donc de vraies pages de conversion, pas des pages informatives.
+- **CPC max EN à 2,50 € vs FR 2,00 €** : marché plus compétitif sur les combinaisons "Paris + service" en anglais, justifie le surcoût pour rester compétitif.
+- **`/pricing` plutôt que `/quote-4k-filming` dans les sitelinks EN** : "4K" est un signal technique peu utilisé par les prospects, "Pricing" est universellement cherché en B2B.
+- **Une seule règle automatique multi-campagne plutôt que deux règles séparées** : mécanisme d'évaluation par campagne indépendante chez Google, donc protection effective sur les 2 campagnes sans duplication.
+- **Audiences EN au niveau campagne** : choix par défaut, sans impact diffusion tant qu'il n'y a qu'un seul groupe d'annonces dans la EN. Possibilité de basculer au niveau groupe ultérieurement si besoin de symétrie reporting avec la FR.
+
+## Calendrier saisonnier annuel validé
+
+Stratégie de pilotage budgétaire calée sur la saisonnalité B2B française et sur la disponibilité de Jérôme.
+
+| Période | FR | EN | Total/jour | Logique |
+|---|---|---|---|---|
+| Mai-Juin (peak printemps) | 6,50 € | 8 € | 14,50 € | Saison haute conférences/séminaires |
+| Juillet-Août (off) | 0 € | 0 € | **0 €** | Jérôme en vacances + France à l'arrêt en août |
+| Sept-Oct (rentrée + peak) | 6,50-8 € | 8-10 € | 14,50-18 € | Selon perfs du peak printemps |
+| Nov-Déc (fin d'année) | 6,50 € | 8 € | 14,50 € | AG, séminaires, all-hands |
+| Janv-Fév (creux) | 4 € | 4 € | 8 € | Période faible post-fêtes |
+| Mars-Avril (peak printemps) | 6,50-8 € | 8 € | 14,50-16 € | Saison haute |
+
+Économie annuelle projetée vs budget plat : ~25 % (3 800-4 200 € vs 5 200 €).
+
+**Dates-clés actées dans le planning Jérôme**
+
+- **30 juin au soir** : pause des 2 campagnes (bouton Activé/En pause → En pause sur les 2)
+- **25 août (mardi)** : réactivation EN (marché anglo-saxon moins affecté par l'été français)
+- **28 août (vendredi)** : réactivation FR (3-4 jours de warm-up Google avant le pic du 1er septembre)
+
+Logique de réactivation : Google met 48-72 h à reprendre du momentum après une pause longue. Un vendredi 28 permet d'être pleinement opérationnel le lundi 1er septembre, jour où le volume de recherche revient à 100 %.
+
+Justification du refus de "réactiver mi-août" : volume B2B en France pendant le 15-22 août = ~40 % de la normale, avec décideurs en vacances et 15 août férié. Mauvais ROI assuré. La fenêtre 25-28 août capte la vraie reprise mentale des prospects qui briefent leurs équipes pour les events de septembre/octobre.
+
+## Décisions de pilotage selon la performance mai-juin
+
+| Conversions sur mai-juin | Action sept-oct |
+|---|---|
+| 0 conversion | Reviens à 14,50 €/jour stable, réévalue à fin sept |
+| 1-3 conversions | Garde 14,50 € + ajoute Enhanced Conversions et call tracking |
+| 4+ conversions | Passe à 18 €/jour + bascule la FR vers "Maximiser les conversions" (ou Target CPA si ≥30 conversions cumulées) |
+
+## État du dispositif Google Ads à fin de session
+
+| Élément | FR | EN |
+|---|---|---|
+| Campagne Search active | ✅ | ✅ |
+| 2 RSAs (axes produit/confiance) | ✅ | ✅ |
+| 14 mots-clés (10 exact + 4 phrase) | ✅ | ✅ |
+| 7 sitelinks (URLs vérifiées) | ✅ | ✅ |
+| 10 callouts | ✅ | ✅ |
+| 8 extraits structurés (Services) | ✅ | ✅ |
+| Tracking UTM template | ✅ | ✅ |
+| Calendrier diffusion saisonnier | ✅ | ✅ |
+| 7 audiences en mode Observation | ✅ (niveau groupe) | ✅ (niveau campagne) |
+| Filet de sécurité (règle pause 275 €) | ✅ | ✅ (couvert par règle multi-campagne) |
+| Géo expansion | ✅ FR/IDF/BE/CH/LU | ✅ 19 zones internationales |
+
+**Budget total** : 14,50 €/jour (~435 €/mois) jusqu'au 30 juin.
+
+**Tracking conversions** : opérationnel sur les 2 campagnes (UTM template + GTM + envoyer.php avec From: evenement@nomacast.fr).
+
+## Prochaine étape
+
+Le dispositif est complet jusqu'à la pause estivale. Aucune action de configuration restante.
+
+À surveiller en hebdo entre maintenant et fin juin :
+
+- Volume de clics et CTR par campagne, par groupe et par mot-clé
+- Premières conversions sur juin (objectif min : 1-2 leads combinés FR + EN sur le mois)
+- Search Terms Report (rapport sur les termes de recherche) pour identifier les requêtes parasites à mettre en négatif
+- Performance comparée RSA produit/prix vs RSA confiance/références (par campagne) — celle qui domine en CTR + conversion deviendra la référence pour les optimisations d'automne
+- Performance des audiences en Observation : à fin juin, identifier les 2-3 segments qui sur-performent → potentiel passage en Ciblage avec bid adjustment positif à la rentrée
+
+À l'horizon rentrée 2026 (septembre/octobre), selon performance accumulée :
+
+- Activation potentielle de la campagne Brand (actuellement en pause) si volume de recherche sur "Nomacast" devient mesurable
+- Activation potentielle de la campagne Agences Partenaires (actuellement en pause) selon stratégie de prospection
+- Migration de la stratégie d'enchère "Maximiser les clics" vers "Maximiser les conversions" ou Target CPA si ≥30 conversions cumulées
+- Activation des Enhanced Conversions et du call tracking si les premiers leads sont au rendez-vous
 
 ## 2026-05-09 (nettoyage DNS), Suppression résidus LWS dans la zone Cloudflare DNS + alignement DMARC sur alias dédié
 
