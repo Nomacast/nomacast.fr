@@ -21,6 +21,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="alternate" hreflang="fr" href="https://www.nomacast.fr/devis-captation-table-ronde.html">
 <link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/quote-interview-roundtable-filming.html">
 <link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/devis-captation-table-ronde.html">
+<!-- lot8-perf : preload du poster vidéo (LCP element) -->
+<link rel="preload" as="image" href="https://www.nomacast.fr/og-image.webp" fetchpriority="high">
 
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.nomacast.fr/devis-captation-table-ronde.html">
@@ -63,7 +65,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- lot8-perf : chargement async des Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
 <!-- Cloudflare Turnstile -->
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
