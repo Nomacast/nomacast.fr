@@ -17,6 +17,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="alternate" hreflang="fr" href="https://www.nomacast.fr/cas-client-louvre-lahorde.html">
 <link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/case-louvre-lahorde.html">
 <link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/cas-client-louvre-lahorde.html">
+<!-- lot8-perf : preload du poster vidéo (LCP element) -->
+<link rel="preload" as="image" href="../og-image.webp" fetchpriority="high">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://www.nomacast.fr/en/case-louvre-lahorde.html">
 <meta property="og:title" content="(LA)HORDE × Louvre: Nuit des Fous 2025 · Nomacast">
@@ -111,7 +113,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- lot8-perf : chargement async des Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -148,7 +152,13 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 /* HERO */
 .page-hero{padding:140px var(--h-pad) 60px;background:var(--navy);position:relative;overflow:hidden}
 .page-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(14,165,233,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.06) 1px,transparent 1px);background-size:48px 48px;opacity:.7;z-index:2}
-.page-hero-inner{max-width:var(--max);margin:0 auto;position:relative;z-index:3}.hero-video-bg{position:absolute;inset:0;overflow:hidden;z-index:0}.hero-video-bg video{position:absolute;top:50%;left:50%;min-width:100%;min-height:100%;width:auto;height:auto;transform:translate(-50%,-50%);object-fit:cover}.hero-video-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,25,41,.55) 0%,rgba(11,25,41,.78) 100%);z-index:1}
+.page-hero-inner{max-width:var(--max);margin:0 auto;position:relative;z-index:3}.hero-video-bg{position:absolute;inset:0;overflow:hidden;z-index:0}.hero-video-bg video{position:absolute;top:50%;left:50%;min-width:100%;min-height:100%;width:auto;height:auto;transform:translate(-50%,-50%);object-fit:cover}
+/* nomacast-video-v2 : affichage conditionnel des vidéos hero cas-client */
+.hero-video-mobile { display: none; }
+@media (max-width: 768px) {
+  .hero-video-desktop { display: none; }
+  .hero-video-mobile { display: block; }
+}.hero-video-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,25,41,.55) 0%,rgba(11,25,41,.78) 100%);z-index:1}
 .breadcrumb{font-size:12px;color:rgba(255,255,255,.3);margin-bottom:28px}
 .breadcrumb a{color:rgba(255,255,255,.45);text-decoration:none}
 .hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:18px;display:flex;align-items:center;gap:10px}
@@ -289,6 +299,9 @@ body.menu-open .float-call{display:none!important}
   .nav-lang-mobile .lang-sep{color:rgba(11,25,41,.3);font-weight:400;user-select:none}
 }
 </style>
+<!-- nomacast-video-v2 : preload conditionnel selon viewport -->
+<link rel="preload" as="video" type="video/mp4" href="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde.mp4" media="(min-width: 769px)">
+<link rel="preload" as="video" type="video/mp4" href="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde-mobile.mp4" media="(max-width: 768px)">
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M99NLF45"
@@ -336,8 +349,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="page-hero">
   <div class="hero-video-bg" aria-hidden="true">
-    <video autoplay muted loop playsinline preload="metadata">
+    <!-- nomacast-video-v2 : 2 balises vidéo cas-client (desktop full + mobile compressé) -->
+    <video class="hero-video-desktop" autoplay muted loop playsinline preload="metadata">
       <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde.mp4" type="video/mp4">
+    </video>
+    <video class="hero-video-mobile" autoplay muted loop playsinline preload="metadata">
+      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde-mobile.mp4" type="video/mp4">
     </video>
   </div>
   <div class="hero-video-overlay" aria-hidden="true"></div>
