@@ -1,3 +1,100 @@
+## 2026-05-09 (Google Ads + landing pages), Refonte des 7 pages devis-* et optimisation de la campagne FR (Nomacast | Conversions)
+
+### Contexte
+
+Audit Google Ads FR sur la fenêtre 12 avr – 8 mai 2026 : 211 impressions, 13 clics, CTR 6,16 %, **0 conversion**. Session combinée pages d'atterrissage + paramètres campagne. Objectifs : aligner toutes les LP ads sur un template conversion-first (form en haut, KPIs, testimonials, tracking précis), puis finaliser la configuration de la campagne FR avant lancement Phase 2 (campagne EN).
+
+### Refonte des 7 pages devis-*
+
+Template unique appliqué :
+- Hero navy avec vidéo `mashup.mp4` en fond + overlay aligné sur l'index (`.65/.50/.75`) + poster `og-image.jpg` pour first paint instantané
+- 3 KPI pills façon index (À partir de 1 500 € HT / Installation en 2h / Devis sous 24h)
+- Section testimonials (3 quotes par page choisis parmi les 7 du fichier d'index, adaptés à la thématique)
+- JS amélioré : capture URL params (gclid, utm_source/medium/campaign/term/content, referrer, landing_page) → injection dans champs cachés du formulaire ; smart prefill du `<select name="type">` selon `utm_term` (ex. `[ag live streaming]` → "Assemblée générale" pré-sélectionné) ; focus auto sur email après clic CTA `#contact` ; bouton submit en état "Envoi en cours…" pour éviter les double-clics
+- `phone_location` dataLayer adapté à chaque page
+
+Pages livrées (FR) :
+- `devis-live-streaming-paris.html` (refonte complète depuis l'ancien template, H1 nouveau "Live streaming d'événement d'entreprise à Paris.")
+- `devis-live-streaming-evenement.html`
+- `devis-captation-conference-seminaire.html`
+- `devis-captation-evenement.html`
+- `devis-emission-live-corporate.html`
+- `devis-captation-table-ronde.html`
+- `devis-captation-4k.html`
+
+Sur la page Paris : "Live streaming multi-plateformes" déplacé de la liste "Sur demande" vers "Toujours compris" (cohérent avec la thématique de la page) ; FAQ enrichie avec deux nouvelles questions critiques pour le live streaming ("Et si la connexion internet du lieu est défaillante ?" → routeur 5G dédié multi-opérateurs + Starlink en secours ; "Sur quelles plateformes peut-on diffuser ?" → YouTube, LinkedIn, Vimeo, RTMP/SRT privé, etc.).
+
+Versions EN miroir mises à jour côté Jérôme pour cohérence brand.
+
+### Optimisation de la campagne Google Ads FR (Nomacast | Conversions, groupe Captation)
+
+**Annonces RSA**
+- 2e RSA créée (axe confiance/références) en complément de la 1re (axe produit/prix). Chemins à afficher différenciés : 1re annonce → `captation/entreprise`, 2e annonce → `captation/paris`. Mots-clés populaires intégrés dans les titres pour passer le check Google "Insérez des mots clés populaires" : "Captation conférence Paris", "Captation séminaire Paris", "Live streaming événement".
+
+**Composants (extensions)**
+- 7 sitelinks reconfigurés, **tous pointés vers les pages devis-* convertissantes** (initialement plusieurs pointaient vers les pages SEO long-form sans formulaire en haut, identifié comme un trou dans le funnel). Mapping final : Captation événement → /devis-captation-evenement, Live streaming → /devis-live-streaming-evenement, Captation conférence → /devis-captation-conference-seminaire, Captation table ronde → /devis-captation-table-ronde, Demander un devis → /devis-live-streaming-paris, Contact rapide → /devis-emission-live-corporate, Notre matériel pro → /devis-captation-4k. Descriptions optimisées (≤ 35 caractères chacune).
+- 11 callouts préexistants (mostly génériques, à enrichir ultérieurement avec des accroches plus chiffrées comme "Devis sous 24h", "Connexion 5G dédiée", "15 ans dans le broadcast")
+- 2 extraits structurés actifs (préexistants)
+- **Lead form asset : reporté** (pas activé maintenant — volume insuffisant pour gérer le tri des leads moins qualifiés, à reconsidérer dans 4-6 semaines)
+
+**URL au niveau mot-clé**
+- `[webcast paris]` basculé de `streaming-multi-plateformes.html` (page service SEO) vers `devis-emission-live-corporate.html` (page devis convertissante). Toutes les autres associations URL ↔ mot-clé vérifiées comme cohérentes.
+
+**Calendrier de diffusion**
+- Lun-Ven 8h-20h : 100 % bid
+- Lun-Ven 20h-8h : -50 % bid
+- Sam et Dim toute la journée : -50 % bid
+- Justification : public B2B essentiellement actif en heures de bureau, économie de budget sur les off-hours moins qualifiés (sans pause totale pour ne pas rater les rares décideurs qui cherchent le week-end).
+
+**Valeur de conversion**
+- 200 € par lead (estimation : tarif moyen 1 500 € HT × marge 60 % ÷ taux de transformation lead→client de 1/4 = 225 € arrondi à 200 € par prudence). Indispensable pour la future bascule en stratégie d'enchères automatique.
+
+**Règle automatisée "filet de sécurité"**
+- Pause automatique de la campagne si `Coût > 275 €` ET `Conversions < 1` sur fenêtre **30 jours glissants**, déclenchement quotidien 16h-17h, notification email à production@matliveprod.com. Sous le seuil de tolérance utilisateur de 300 €/mois. Note : le plafond Google natif (30,4 × budget journalier) limite déjà la dépense à ~198 €/mois avec le budget actuel de 6,50 €/jour, mais la règle est conservée pour les cas de hausse future du budget.
+
+**Tracking template UTM au niveau campagne**
+- Template configuré : `{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}&gclid={gclid}`
+- Test Google passé (4/4 échantillons validés)
+- Couplé au JS injecté dans les 7 pages devis-* qui capture ces UTMs et les met dans les champs cachés du formulaire → réception dans le mail de devis avec source précise du lead (mot-clé exact qui a converti)
+
+**Audiences en mode Observation (7 segments)**
+- Mode Observation = collecte de données sans restriction de diffusion (vs Ciblage qui restreint).
+- Très grande entreprise (10 000+) [démographie] · Voyageurs d'affaires [affinité] · Services de publicité et de marketing [in-market] · Services événementiels [in-market] · Planification d'événements professionnels [in-market] · Emplois de cadres [démographie] · Secteur de la technologie [démographie]
+- "Petite entreprise (1-249)" volontairement écartée (trop large, inclut les TPE qui n'ont pas le budget pour le tarif de départ à 1 500 €).
+- Données démographiques par âge déjà visibles dans les rapports : tranche **35-44 ans = meilleure performance** (10 % CTR), cohérent avec un profil DAF/DirCom/Resp. événementiel.
+
+**Sécurité / contrôle**
+- "Recommandations appliquées automatiquement" désactivées (Google ne peut plus modifier la campagne sans validation manuelle).
+- DSA (Annonces Dynamiques du Réseau de Recherche) : vérifié comme **non actives**. Le libellé "Ciblage automatique sur le Réseau de Recherche" affiché dans les paramètres campagne est un texte par défaut (le champ Website source est vide et aucun groupe d'annonces de type Dynamic n'existe — la fonctionnalité ne peut donc pas servir).
+- Composants créés automatiquement, mots-clés en requête large : déjà désactivés (préexistant, conservé).
+
+### Décisions techniques actées
+
+- **Pages devis-* en `noindex, follow`** : accessibles aux ads (URL directes) mais cachées du SEO. Les pages SEO long-form (sans préfixe `devis-`, ex. `captation-conference-seminaire.html` vs `devis-captation-conference-seminaire.html`) restent indexables pour le trafic organique. Séparation structurelle volontaire entre LP ads et pages SEO.
+- **Stratégie d'enchères "Maximiser les clics" maintenue** jusqu'à atteindre 15-30 conversions sur 30 jours. Bascule prévue vers "Maximiser les conversions" à ce moment-là — le compteur de conversion (via GTM) et la valeur 200 €/conv sont déjà configurés pour permettre cette bascule sans perte de signal.
+- **Tracking template UTM ≠ tag de conversion Google Ads via GTM** (complémentaires, pas redondants) : le tag GTM dit à Google **combien** de leads (alimente l'optimisation algorithmique), le tracking template dit à Jérôme **quel mot-clé exact** a apporté chaque lead (alimente le pilotage commercial via la lecture du mail de devis). Les deux sont indispensables et n'occupent pas la même fonction.
+- **Lead form asset reporté** : non activé. Avantages connus (+15-25 % conversions B2B documenté, capture des leads mobile qui rebondiraient) mais inconvénients prohibitifs au stade actuel (leads moins qualifiés, pas de tracking UTM côté CRM, téléchargement manuel ou webhook obligatoire). À reconsidérer après 4-6 semaines de données sur les pages refondues.
+- **Brand + Agences Partenaires** : groupes d'annonces conservés en pause. Brand à réactiver dès que des recherches "Nomacast" émergent dans le rapport "Termes de recherche" (probable d'ici 2-3 mois avec la croissance de la marque). Agences Partenaires à réactiver dans le cadre d'une campagne ABM dédiée plus tard.
+- **Règle de pause automatique calibrée à 275 €** : sous le seuil 300 € de tolérance utilisateur, marge de sécurité de 25 €. Fenêtre 30 jours glissants (pas "Toutes les données" — sinon l'historique pèse à vie et la règle se déclencherait abusivement). Si déclenchement, réactivation manuelle reste possible depuis l'interface.
+
+### Tests à effectuer post-déploiement (après propagation Cloudflare)
+
+- Soumission de formulaire sur prod avec URL test type `https://www.nomacast.fr/devis-captation-conference-seminaire.html?gclid=test123&utm_source=google&utm_medium=cpc&utm_term=ag+live+streaming` → vérifier que le mail reçu contient les nouveaux champs cachés (gclid, utm_term, utm_source, utm_campaign, landing_page) et que le select Type d'événement a été pré-sélectionné automatiquement sur "Assemblée générale".
+- Test de Turnstile : OK désormais sur prod (échouait en local `file://`, comportement attendu — la clé `0x4AAAAAADFA3CK0v2Nj6np8` est liée au domaine `nomacast.fr`).
+
+### Fichiers livrés (déployés par Jérôme côté Cloudflare Pages)
+
+- 7 pages FR : `devis-live-streaming-paris.html`, `devis-live-streaming-evenement.html`, `devis-captation-conference-seminaire.html`, `devis-captation-evenement.html`, `devis-emission-live-corporate.html`, `devis-captation-table-ronde.html`, `devis-captation-4k.html`
+- 7 pages EN miroir mises à jour côté Jérôme (alignement de structure)
+
+### Prochaine étape
+
+Observation des résultats sur 7-10 jours. Selon les données :
+1. Conversions ≥ 5 sur 30 jours : continuer observation, préparer la bascule en "Maximiser les conversions" et l'enrichissement des callouts génériques par des accroches chiffrées
+2. Conversions = 0 sur 30 jours : la règle automatique pause la campagne au seuil 275 €, diagnostic approfondi (qualité du trafic ? page de destination ? formulaire ?)
+3. Lead form asset : à reconsidérer une fois le volume stabilisé
+4. Phase 2 — campagne EN : à lancer une fois la campagne FR stabilisée (document opérationnel `nomacast-google-ads-en-setup.md` déjà rédigé en début de session, prêt à exécution)
+
 ## 2026-05-09 (nettoyage DNS), Suppression résidus LWS dans la zone Cloudflare DNS + alignement DMARC sur alias dédié
 
 ### Contexte
@@ -1037,7 +1134,7 @@ API admin (CRUD) : `/nmc-7k9q3p2x/api/partners` avec verbes GET/POST/PUT/DELETE.
 
 Page admin : `https://nomacast.fr/nmc-7k9q3p2x.html`. URL secrète sans login (choix acté avec Jérôme : compte solo, exposition limitée). HTML/CSS/JS vanilla, pas de framework. Modal d'édition, génération automatique du code interne depuis le display name, copie de lien en un clic, désactivation sans suppression possible.
 
-C�té `tarifs.html` : `applyPartnerCode(raw, kind)` détecte automatiquement si l'input est un token (lowercase alphanum 4-12) ou un code (uppercase alphanum 2-30), appelle l'API avec le bon paramètre, met en cache le résultat indexé par code interne. `state.partnerDisplayName` introduit pour le badge "Code partenaire actif · X" et le pré-remplissage du champ Société.
+C té `tarifs.html` : `applyPartnerCode(raw, kind)` détecte automatiquement si l'input est un token (lowercase alphanum 4-12) ou un code (uppercase alphanum 2-30), appelle l'API avec le bon paramètre, met en cache le résultat indexé par code interne. `state.partnerDisplayName` introduit pour le badge "Code partenaire actif · X" et le pré-remplissage du champ Société.
 
 ### Phase 1 : Setup KV (faite par Jérôme dans le dashboard)
 
@@ -1196,9 +1293,9 @@ Fichiers concernés :
 - `functions/api/validate-code.js` (nouvelle Pages Function, sert l'endpoint `/api/validate-code?code=XXX`)
 - `tarifs.html` (objet `PARTNER_CODES = {}` désormais vide à l'init, peuplé dynamiquement après appel API ; `applyPartnerCode` rendue async)
 
-C�té client, `applyPartnerCode(raw)` fait un `fetch('/api/validate-code?code=' + raw)`. Si la réponse est `{valid:true, code, data}`, l'objet `data` est mis en cache local dans `PARTNER_CODES[code]` pour la session, puis le rendu se fait normalement. Si invalide, `state.partnerCode` reste à `null`.
+C té client, `applyPartnerCode(raw)` fait un `fetch('/api/validate-code?code=' + raw)`. Si la réponse est `{valid:true, code, data}`, l'objet `data` est mis en cache local dans `PARTNER_CODES[code]` pour la session, puis le rendu se fait normalement. Si invalide, `state.partnerCode` reste à `null`.
 
-C�té serveur, la Pages Function valide la regex `/^[A-Z0-9]{2,30}$/`, parse `context.env.PARTNER_CODES_JSON`, fait un lookup, renvoie 200 ou 404. Header `Cache-Control: no-store` pour éviter qu'un attaquant devine les codes via le cache CDN.
+C té serveur, la Pages Function valide la regex `/^[A-Z0-9]{2,30}$/`, parse `context.env.PARTNER_CODES_JSON`, fait un lookup, renvoie 200 ou 404. Header `Cache-Control: no-store` pour éviter qu'un attaquant devine les codes via le cache CDN.
 
 ### Décision : Plaintext et non Secret
 
