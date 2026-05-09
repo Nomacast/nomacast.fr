@@ -1,3 +1,26 @@
+# LOT 10 — Investigation `en/multi-platform-streaming.html` (score 0)
+
+## Diagnostic effectué côté code
+✅ Code source en ordre : DOCTYPE valide, balises équilibrées, Solution 4 présente.
+✅ 6 scripts, 2 vidéos, 2 preload links — pas de structure cassée.
+✅ Pas plus lourde qu'une autre page similaire.
+
+## Cause probable
+**Timeout Lighthouse côté PageSpeed** lors de ton premier test (la connexion 4G simulée a pu être instable, ou Lighthouse a fail à charger une ressource externe — Turnstile, GTM, etc.).
+
+## Action recommandée
+1. Aller sur https://pagespeed.web.dev/?url=https%3A%2F%2Fwww.nomacast.fr%2Fen%2Fmulti-platform-streaming.html
+2. Cliquer "Analyser"
+3. Si nouveau timeout → re-essayer plusieurs fois (aléatoire côté Lighthouse Cloud)
+4. Si récurrent → ouvrir le rapport individuel pour voir l'erreur exacte (souvent dans l'onglet "Diagnostic" en bas)
+
+Si récurrent, suspects à vérifier :
+- Une ressource R2 inaccessible (vidéo qui 404 ?)
+- Cloudflare Turnstile bloqué (rare mais possible)
+
+→ Probablement OK après le redéploiement LOT 8+9 (les fonts async réduisent le TBT, le test passe plus vite).
+
+
 # Session du 9 mai 2026 (soir) — Audit perf, sécurité, légal
 
 Audit complet déclenché par les rapports PageSpeed Insights et erreurs console DevTools.
