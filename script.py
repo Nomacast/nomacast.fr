@@ -6,9 +6,9 @@ import csv
 # ==========================================
 # VOS PARAMÈTRES (À MODIFIER)
 # ==========================================
-API_KEY = 'COLLEZ_VOTRE_CLE_API_ICI'
-SITEMAP_URL = 'https://www.votre-site.com/sitemap.xml'
-STRATEGIE = 'mobile' # Mettre 'desktop' si vous préférez tester la version ordinateur
+API_KEY = 'AIzaSyC_F0BRjKpWKpn8aQFUO_sw3OM4BGp7jRs'
+SITEMAP_URL = 'https://www.nomacast.fr/sitemap.xml'
+STRATEGIE = 'mobile' 
 FICHIER_RESULTAT = 'resultats_pagespeed.csv'
 # ==========================================
 
