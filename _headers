@@ -9,6 +9,13 @@
 #
 # Les règles sont appliquées par ordre de spécificité (plus spécifique en bas).
 #
+# Changelog v3 (2026-05-09 LOT 1.1) :
+# - Ajout pagead2.googlesyndication.com + *.googlesyndication.com (Google Ads CCM/conversion linker)
+#   sur script-src, script-src-elem, connect-src, img-src, frame-src
+# - Ajout static.axept.io + *.axept.io (Axeptio CMP injecté via GTM)
+#   sur script-src, script-src-elem, connect-src, img-src
+# - script-src-elem déclaré explicitement (évite le fallback warning sur 'script-src')
+#
 # Changelog v2 (2026-05-09 LOT 4.1) :
 # - Ajout media-src pour autoriser Cloudflare R2 (*.r2.dev) et Stream (*.cloudflarestream.com)
 # - Permissions-Policy nettoyé (retrait des features non reconnues qui généraient des warnings)
@@ -25,7 +32,7 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=(), usb=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://images.unsplash.com https://*.r2.dev; media-src 'self' blob: https://*.r2.dev https://*.cloudflarestream.com; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com https://www.googleadservices.com https://*.doubleclick.net https://challenges.cloudflare.com https://*.r2.dev; frame-src 'self' https://challenges.cloudflare.com https://td.doubleclick.net; worker-src 'self' blob:; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://challenges.cloudflare.com https://static.axept.io https://*.axept.io; script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://challenges.cloudflare.com https://static.axept.io https://*.axept.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://images.unsplash.com https://*.r2.dev https://*.axept.io; media-src 'self' blob: https://*.r2.dev https://*.cloudflarestream.com; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com https://www.googleadservices.com https://*.doubleclick.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://challenges.cloudflare.com https://*.r2.dev https://api.axept.io https://*.axept.io; frame-src 'self' https://challenges.cloudflare.com https://td.doubleclick.net https://*.googlesyndication.com; worker-src 'self' blob:; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CACHE — Pages HTML (toujours frais, jamais en cache navigateur)
