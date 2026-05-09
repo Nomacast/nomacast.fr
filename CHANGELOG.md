@@ -1,3 +1,236 @@
+# Nomacast — Diffs du 9 mai 2026
+
+Ce document récapitule l'ensemble des modifications HTML / sitemap appliquées en une session après l'audit complet du 9 mai 2026.
+
+**Total : 14 fichiers modifiés, ~19 modifications, aucune touche à la structure CSS/JS.**
+
+---
+
+## 1. `sitemap.xml`
+
+**2 blocs `<url>` retirés** (LP Ads pures, doivent être hors sitemap car en `noindex, follow`) :
+
+- `https://www.nomacast.fr/devis-live-streaming-paris.html`
+- `https://www.nomacast.fr/en/quote-live-streaming-paris.html`
+
+**Commentaire d'en-tête mis à jour** :
+- Date `2026-05-08` → `2026-05-09`
+- Compte `56 URLs (28 FR + 28 EN)` → `54 URLs (27 FR + 27 EN)`
+- Note d'exclusion clarifiée : toutes les pages `devis-* / quote-*` sont hors sitemap
+
+---
+
+## 2. `mentions-legales.html`
+
+**Robots** : `noindex, follow` → `index, follow`
+
+Cohérence avec `politique-de-confidentialite.html` qui était déjà indexable.
+
+---
+
+## 3. `en/legal-notice.html`
+
+**Robots** : `noindex, follow` → `index, follow`
+
+Cohérence avec `en/privacy-policy.html`.
+
+---
+
+## 4. `captation-evenement-entreprise.html`
+
+**Ajout balise `<meta property="og:url">`** dans le `<head>` avant `og:title` :
+```html
+<meta property="og:url" content="https://www.nomacast.fr/captation-evenement-entreprise.html">
+```
+
+---
+
+## 5. `captation-video-corporate.html`
+
+**Ajout balise `<meta property="og:url">`** :
+```html
+<meta property="og:url" content="https://www.nomacast.fr/captation-video-corporate.html">
+```
+
+---
+
+## 6. `en/corporate-event-filming.html`
+
+**Ajout balise `<meta property="og:url">`** :
+```html
+<meta property="og:url" content="https://www.nomacast.fr/en/corporate-event-filming.html">
+```
+
+---
+
+## 7. `en/corporate-video-production.html`
+
+**Ajout balise `<meta property="og:url">`** :
+```html
+<meta property="og:url" content="https://www.nomacast.fr/en/corporate-video-production.html">
+```
+
+---
+
+## 8. `prestataire-captation-evenement.html`
+
+**Eyebrow** : `Prestataire audiovisuel` → `Vidéaste événementiel B2B`
+
+Place stratégique (au-dessus du H1) qui injecte le mot-clé sans toucher au H1 ni au positionnement marque blanche.
+
+---
+
+## 9. `index.html` (FR)
+
+**Meta description** :
+- Avant : `Tournage vidéo et live streaming clé en main pour vos événements d'entreprise. 3 caméras 4K, livré le jour même. Paris, France & Europe. Devis 24h.`
+- Après : `Vidéaste événementiel pour entreprises : tournage vidéo et live streaming clé en main. 3 caméras 4K, livré le jour même. Paris, France & Europe. Devis 24h.`
+
+---
+
+## 10. `agences-partenaires.html`
+
+**Subtitle hero** :
+- Avant : `Vous êtes une agence événementielle ou audiovisuelle. Vous avez besoin d'un technicien broadcast fiable, équipé et autonome...`
+- Après : `Vous êtes une agence événementielle ou audiovisuelle. Vous avez besoin d'un vidéaste événementiel broadcast fiable, équipé et autonome...`
+
+`technicien broadcast` remplacé par `vidéaste événementiel broadcast` : on garde la valeur "broadcast" (différenciation TV) tout en injectant le mot-clé SEO.
+
+---
+
+## 11. `en/index.html`
+
+**Meta description** :
+- Avant : `Turnkey video filming and live streaming for corporate events. 3 cameras in 4K, delivered same day. Paris, France & Europe. Quote within 24 hours.`
+- Après : `Corporate event videographer: turnkey filming and live streaming. 3 cameras in 4K, delivered same day. Paris, France & Europe. Quote within 24 hours.`
+
+---
+
+## 12. `en/b2b-event-filming-provider.html`
+
+**Eyebrow** : `Audiovisual provider` → `B2B event videographer`
+
+---
+
+## 13. `en/quote-live-streaming-paris.html` (LP Ads exact-match)
+
+**Eyebrow** : `Conference · Seminar · AGM · Convention` → `Event videographer · Conference · Seminar · AGM`
+
+**Subtitle** :
+- Avant : `3 4K cameras + dedicated 5G connection. Broadcast to YouTube, LinkedIn, Vimeo or a private platform. Tailored quote within 24h, often the same day.`
+- Après : `Your dedicated corporate event videographer in Paris. 3 4K cameras + dedicated 5G connection. Broadcast to YouTube, LinkedIn, Vimeo or a private platform. Tailored quote within 24h, often the same day.`
+
+**Effet attendu** : alignement keyword `[event videographer paris]` ↔ ad copy ↔ landing → Quality Score +1 à +2 points → CPC -10 à -20 % sur ce keyword.
+
+---
+
+## 14. `live-streaming-evenement.html`
+
+### Modif 14a — Subtitle hero enrichi avec webcast/webinaire
+- Avant : `Définition complète, composantes techniques et bonnes pratiques pour retransmettre vos événements en direct sur toutes les plateformes.`
+- Après : `Le live streaming événementiel — aussi appelé webcast professionnel ou webinaire d'entreprise — c'est la diffusion en direct de vos événements vers toutes les plateformes. Définition complète, composantes techniques et bonnes pratiques.`
+
+### Modif 14b — FAQ insérée en position 2
+Question : `Webcast, webinaire, live streaming : quelle différence ?`
+
+Réponse complète avec définition de chaque terme + lien vers `captation-conference-seminaire.html` pour le maillage interne.
+
+---
+
+## 15. `en/event-live-streaming.html`
+
+### Modif 15a — Subtitle hero enrichi avec webcast/webcasting
+- Avant : `Full definition, technical components and best practices to broadcast your events live on every platform.`
+- Après : `Event live streaming — also known as professional webcast or corporate webcasting — is the live broadcast of your events to every platform. Full definition, technical components and best practices.`
+
+### Modif 15b — FAQ insérée en position 2
+Question : `Webcast, webinar, live streaming: what's the difference?`
+
+Réponse parallèle au FR avec lien vers `conference-seminar-filming.html` (maillage EN).
+
+---
+
+## Récap des mots-clés ajoutés
+
+### FR
+| Mot-clé | Pages cibles | Mentions |
+|---|---|---|
+| Vidéaste événementiel | `prestataire-captation-evenement.html` (eyebrow), `index.html` (meta), `agences-partenaires.html` (subtitle) | 3 mentions visibles |
+| Webcast professionnel | `live-streaming-evenement.html` (subtitle + FAQ) | 2 mentions |
+| Webinaire d'entreprise | `live-streaming-evenement.html` (subtitle + FAQ) | 2 mentions |
+
+### EN
+| Mot-clé | Pages cibles | Mentions |
+|---|---|---|
+| Corporate event videographer | `en/index.html` (meta), `en/quote-live-streaming-paris.html` (subtitle) | 2 mentions |
+| Event videographer | `en/b2b-event-filming-provider.html` (eyebrow), `en/quote-live-streaming-paris.html` (eyebrow) | 2 mentions |
+| Professional webcast | `en/event-live-streaming.html` (subtitle + FAQ) | 2 mentions |
+| Corporate webcasting | `en/event-live-streaming.html` (subtitle + FAQ) | 2 mentions |
+
+---
+
+## Entrée CHANGELOG suggérée
+
+À ajouter en tête de `CHANGELOG.md` :
+
+```markdown
+# 2026-05-09 — SEO + tracking : intégration mots-clés "vidéaste événementiel" / "videographer" / "webcast" + nettoyage sitemap
+
+Suite à l'audit complet du 9 mai 2026 (cf. AUDIT-2026-05-09.md / SESSION-RECAP-2026-05-09.md).
+
+## Modifications HTML (14 fichiers, ~19 modifs)
+
+**SEO mots-clés FR** : ajout "Vidéaste événementiel" sur 3 pages stratégiques (eyebrow `prestataire-captation-evenement`, meta description `index`, subtitle `agences-partenaires`). "Vidéaste" passe de 0 occurrence dans le contenu visible à 3.
+
+**SEO mots-clés EN** : ajout "Corporate event videographer" + "Event videographer" sur 3 pages (meta `en/index`, eyebrow `en/b2b-event-filming-provider`, eyebrow + subtitle `en/quote-live-streaming-paris`). "Videographer" passe de 0 à 4 mentions visibles. Effet attendu sur Quality Score Ads `[event videographer paris]`.
+
+**SEO mots-clés bilingues** : ajout "webcast professionnel / webinaire" (FR) et "professional webcast / corporate webcasting" (EN) via subtitle enrichi + FAQ dédiée sur les 2 pages live-streaming. "Webcast" passe de 0 à 2-3 mentions par langue.
+
+**OG:url manquant** : ajout sur les 4 landings indexables (`captation-evenement-entreprise`, `captation-video-corporate`, `en/corporate-event-filming`, `en/corporate-video-production`).
+
+**Pages légales indexées** : `mentions-legales.html` et `en/legal-notice.html` passent de `noindex, follow` à `index, follow`. Cohérence avec les pages de confidentialité déjà indexables.
+
+## Sitemap
+
+Retrait des 2 dernières URLs `noindex` du sitemap (`devis-live-streaming-paris.html` et `en/quote-live-streaming-paris.html`). Sitemap : 56 → 54 URLs (27 FR + 27 EN, parfaitement symétriques).
+
+Commentaire d'en-tête reformulé : toutes les pages `devis-* / quote-*` sont désormais explicitement hors sitemap (LP Ads pures, ne doivent pas concurrencer les pages services hub canoniques en SEO organique).
+
+## Décisions techniques actées
+
+- **Pas de modification d'URL slugs** : `webcast` et `videographer` n'apparaîtront pas dans les URLs. Le mot-clé fait le job dans le contenu visible (H1, eyebrow, meta, FAQ). Casser des URL stables pour un gain marginal n'est pas justifié (link equity + redirections + propagation 1-3 mois).
+- **FAQ dédiée "webcast/webinar vs live streaming"** : ajoutée en position 2 (juste après la Q de prix qui reste première pour la conversion). Sans schema FAQPage JSON-LD pour l'instant (cohérent avec l'existant).
+- **Eyebrow comme injecteur SEO** : convention adoptée pour intégrer un mot-clé sans toucher au H1 (qui garde sa force commerciale).
+- **Pages légales `index, follow`** : standard SEO préféré au noindex pour les pages obligatoires (cohérence FR/EN).
+
+## Modifications Google Ads (réalisées par Jérôme avant le patch)
+
+- Titres RSA EN enrichis avec "videographer" et "webcast"
+- Sitelink EN "Event Videographer" ajouté
+- Extrait structuré "Event videographer" ajouté côté EN
+- Keyword FR "vidéaste événementiel" vérifié/ajouté
+- Conversion form submit : valeur 200 € → 500 € (proxy lead-to-deal raisonnable sur panier moyen 2 000 €)
+- Click Phone passé en secondaire (Smart Bidding optimise désormais quasi-uniquement sur form submits, cohérent avec funnel B2B où la majorité des leads passent par formulaire)
+
+## Reste à finaliser (session ultérieure)
+
+- Recréation propre de la conversion "Clic Mail" + objectif "Contact" (mis de côté pendant cette session)
+- Enhanced Conversions confirmées actives ✓
+- Vérifier label `n81SCKCN46EcENCEva9D` côté Click Phone (non bloquant, à voir si Click Phone enregistre correctement les conversions sur 30 jours)
+
+## À surveiller (suivi 4-6 semaines)
+
+- Search Console > Performance : impressions sur "vidéaste événementiel", "videographer paris", "webcast"
+- Google Ads > Quality Score `[event videographer paris]` (attendu : +1 à +2)
+- Google Ads > CPC moyen sur les keywords avec mot exact (attendu : -10 à -20 %)
+- Search Console > Couverture : `mentions-legales` et `en/legal-notice` indexées
+- Re-soumettre `sitemap.xml` après déploiement
+```
+
+---
+
+**Fin du récap diffs.**
+
 # 2026-05-09 — Campagne Google Ads EN créée + raffinements FR + dispositif complet
 
 ## Création campagne "Nomacast | Conversions EN"
