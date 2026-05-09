@@ -9,9 +9,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-M99NLF45');</script>
 <script>
   // Detects the form type submitted via ?type=devis or ?type=agence
+  // IMPORTANT: only fire conversion if the 'type' parameter is present
+  // (parameter added by envoyer.php after server validation; protects against ghost conversions)
   (function() {
     var params = new URLSearchParams(window.location.search);
-    var formType = params.get('type') || 'devis'; // Default: devis
+    var formType = params.get('type');
+    if (!formType) return; // direct visit without valid submission → no conversion
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
       'event': 'form_submit',
@@ -25,9 +28,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <title>Request sent | Nomacast</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="canonical" href="https://www.nomacast.fr/en/thank-you.html">
-<link rel="alternate" hreflang="fr" href="https://www.nomacast.fr/merci.html">
-<link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/thank-you.html">
-<link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/merci.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
@@ -176,12 +176,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span id="contact-email">evenement@nomacast.fr</span>
     </div>
   </div>
-
-  <ul class="lang-switch" aria-label="Choose language">
-    <li><a href="/merci.html" hreflang="fr" lang="fr">FR</a></li>
-    <li><span class="lang-sep" aria-hidden="true">·</span></li>
-    <li><a href="" class="active" aria-current="page">EN</a></li>
-  </ul>
 
   <a href="index.html" class="btn-home">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M7 1l-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
