@@ -2543,17 +2543,10 @@ const SITE_DATA = {
   ]
 };
 
-async function loadConfig() {
-  try {
-    const res = await fetch('nomacast-config.json');
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    renderClients(data.clients || SITE_DATA.clients);
-    renderTemoignages(data.temoignages || SITE_DATA.temoignages);
-  } catch {
-    renderClients(SITE_DATA.clients);
-    renderTemoignages(SITE_DATA.temoignages);
-  }
+function loadConfig() {
+  // SITE_DATA est la source de vérité (inline ci-dessus) — pas de fetch externe nécessaire
+  renderClients(SITE_DATA.clients);
+  renderTemoignages(SITE_DATA.temoignages);
 }
 
 function renderTemoignages(temos) {
