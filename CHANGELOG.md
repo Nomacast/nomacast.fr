@@ -1,3 +1,99 @@
+## 2026-05-09 (post-audit sitemap), Correction de 4 résidus FR oubliés sur 4 pages EN — nav menu, trust bar, CTA pricing, aria-label call
+
+### Contexte
+
+Session de vérification déclenchée par une demande utilisateur de scan exhaustif sur la version EN livrée (recherche de `--` parasites + autres anomalies). Le scan s'est exécuté immédiatement après l'entrée précédente (audit hreflang/canonical, 2026-05-09 11:00) et a remonté **4 résidus français passés à travers le Lot A du 2026-05-08** (Lots A/B/C, audit complet FR/EN), ainsi qu'**un lien interne cassé**.
+
+Le scan `--` lui-même n'a remonté aucune anomalie : toutes les occurrences sont légitimes (commentaires CSS `/* --- ... --- */` dans `index.html` et opérateur de décrément JS `i--` dans le simulateur de `pricing.html`).
+
+### Diagnostic
+
+#### Pourquoi ces résidus n'ont pas été attrapés par le Lot A du 2026-05-08
+
+Le Lot A avait une portée délibérément étroite : 4 traductions sur `corporate-video-production.html` (lignes 290, 552, 553, 555) + ajout du switcher de langue sur 4 pages utility (`legal-notice`, `privacy-policy`, `sitemap`, `thank-you`). Aucun scan automatisé exhaustif des résidus FR n'avait été fait sur l'ensemble des 35 pages EN. Les 4 résidus listés ci-dessous sont précisément ce qu'un grep de stop-words FR (`Prestations`, `Cas clients`, `Agences`, `Appeler`, `ans d'expérience`, `Matériel`, `Voir les tarifs`) aurait remonté si lancé sur le zip livré — il n'a pas été lancé.
+
+#### Résidus identifiés
+
+| Page EN | Ligne | Type | Avant (FR) | Après (EN) |
+|---|---|---|---|---|
+| `4k-video-recording.html` | 519 | CTA texte (lien vers pricing) | `Voir les tarifs et configurer` | `See pricing &amp; configure` |
+| `corporate-event-filming.html` | 386 | trust-item | `15 ans d'expérience` | `15 years of experience` |
+| `corporate-event-filming.html` | 387 | trust-item | `Matériel en propriété` | `Owned equipment` |
+| `corporate-event-filming.html` | 388 | trust-item | `Installation en 2h` | `2-hour setup` |
+| `corporate-event-filming.html` | 389 | trust-item | `Fichier remis le soir même` | `File delivered same day` |
+| `multi-site-live-streaming.html` | 346 | nav desktop | `Prestations` | `Services` |
+| `multi-site-live-streaming.html` | 347 | nav desktop | `Cas clients` | `Case studies` |
+| `multi-site-live-streaming.html` | 349 | nav desktop (texte) | `Agences` | `Agencies` |
+| `multi-site-live-streaming.html` | 349 | nav desktop (href) | `agences-partenaires.html` ⚠️ lien cassé | `partner-agencies.html` |
+| `multi-site-live-streaming.html` | 353 | aria-label `nav-tel-mobile` | `Appeler` | `Call Nomacast` |
+| `corporate-video-production.html` | 293 | aria-label `float-call` | `Appeler` | `Call` |
+
+⚠️ Le `href="agences-partenaires.html"` était un lien mort (le fichier n'existe pas dans `/en/`, seul `partner-agencies.html` existe). Probablement un copier-coller depuis la version FR resté incomplet lors de la traduction.
+
+### Cohérence avec les conventions du CHANGELOG
+
+Avant édition, vérification que les choix de wording respectent les conventions documentées dans les entrées précédentes :
+
+#### Convention de pairage "landings simples" (Lot A, 2026-05-08)
+
+L'entrée du 2026-05-08 (Lot A, ligne 214 : « Wording aligné sur `corporate-event-filming.html` (autre landing simple EN déjà bien traduite). Cohérence assurée entre les 2 landings simples. ») établit que `corporate-event-filming.html` et `corporate-video-production.html` constituent une paire de landings simples qui doivent rester alignés.
+
+→ **Trust bar** : les 4 traductions sur `corporate-event-filming.html` sont copiées **mot pour mot** depuis le bloc équivalent de `corporate-video-production.html` (qui était déjà en EN). Pairage respecté.
+
+→ **`aria-label="Call"`** sur `corporate-video-production.html` : reprend exactement la valeur déjà présente sur `corporate-event-filming.html` (`class="float-call" aria-label="Call"`). Pairage respecté.
+
+#### Convention `aria-label` sur `nav-tel-mobile`
+
+Audit du pattern dominant : 11 pages EN avec `class="float-call"` utilisent `aria-label="Call Nomacast"` (incluant `index.html` qui sert de référence pour la nav). Sur `multi-site-live-streaming.html`, c'est ce pattern qui s'applique (puisque cette page n'est pas un "landing simple"). `aria-label="Call Nomacast"` retenu.
+
+#### CTA `See pricing & configure` (4k-video-recording.html L519)
+
+Ce CTA n'entre pas dans la catégorie "Devis sous 24h" documentée par l'entrée 2026-05-08 (Lot C, lignes 156-162) : ce n'est pas un bouton de conversion vers le formulaire de contact, c'est un lien contextuel vers la page Pricing (le simulateur). La formulation choisie est la traduction directe du FR `Voir les tarifs et configurer` et reste cohérente avec d'autres CTA existants vers la page pricing recensés dans le code (ex. `>see my pricing and configure online →</a>`). Aucun conflit avec la convention "Devis sous 24h".
+
+#### Lot E (variabilité CTA EN) reste tolérée
+
+Les 5 variantes de CTA EN documentées (Lot E, ligne 188-197 du 2026-05-08) ne sont pas touchées par cette session. La nouvelle chaîne `See pricing & configure` n'est pas une variante de plus du couple `quote / free quote / request a quote` — c'est un wording de catégorie différente (lien vers pricing, pas vers contact form).
+
+### Modifications appliquées
+
+- `4k-video-recording.html` (L519) : 1 traduction CTA
+- `corporate-event-filming.html` (L386-389) : 4 traductions trust-bar
+- `multi-site-live-streaming.html` (L346, L347, L349 ×2, L353) : 3 traductions nav + 1 lien cassé corrigé + 1 aria-label
+- `corporate-video-production.html` (L293) : 1 aria-label
+
+Timestamp DOCTYPE pour les 4 fichiers : `<!-- Last update: 2026-05-09 12:00 -->`.
+
+### Vérifications post-édition
+
+- Re-scan de stop-words FR sur les 4 fichiers : aucun résidu (le seul match restant `agences@nomacast.fr` est une adresse e-mail intentionnelle, le local-part `agences` est l'adresse réelle de contact partenaires, pas une chaîne à traduire).
+- Re-scan `--` sur les 35 fichiers EN : aucune anomalie.
+- Encodage UTF-8 : pas de mojibake (`Ã©`, `â€™`, etc.).
+- Forms : tous les `<form action="../envoyer.php">` conservent leur `<input type="hidden" name="lang" value="en">` ✓.
+- `<html lang>` : `en-GB` partout (35/35).
+- Canonical et hreflang : non modifiés (cohérents avec l'entrée 2026-05-09 11:00).
+
+### Décisions techniques actées
+
+- **Garde-fou anti-résidus FR généralisé** : avant toute livraison de la version EN après chantier de traduction, lancer systématiquement un scan `grep -i` sur une liste fermée de stop-words FR (`prestations`, `cas clients`, `agences`, `tarifs`, `devis`, `appeler`, `matériel`, `propriété`, `expérience`, `fichier`, `installation`, `voir les`, `configurer`, etc.) sur l'ensemble des 35 fichiers EN. Le Lot A du 2026-05-08 n'avait fait ce scan que sur `corporate-video-production.html`, ce qui a laissé passer ces 4 résidus. À ajouter au workflow pré-livraison.
+- **Cross-check des liens internes** : vérifier que tous les `href` non-externes pointent sur un fichier qui existe dans le même dossier. Le `href="agences-partenaires.html"` sur `multi-site-live-streaming.html` est passé à travers parce qu'aucune validation de lien interne n'avait été faite sur la livraison du 2026-05-08. À ajouter aussi.
+- **Convention de pairage `corporate-event-filming.html` ↔ `corporate-video-production.html`** : reconfirmée. Toute modification structurelle ou de wording sur l'une doit être propagée à l'autre dans la même session (similaire à la règle de parité FR/EN).
+- **Cloudflare** : après déploiement, purger le cache au minimum sur les 4 fichiers modifiés (`/en/4k-video-recording.html`, `/en/corporate-event-filming.html`, `/en/multi-site-live-streaming.html`, `/en/corporate-video-production.html`). Pas d'impact sur le sitemap (aucune URL ajoutée ou retirée).
+
+### Limitations résiduelles non traitées dans cette session
+
+- **CTA EN harmonisation (Lot E du 2026-05-08)** : toujours non harmonisé. 5 variantes coexistent. Cette session n'a pas traité ce sujet (hors scope de la correction de résidus FR).
+- **Asymétrie switcher mobile FR/EN** (limitation 1 du 2026-05-08, ligne 336) : non touchée.
+
+### Fichiers livrés
+
+- `4k-video-recording.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-09 12:00 -->`)
+- `corporate-event-filming.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-09 12:00 -->`)
+- `multi-site-live-streaming.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-09 12:00 -->`)
+- `corporate-video-production.html` (timestamp DOCTYPE `<!-- Last update: 2026-05-09 12:00 -->`)
+- `CHANGELOG.md` (cette entrée ajoutée en tête)
+
+---
+
 ## 2026-05-09, Audit hreflang/canonical pré-soumission sitemap + correction des deux homepages FR/EN (mismatch /index.html ↔ /)
 
 ### Contexte
