@@ -1,3 +1,78 @@
+# Session du 9 mai 2026 (soir) — Audit perf, sécurité, légal
+
+Audit complet déclenché par les rapports PageSpeed Insights et erreurs console DevTools.
+Résolution en 6 lots progressifs avec validation utilisateur à chaque étape.
+
+---
+
+## Lots déployés
+
+| Lot | Date | Fichiers | Description |
+|---|---|---|---|
+| **LOT 1** | 9 mai 2026 | `index.html` + `en/index.html` | Suppression du `fetch('nomacast-config.json')` qui causait un 404 dans la console. Le code utilise désormais directement `SITE_DATA` (déjà inline). Plus de requête réseau parasite, console propre. |
+| **LOT 1.1** | 9 mai 2026 | `_headers` v3 | Patch CSP : ajout `pagead2.googlesyndication.com` + `*.googlesyndication.com` (Google Ads CCM injecté par GTM) et `static.axept.io` + `*.axept.io` (Axeptio CMP injecté par GTM). Déclaration explicite de `script-src-elem` pour éviter le warning `was not explicitly set`. |
+| **LOT 1.2** | 9 mai 2026 | 48 HTML (FR + EN, incluant tarifs/pricing) | Fix bug visuel du bouton CTA "Devis sous 24h" qui passait sur 3 lignes en zone tablette/petit desktop (769-1024px). Ajout `white-space: nowrap`, `flex-shrink: 0` et réduction du gap entre 769-1024px. Variante `.nav-cta-sm` pour les 4 landing pages dédiées. Marqueur `nav-cta-fix-v1` (idempotent). |
+| **LOT 2+3 v1 ❌** | 9 mai 2026 | `index.html` + `en/index.html` | Tentative perf : preload poster vidéo + Google Fonts async + vidéo conditionnelle JS desktop/mobile. **Effet pervers** : la `<source>` ajoutée par JS a cassé la discoverability LCP par Lighthouse (insight "Détection de la requête LCP" en rouge). Score perf mobile FR/EN passé de 67/84 à 63/65. **Reverté dans Solution 4**. |
+| **LOT 2+3 v2 (Solution 4)** | 9 mai 2026 | 34 HTML avec vidéo hero (FR + EN) | Architecture déclarative : 2 balises `<video>` HTML statiques (desktop + mobile) avec `<source>` en dur, CSS `display:none` selon viewport. `<link rel="preload" as="video" media>` dans le head pour que le browser ne fetch que la version utile au viewport courant. `preload="metadata"` sur les 2 (au lieu de `auto`) pour éviter tout double-fetch. Marqueur `nomacast-video-v2` (idempotent). Préserve aussi les modifs saines du v1 : preload poster `og-image.jpg` + Google Fonts en async (`media="print" onload`). |
+| **LOT 4 — vidéo mobile compressée** | 9 mai 2026 | Cloudflare R2 | Upload de `mashup-mobile.mp4` (3 Mo, 720p, sans audio, généré via ffmpeg avec `-vf scale=720:-2 -crf 28 -preset slow`) en complément de `mashup.mp4` (30 Mo, qualité full). Économie 90% de bande passante sur mobile en 4G. |
+| **LOT 5.1 — SEO fixes** | 9 mai 2026 | `en/index.html`, `en/corporate-video-production.html`, `_headers` | (1) Remplacement de "Learn more" (texte non descriptif rejeté par Lighthouse SEO) par "See our white-label offer" / "See our corporate live show offer". (2) Ajout des `Content-Type` explicites pour `/robots.txt` (`text/plain`), `/sitemap.xml` (`application/xml`) et `/llms.txt` (`text/plain`) dans `_headers`. Cause probable du warning "robots.txt invalide" : `X-Content-Type-Options: nosniff` empêchait le browser d'inférer le type. |
+| **LOT 5.2 — mentions légales** | 9 mai 2026 | `mentions-legales.html` + `en/legal-notice.html` | Mise à jour Éditeur (Auto-entrepreneur EI Jérôme Bouquillon, adresse 14 rue de l'Aubrac 75012 Paris, SIRET en commentaire HTML en attente). Hébergeur LWS → Cloudflare Inc. (101 Townsend Street, San Francisco) avec mention de la filiale européenne RGPD (Cloudflare Ireland Ltd, Dublin). |
+| **LOT 5.3 — Open Graph** | 9 mai 2026 | 30 pages HTML | Ajout des balises `og:image` (par défaut `https://www.nomacast.fr/og-image.jpg`) et/ou `og:type` (`website`) manquantes sur 30 pages. Avant le patch, ces pages partageaient sans visuel sur Facebook/LinkedIn/Twitter. |
+
+---
+
+## Audits techniques (tous OK)
+
+| Audit | Résultat |
+|---|---|
+| Sitemap (54 URLs) | ✅ Toutes les URLs existent en local. Toutes les pages indexables sont incluses. |
+| Images sans `alt` | ✅ Aucune. |
+| Hreflang FR ↔ EN | ✅ Cohérent sur toutes les pages indexables. |
+| Liens internes | ✅ Aucun lien cassé sur les 72 pages. |
+| Schema.org JSON-LD | ✅ 118 blocs valides syntaxiquement sur 70 pages. |
+
+---
+
+## En attente (actions utilisateur)
+
+- [ ] Compléter le SIRET dans `mentions-legales.html` + `en/legal-notice.html` (lignes commentées `<!-- <p>SIRET : ... -->`)
+- [ ] Configurer SPF DNS sur Cloudflare → DNS pour Resend : `v=spf1 include:_spf.resend.com ~all` (vérifier qu'il n'y a pas déjà un autre SPF avant — un seul autorisé par domaine)
+- [ ] Soumettre `https://www.nomacast.fr/sitemap.xml` à Google Search Console (prévu demain)
+- [ ] Décider du swap massif `png|jpg|jpeg → webp` dans le HTML (toutes les images sont uploadées en .webp côté CDN)
+
+---
+
+## Mémoire technique (à connaître pour les prochaines sessions)
+
+- **Hébergeur** : Cloudflare Pages (les memories anciennes mentionnant LWS sont obsolètes).
+- **`.htaccess`** : non utilisé (Cloudflare Pages n'est pas Apache). Le fichier `404.html` à la racine assure la page d'erreur 404.
+- **Pages tarifs/pricing** : reste fragiles, on accepte les patches additifs uniquement (CSS additif type `nav-cta-fix-v1` est OK, refonte structurelle non).
+- **Marqueurs idempotents** dans le code : `nav-cta-fix-v1`, `nomacast-video-v2`, `lot2-perf` (legacy), `lot1.1` (CSP).
+- **GTM** : actif sur toutes les pages (GTM-M99NLF45). Sur `merci.html`, conversion gardée par garde-fou `?type=` pour éviter les conversions fantômes.
+
+---
+
+## Faux positifs documentés (à ne PAS chercher à corriger)
+
+Erreurs observées dans la console mais qui ne viennent pas du code Nomacast :
+
+| Message | Origine | Verdict |
+|---|---|---|
+| `This document requires 'TrustedHTML/TrustedScript/TrustedScriptURL'` | Brave Shields (politique TT activée par défaut) | Ignorable — invisible sur Chrome/Firefox classiques |
+| `Executing inline script violates CSP about:srcdoc` | Brave Shields, iframe sandboxé interne | Ignorable |
+| `Failed to parse audio contentType: audio/mp4 codecs=ac-3, ec-3` | Brave qui pré-vérifie tous les codecs des balises `<video>` | Ignorable |
+| `Invalid (ambiguous) video codec string: video/webm codecs=vp9` | idem Brave | Ignorable |
+| `Failed to parse video contentType: video/ogg codecs=theora` | idem Brave | Ignorable |
+| `Form submission canceled because the form is not connected` | Cloudflare Turnstile (le widget met du temps à se rendre form-attached) | Ignorable, le formulaire fonctionne |
+| `[Violation] Permissions policy violation: xr-spatial-tracking` | Cloudflare Turnstile (essaie d'accéder à cette feature) | Ignorable |
+| `https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/cmg/1 was preloaded but not used` | Cloudflare Turnstile | Ignorable |
+| `Request for the Private Access Token challenge` | Cloudflare Turnstile (anti-bot) | Ignorable |
+| `Permissions-Policy: interest-cohort, browsing-topics unrecognized` | Brave qui surveille des features non utilisées | Ignorable, le `_headers` actuel ne déclare pas ces features |
+| `Feature Policy: cross-origin-isolated, autoplay, keyboard-map ignoré` (Firefox) | Cloudflare Turnstile `api.js` | Ignorable, warnings Firefox sur API legacy |
+| `WEBGL_debug_renderer_info is deprecated in Firefox` | Firefox internals | Ignorable |
+| `InstallTrigger / onmozfullscreenchange est obsolète` | Firefox internals | Ignorable |
+| `Un accès partitionné à un cookie...turnstile` | Cloudflare Turnstile (partitioned cookie storage) | Ignorable |
+
 # Nomacast — Récap session 9 mai 2026
 
 Audit complet site nomacast.fr (vidéaste B2B Paris/Bordeaux, hébergé Cloudflare Pages).
