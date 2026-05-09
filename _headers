@@ -100,10 +100,13 @@
 # ─────────────────────────────────────────────────────────────────────────────
 /sitemap.xml
   Cache-Control: public, max-age=86400
+  Content-Type: application/xml; charset=utf-8
 /robots.txt
   Cache-Control: public, max-age=86400
+  Content-Type: text/plain; charset=utf-8
 /llms.txt
   Cache-Control: public, max-age=86400
+  Content-Type: text/plain; charset=utf-8
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CACHE — Config JSON (1 heure)
