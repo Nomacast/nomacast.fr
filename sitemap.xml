@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Nomacast — Bilingual sitemap (FR + EN)
-  Last update: 2026-05-08
-  Total URLs: 56 (28 FR + 28 EN)
+  Last update: 2026-05-09
+  Total URLs: 54 (27 FR + 27 EN)
   Each URL declares its hreflang alternates for fr / en / x-default.
   Excluded from sitemap (intentionally noindex):
     - 404.html
     - merci.html / en/thank-you.html
-    - devis-* (except devis-live-streaming-paris which is a Paris ads landing)
+    - All 7 devis-* / quote-* pages (Google Ads landing pages exclusively, must not compete with canonical hub pages in organic SEO)
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
@@ -123,15 +123,6 @@
     <xhtml:link rel="alternate" hreflang="fr" href="https://www.nomacast.fr/captation-4k.html"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/4k-video-recording.html"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/captation-4k.html"/>
-  </url>
-  <url>
-    <loc>https://www.nomacast.fr/devis-live-streaming-paris.html</loc>
-    <lastmod>2026-05-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://www.nomacast.fr/devis-live-streaming-paris.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/quote-live-streaming-paris.html"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/devis-live-streaming-paris.html"/>
   </url>
   <url>
     <loc>https://www.nomacast.fr/prestataire-captation-evenement.html</loc>
@@ -380,15 +371,6 @@
     <xhtml:link rel="alternate" hreflang="fr" href="https://www.nomacast.fr/captation-4k.html"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/4k-video-recording.html"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/captation-4k.html"/>
-  </url>
-  <url>
-    <loc>https://www.nomacast.fr/en/quote-live-streaming-paris.html</loc>
-    <lastmod>2026-05-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://www.nomacast.fr/devis-live-streaming-paris.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://www.nomacast.fr/en/quote-live-streaming-paris.html"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.nomacast.fr/devis-live-streaming-paris.html"/>
   </url>
   <url>
     <loc>https://www.nomacast.fr/en/b2b-event-filming-provider.html</loc>
