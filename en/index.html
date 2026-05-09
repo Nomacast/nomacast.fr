@@ -2566,19 +2566,10 @@ const SITE_DATA = {
   ]
 };
 
-async function loadConfig() {
-  // Fetch d'un fichier inexistant pour forcer le fallback SITE_DATA (déjà traduit en EN ci-dessus).
-  // Pour activer un config externe EN, créer /en/nomacast-config.json avec le même schéma.
-  try {
-    const res = await fetch('nomacast-config.json');
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    renderClients(data.clients || SITE_DATA.clients);
-    renderTemoignages(data.temoignages || SITE_DATA.temoignages);
-  } catch {
-    renderClients(SITE_DATA.clients);
-    renderTemoignages(SITE_DATA.temoignages);
-  }
+function loadConfig() {
+  // SITE_DATA is the source of truth (inline above) — no external fetch needed
+  renderClients(SITE_DATA.clients);
+  renderTemoignages(SITE_DATA.temoignages);
 }
 
 function renderTemoignages(temos) {
