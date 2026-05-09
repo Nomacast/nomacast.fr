@@ -1,3 +1,87 @@
+## 2026-05-09 (nettoyage DNS), Suppression résidus LWS dans la zone Cloudflare DNS + alignement DMARC sur alias dédié
+
+### Contexte
+
+Suite à la migration complète de l'infrastructure (site sur Cloudflare Pages, formulaire sur Cloudflare Pages Functions + Resend, email pro sur Google Workspace), LWS n'est plus utilisé que comme registrar du nom de domaine. La zone DNS Cloudflare conservait néanmoins plusieurs résidus de la période où LWS hébergeait à la fois le site et la messagerie. Cette session nettoie ces résidus pour préparer la résiliation de l'hébergement LWS (passage en formule "domaine seul").
+
+### Diagnostic — état initial de la zone
+
+Export BIND complet de la zone récupéré depuis Cloudflare (DNS → Records → Export). 12 enregistrements actifs (hors SOA/NS) :
+
+**Garder en l'état (infrastructure active) :**
+- `nomacast.fr` CNAME → `nomacast-fr.pages.dev` (proxy Cloudflare)
+- `www.nomacast.fr` CNAME → `nomacast-fr.pages.dev` (proxy Cloudflare)
+- `nomacast.fr` MX 1 → `SMTP.GOOGLE.COM` (Google Workspace)
+- `send.nomacast.fr` MX 10 → `feedback-smtp.eu-west-1.amazonses.com` (return-path Resend)
+- `google._domainkey.nomacast.fr` TXT → DKIM Google Workspace (clé 2048 bits)
+- `resend._domainkey.nomacast.fr` TXT → DKIM Resend (signe les mails From `@nomacast.fr`)
+- `send.nomacast.fr` TXT → `v=spf1 include:amazonses.com ~all` (SPF Resend bounce domain)
+- `nomacast.fr` TXT → `google-site-verification=U8Sg-_J-hJMQXSvHvumxW3uXDZCb5lSxDsfQO7JJnoU` (Google Search Console)
+
+**À supprimer ou éditer (résidus LWS) :**
+- `dkim._domainkey.nomacast.fr` TXT → DKIM LWS (clé 1024 bits, sélecteur `dkim`) — orphelin depuis l'arrêt des envois via LWS
+- `nomacast.fr` TXT SPF → `v=spf1 include:_spf.google.com a:mailphp.lws-hosting.com a:mail.nomacast.fr ~all` — autorise encore LWS à signer en notre nom, et la 2e référence pointe sur un A `mail.nomacast.fr` qui n'existe plus
+- `_dmarc.nomacast.fr` TXT → DMARC valide mais avec `rua`/`ruf` à reconfigurer vers une adresse exploitable
+
+**Confirmé absent (pas d'action nécessaire) :**
+- Aucun CNAME `imap`, `pop`, ou `smtp` (les sous-domaines mail clients de LWS n'ont jamais été migrés vers la zone Cloudflare lors du switch des nameservers)
+- Aucun A `mail.nomacast.fr` (idem)
+
+### Identification du DKIM LWS sans risque
+
+Risque initial : confondre `dkim._domainkey` avec un éventuel DKIM Google Workspace configuré sous le sélecteur `dkim` (au lieu de `google` par défaut), dont la suppression aurait cassé la signature des mails sortants.
+
+Vérification croisée via l'export DNS complet : présence d'un enregistrement séparé `google._domainkey.nomacast.fr` avec une clé RSA 2048 bits (préfixe `MIIBIjANB...`), qui est le format standard du DKIM Google Workspace. La clé sur `dkim._domainkey` est en 1024 bits (préfixe `MIGfMA0G...`), format historique LWS. Les deux records coexistant, `dkim._domainkey` est sans ambiguïté l'ancien DKIM LWS et peut être supprimé sans casser l'authentification Google.
+
+### Modifications appliquées dans Cloudflare DNS
+
+**1. Suppression de l'enregistrement DKIM LWS**
+- `dkim._domainkey.nomacast.fr` TXT → supprimé
+
+**2. Édition du SPF racine**
+- Avant : `v=spf1 include:_spf.google.com a:mailphp.lws-hosting.com a:mail.nomacast.fr ~all`
+- Après : `v=spf1 include:_spf.google.com ~all`
+- Justification : suppression des autorisations LWS (mécanisme `a:` pointant sur l'IP des serveurs LWS et sur un A record cassé). Resend n'a pas besoin d'être inclus dans ce SPF racine : le sender Resend utilise `send.nomacast.fr` comme return-path, qui a son propre SPF (`include:amazonses.com`).
+
+**3. Édition du DMARC**
+- Avant : `v=DMARC1; p=none; rua=mailto:[email protected]; ruf=mailto:[email protected]; fo=1; adkim=r; aspf=r; pct=100` (rua/ruf inexploitables — l'adresse `[email protected]` était soit une placeholder oubliée soit l'anonymisation par l'export, dans tous les cas non utilisée)
+- Après : `v=DMARC1; p=none; rua=mailto:dmarc@nomacast.fr; ruf=mailto:dmarc@nomacast.fr; fo=1; adkim=r; aspf=r; pct=100`
+- Politique conservée à `p=none` (monitor mode) — pas de durcissement à `quarantine`/`reject` tant que les rapports n'ont pas été observés sur quelques semaines.
+
+### Modifications appliquées dans Google Workspace
+
+**Création d'un alias dédié `dmarc@nomacast.fr`** sur le compte utilisateur principal (Console Admin → Annuaire → Utilisateurs → Adresses e-mail de l'utilisateur → ajouter alias). Reçoit les rapports agrégés DMARC quotidiens (Google, Microsoft, Yahoo, etc.).
+
+**Filtre Gmail recommandé** (à appliquer côté Jérôme dans Gmail) : `Vers: dmarc@nomacast.fr` → "Ne pas afficher dans la boîte de réception (Archiver)" + libellé `DMARC`. Évite la pollution de la boîte principale par les XML quotidiens.
+
+### Vérifications post-modification
+
+- DNS : la zone Cloudflare ne contient plus aucune référence à `lws-hosting.com`, `lws.fr`, ou `mail.nomacast.fr`.
+- Test envoi/réception sortant Google Workspace : à valider après propagation (5-15 min) — les mails depuis `evenement@` et `agences@` doivent toujours passer SPF + DKIM côté destinataire.
+- Test formulaire de contact (Resend) : à valider — l'envoi via `noreply@nomacast.fr` doit toujours arriver, signé par `resend._domainkey` (inchangé).
+- Outils de validation externes (optionnel) : `mxtoolbox.com/SuperTool.aspx` → MX Lookup, SPF Record Lookup, DMARC Lookup, DKIM Lookup avec sélecteurs `google` et `resend`.
+
+### Décisions techniques actées
+
+- **LWS = registrar uniquement.** Plus aucune dépendance à l'infrastructure LWS dans la zone DNS. L'hébergement mutualisé peut être résilié, en gardant la formule "domaine seul" qui conserve le renouvellement annuel du `.fr`. Verrou de transfert (transfer lock) à laisser activé côté LWS comme protection.
+- **DKIM tracking** : 2 sélecteurs DKIM actifs sur `nomacast.fr` (`google` pour Google Workspace, `resend` pour Resend depuis @nomacast.fr). L'ancien sélecteur `dkim` (LWS) n'existe plus. Si un troisième service mail est ajouté un jour (Postmark, Mailgun, etc.), prévoir un nouveau sélecteur dédié — ne jamais réutiliser `dkim` comme sélecteur par défaut.
+- **SPF racine minimal** : `v=spf1 include:_spf.google.com ~all`. Toute future addition (nouveau service envoyant depuis @nomacast.fr) doit être documentée ici avant édition. Resend reste hors de cette ligne car il signe et envoie via `send.nomacast.fr`.
+- **DMARC en `p=none`** : conservé en mode observation. Avant tout passage à `p=quarantine`, observer les rapports agrégés sur 4-6 semaines minimum pour vérifier qu'aucun service légitime n'envoie sans alignement (sinon les mails seraient mis en spam après durcissement). Adresse de rapport : `dmarc@nomacast.fr` (alias Google Workspace).
+- **Alias `dmarc@nomacast.fr`** : créé spécifiquement pour absorber les rapports DMARC. Ne pas l'utiliser comme adresse de contact, ne pas le publier ailleurs.
+- **Pas de Resend dans le SPF racine** : choix architectural. Le From: des mails Resend est `noreply@nomacast.fr`, donc l'alignement SPF demanderait un include Resend ici. Mais la signature DKIM `resend._domainkey.nomacast.fr` suffit à passer DMARC en mode relaxed (`adkim=r`), et SPF côté return-path est sur `send.nomacast.fr`. Configuration validée par Resend lors du setup initial du domaine.
+
+### Fichiers livrés
+
+- `CHANGELOG.md` (cette entrée ajoutée en tête)
+
+Aucun fichier de site modifié — les actions de cette session sont exclusivement côté DNS Cloudflare et console Google Workspace.
+
+### Prochaine étape
+
+Résiliation de l'hébergement mutualisé LWS, passage en formule "domaine seul". Sans risque puisque plus aucun enregistrement DNS ne dépend de leur infrastructure. Vérifier avant résiliation qu'aucun service tiers ne pointe encore sur l'ancien IP/serveur LWS (peu probable).
+
+---
+
 ## 2026-05-09 (post-audit sitemap), Correction de 4 résidus FR oubliés sur 4 pages EN — nav menu, trust bar, CTA pricing, aria-label call
 
 ### Contexte
