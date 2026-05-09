@@ -1,0 +1,95 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Nomacast — Cloudflare Pages headers configuration
+# Doc : https://developers.cloudflare.com/pages/configuration/headers/
+#
+# Ce fichier définit les en-têtes HTTP servis par Cloudflare Pages.
+# Format :
+#   /chemin
+#     Header-Name: header-value
+#
+# Les règles sont appliquées par ordre de spécificité (plus spécifique en bas).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HEADERS GLOBAUX — appliqués à toutes les pages et tous les assets
+# ─────────────────────────────────────────────────────────────────────────────
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://images.unsplash.com; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com https://www.googleadservices.com https://*.doubleclick.net https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com https://td.doubleclick.net; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CACHE — Pages HTML (toujours frais, jamais en cache navigateur)
+# Important pour : tracking dynamique, contenu mis à jour, A/B tests
+# ─────────────────────────────────────────────────────────────────────────────
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CACHE — Images (1 an, immutables)
+# Si update : renommer le fichier (ex: jerome-bouquillon-v2.jpg) ou Purge Cloudflare
+# ─────────────────────────────────────────────────────────────────────────────
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+/*.jpeg
+  Cache-Control: public, max-age=31536000, immutable
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+/*.avif
+  Cache-Control: public, max-age=31536000, immutable
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+/*.ico
+  Cache-Control: public, max-age=31536000, immutable
+/*.gif
+  Cache-Control: public, max-age=31536000, immutable
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CACHE — Polices (1 an, immutables)
+# ─────────────────────────────────────────────────────────────────────────────
+/*.woff
+  Cache-Control: public, max-age=31536000, immutable
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+/*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+/*.otf
+  Cache-Control: public, max-age=31536000, immutable
+/*.eot
+  Cache-Control: public, max-age=31536000, immutable
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CACHE — CSS et JS externes (1 an, immutables)
+# Pas utilisés actuellement (tout inline) mais préparé pour le futur
+# ─────────────────────────────────────────────────────────────────────────────
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CACHE — Sitemap, robots, llms (1 jour)
+# Crawlers refresh quotidiennement, pas besoin d'attendre 1 an
+# ─────────────────────────────────────────────────────────────────────────────
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+/robots.txt
+  Cache-Control: public, max-age=86400
+/llms.txt
+  Cache-Control: public, max-age=86400
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CACHE — Config JSON (1 heure)
+# Mise à jour fréquente (vidéos, logos, témoignages) sans nécessiter de purge
+# ─────────────────────────────────────────────────────────────────────────────
+/nomacast-config.json
+  Cache-Control: public, max-age=3600
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Fin du fichier _headers
+# ─────────────────────────────────────────────────────────────────────────────
