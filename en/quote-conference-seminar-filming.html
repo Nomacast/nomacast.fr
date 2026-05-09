@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Last update: 2026-05-07 23:55 -->
+<!-- Last update: 2026-05-09 14:00 -->
 <html lang="en-GB">
 <head>
 <!-- Google Tag Manager -->
@@ -169,12 +169,32 @@ a:hover { color: var(--cyan-hover); }
   .tel-link span:first-child { display: none; }
 }
 
-/* HERO — split layout : pitch à gauche + form à droite */
+/* HERO — split layout avec VIDÉO en background : pitch à gauche + form à droite */
 .hero {
-  background: linear-gradient(180deg, var(--off-white) 0%, var(--white) 100%);
-  padding: 60px 0 80px;
+  background: var(--navy);
+  padding: 100px 0 80px;
   position: relative;
   overflow: hidden;
+  color: #fff;
+}
+.hero-video-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.hero-video-bg video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(11,25,41,0.65) 0%, rgba(11,25,41,0.50) 30%, rgba(11,25,41,0.75) 100%);
+  pointer-events: none;
 }
 .hero::before {
   content: '';
@@ -183,8 +203,9 @@ a:hover { color: var(--cyan-hover); }
   right: -200px;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(90,152,214,0.15) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(90,152,214,0.18) 0%, transparent 60%);
   pointer-events: none;
+  z-index: 2;
 }
 .hero-inner {
   max-width: var(--max);
@@ -195,15 +216,16 @@ a:hover { color: var(--cyan-hover); }
   gap: 60px;
   align-items: start;
   position: relative;
+  z-index: 3;
 }
 @media (max-width: 900px) {
   .hero-inner { grid-template-columns: 1fr; gap: 40px; }
-  .hero { padding: 40px 0 60px; }
+  .hero { padding: 80px 0 60px; }
 }
 .eyebrow {
   display: inline-block;
-  background: var(--cyan-light);
-  color: var(--cyan-hover);
+  background: rgba(90,152,214,0.18);
+  color: #d6e7f8;
   font-family: var(--font-head);
   font-weight: 600;
   font-size: 12px;
@@ -212,6 +234,7 @@ a:hover { color: var(--cyan-hover); }
   padding: 6px 14px;
   border-radius: 999px;
   margin-bottom: 20px;
+  backdrop-filter: blur(8px);
 }
 .hero h1 {
   font-family: var(--font-head);
@@ -219,18 +242,19 @@ a:hover { color: var(--cyan-hover); }
   font-size: clamp(32px, 5vw, 50px);
   line-height: 1.1;
   letter-spacing: -0.02em;
-  color: var(--ink);
+  color: #fff;
   margin-bottom: 20px;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.3);
 }
 .hero h1 .accent { color: var(--cyan); }
 .hero-sub {
   font-size: clamp(16px, 1.6vw, 18px);
-  color: var(--ink-muted);
+  color: rgba(255,255,255,0.85);
   line-height: 1.6;
   margin-bottom: 28px;
   max-width: 540px;
 }
-.hero-sub strong { color: var(--ink); font-weight: 600; }
+.hero-sub strong { color: #fff; font-weight: 600; }
 .hero-cta-row {
   display: flex;
   gap: 12px;
@@ -242,12 +266,12 @@ a:hover { color: var(--cyan-hover); }
   margin-bottom: 30px;
 }
 .hero-simulator-link a {
-  color: var(--ink-muted);
+  color: rgba(255,255,255,0.7);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  border-bottom: 1px dashed var(--border);
+  border-bottom: 1px dashed rgba(255,255,255,0.25);
   padding-bottom: 2px;
   transition: color 0.2s, border-color 0.2s;
 }
@@ -260,9 +284,9 @@ a:hover { color: var(--cyan-hover); }
   font-size: 15px;
 }
 .btn-secondary {
-  background: white;
-  color: var(--ink);
-  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.25);
   padding: 14px 24px;
   border-radius: 999px;
   font-family: var(--font-head);
@@ -274,10 +298,12 @@ a:hover { color: var(--cyan-hover); }
   align-items: center;
   gap: 8px;
   text-decoration: none;
+  backdrop-filter: blur(8px);
 }
 .btn-secondary:hover {
   border-color: var(--cyan);
   color: var(--cyan);
+  background: rgba(90,152,214,0.12);
   transform: translateY(-1px);
 }
 .trust-row {
@@ -285,7 +311,7 @@ a:hover { color: var(--cyan-hover); }
   grid-template-columns: repeat(2, 1fr);
   gap: 18px 32px;
   padding-top: 20px;
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid rgba(255,255,255,0.12);
   max-width: 460px;
 }
 @media (max-width: 500px) {
@@ -300,13 +326,49 @@ a:hover { color: var(--cyan-hover); }
   font-family: var(--font-head);
   font-weight: 700;
   font-size: 24px;
-  color: var(--ink);
+  color: #fff;
   line-height: 1;
 }
 .trust-label {
   font-size: 13px;
-  color: var(--ink-muted);
+  color: rgba(255,255,255,0.7);
   line-height: 1.3;
+}
+
+/* HERO KPIS — pills inspirées de l'index */
+.hero-kpis {
+  display: flex;
+  gap: 24px 32px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+.hero-kpi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+}
+.hero-kpi-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+.hero-kpi-icon svg { width: 16px; height: 16px; }
+@media (max-width: 600px) {
+  .hero-kpis { gap: 14px; }
+  .hero-kpi { font-size: 13px; }
 }
 
 /* FORM HERO — boîte sombre */
@@ -392,6 +454,73 @@ a:hover { color: var(--cyan-hover); }
   width: auto;
   height: auto;
   object-fit: contain;
+}
+
+/* TESTIMONIALS — repris du style index */
+.testimonials-section {
+  padding: clamp(60px, 10vw, 100px) var(--h-pad);
+  background: var(--off-white);
+}
+.testimonials-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+}
+.temoignages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-top: 48px;
+  background: var(--border-light);
+  border-radius: 12px;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .temoignages-grid { grid-template-columns: 1fr; }
+}
+.temo-card {
+  background: var(--white);
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.temo-card:hover { background: #fafcff; }
+.temo-quote {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.65;
+  flex: 1;
+  font-style: italic;
+}
+.temo-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+}
+.temo-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--border-light);
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.temo-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.temo-role {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink-muted);
+  line-height: 1.3;
 }
 
 /* SECTION GENERIC */
@@ -918,13 +1047,25 @@ a:hover { color: var(--cyan-hover); }
 @media (max-width: 700px) { .mobile-call { display: inline-flex; } }
 .mobile-call:hover { background: var(--cyan-hover); color: white; }
 
-/* LANGUAGE SWITCHER */
+/* Switcher de langue FR/EN */
 .lang-switch{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:6px 4px;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-muted);list-style:none}
 .lang-switch a{color:var(--ink-muted);text-decoration:none;padding:4px 6px;border-radius:4px;transition:color .15s,background .15s}
 .lang-switch a:hover{color:var(--cyan);background:rgba(90,152,214,.08);text-decoration:none}
 .lang-switch a.active{color:var(--cyan);pointer-events:none}
 .lang-switch .lang-sep{color:var(--ink-faint);font-weight:400;user-select:none}
-@media(max-width:768px){.lang-switch{margin-left:0;margin-top:8px}}
+.mobile-lang-switch{display:flex;justify-content:center;align-items:center;gap:14px;width:100%;max-width:320px;margin:20px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;letter-spacing:.04em}body.menu-open .mobile-overlay{padding-bottom:90px}body.menu-open .float-call{display:none!important}
+.mobile-lang-switch a{color:rgba(255,255,255,.65);text-decoration:none;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s}
+.mobile-lang-switch a.active{color:var(--cyan);pointer-events:none}
+.mobile-lang-switch a:hover{color:#fff}
+.mobile-lang-switch .lang-sep{color:rgba(255,255,255,.3)}
+@media(max-width:768px){.lang-switch{display:none}}
+
+.devis-lang-switch{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;letter-spacing:.02em;list-style:none;margin-right:6px}
+.devis-lang-switch a{color:rgba(11,25,41,.55);text-decoration:none;padding:4px 6px;border-radius:4px;transition:color .15s,background .15s}
+.devis-lang-switch a:hover{color:var(--cyan);background:rgba(90,152,214,.08)}
+.devis-lang-switch a.active{color:var(--cyan);pointer-events:none}
+.devis-lang-switch .lang-sep{color:rgba(11,25,41,.3);font-weight:400;user-select:none}
+@media(max-width:640px){.devis-lang-switch{display:none}}
 </style>
 </head>
 <body>
@@ -939,6 +1080,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="header-inner">
     <a href="https://www.nomacast.fr/" class="logo">Nomacast</a>
     <div class="header-actions">
+      <ul class="devis-lang-switch" aria-label="Choose language">
+        <li><a href="/devis-captation-conference-seminaire.html" hreflang="fr" lang="fr">FR</a></li>
+        <li><span class="lang-sep" aria-hidden="true">·</span></li>
+        <li><a href="" class="active" aria-current="page">EN</a></li>
+      </ul>
+
       <a href="tel:+33660541732" class="tel-link" data-conversion="phone">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
         <span>+33 6 60 54 17 32</span>
@@ -950,6 +1097,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- HERO -->
 <section class="hero">
+  <div class="hero-video-bg" aria-hidden="true">
+    <video autoplay muted loop playsinline preload="auto" poster="https://www.nomacast.fr/og-image.jpg">
+      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="hero-video-overlay" aria-hidden="true"></div>
   <div class="hero-inner">
     <div class="hero-text">
       <span class="eyebrow">Conference · Seminar · Convention</span>
@@ -968,22 +1121,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           Need a price right now? Get a 30-second estimate →
         </a>
       </p>
-      <div class="trust-row">
-        <div class="trust-item">
-          <span class="trust-num">15+</span>
-          <span class="trust-label">years<br>of experience</span>
+      <div class="hero-kpis">
+        <div class="hero-kpi">
+          <div class="hero-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          From €1,500 (excl. VAT)
         </div>
-        <div class="trust-item">
-          <span class="trust-num">2h</span>
-          <span class="trust-label">full 4K<br>setup</span>
+        <div class="hero-kpi">
+          <div class="hero-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          2-hour setup
         </div>
-        <div class="trust-item">
-          <span class="trust-num">24h</span>
-          <span class="trust-label">guaranteed<br>reply</span>
-        </div>
-        <div class="trust-item">
-          <span class="trust-num">100%</span>
-          <span class="trust-label">owned<br>equipment</span>
+        <div class="hero-kpi">
+          <div class="hero-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          </div>
+          Quote within 24h
         </div>
       </div>
     </div>
@@ -1104,6 +1259,46 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <h3 class="usp-title">One single contact,<br>from brief to delivery</h3>
       <p class="usp-desc">No project manager handing off to a technician. The same contact, from the first call to the file delivery. No weak link.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-section">
+  <div class="testimonials-inner">
+    <p class="section-eyebrow">What they say</p>
+    <h2 class="section-title">Hear from<br>my clients.</h2>
+    <div class="temoignages-grid">
+      <div class="temo-card">
+        <p class="temo-quote">&ldquo;Working with Nomacast on the broadcast of digital events is a guarantee of success for us, peace of mind for any event producer.&rdquo;</p>
+        <div class="temo-author">
+          <img class="temo-avatar" src="https://www.nomacast.fr/images/references/cabon.jpeg" alt="Jean-Michel Cabon" loading="lazy">
+          <div>
+            <div class="temo-name">Jean-Michel Cabon</div>
+            <div class="temo-role">Marketing &amp; Communication Director, ESRI France</div>
+          </div>
+        </div>
+      </div>
+      <div class="temo-card">
+        <p class="temo-quote">&ldquo;Nomacast has been our trusted partner for five years on filming and live streaming. The feedback is always very positive, reflecting the quality of the services delivered.&rdquo;</p>
+        <div class="temo-author">
+          <img class="temo-avatar" src="https://www.nomacast.fr/images/references/marchand.jpeg" alt="Charlotte Marchand" loading="lazy">
+          <div>
+            <div class="temo-name">Charlotte Marchand</div>
+            <div class="temo-role">Head of Events, Morning</div>
+          </div>
+        </div>
+      </div>
+      <div class="temo-card">
+        <p class="temo-quote">&ldquo;For nearly 10 years Nomacast has contributed significantly to our Activation Days. Their lasting commitment and expertise have greatly enriched every edition.&rdquo;</p>
+        <div class="temo-author">
+          <img class="temo-avatar" src="https://www.nomacast.fr/images/references/desenfant.jpeg" alt="Marc Désenfant" loading="lazy">
+          <div>
+            <div class="temo-name">Marc Désenfant</div>
+            <div class="temo-role">CSO, Actito</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1370,6 +1565,98 @@ document.querySelectorAll('a[data-conversion="phone"]').forEach(link => {
     });
   });
 });
+
+// SOURCE TRACKING — capture URL params (gclid, utm_*, kw) and inject into forms
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const gclid = params.get('gclid') || '';
+  const utm_source = params.get('utm_source') || '';
+  const utm_medium = params.get('utm_medium') || '';
+  const utm_campaign = params.get('utm_campaign') || '';
+  const utm_term = params.get('utm_term') || '';
+  const utm_content = params.get('utm_content') || '';
+  const referrer = document.referrer || '';
+
+  document.querySelectorAll('form[name="contact"]').forEach(form => {
+    const sourceField = form.querySelector('input[name="source"]');
+    if (sourceField && (gclid || utm_source || utm_term)) {
+      const baseSource = sourceField.value || '';
+      const tracking = [];
+      if (gclid) tracking.push('gclid=' + gclid);
+      if (utm_source) tracking.push('src=' + utm_source);
+      if (utm_campaign) tracking.push('cmp=' + utm_campaign);
+      if (utm_term) tracking.push('kw=' + utm_term);
+      sourceField.value = baseSource + ' | ' + tracking.join(' ');
+    }
+
+    // Additional hidden fields for CRM reporting
+    const addHidden = (name, value) => {
+      if (!value) return;
+      if (form.querySelector('input[name="'+name+'"]')) return;
+      const i = document.createElement('input');
+      i.type = 'hidden'; i.name = name; i.value = value;
+      form.appendChild(i);
+    };
+    addHidden('gclid', gclid);
+    addHidden('utm_source', utm_source);
+    addHidden('utm_medium', utm_medium);
+    addHidden('utm_campaign', utm_campaign);
+    addHidden('utm_term', utm_term);
+    addHidden('utm_content', utm_content);
+    addHidden('referrer', referrer);
+    addHidden('landing_page', window.location.pathname);
+  });
+})();
+
+// SMART TYPE PREFILL — preselect event type from utm_term keyword
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const term = (params.get('utm_term') || '').toLowerCase();
+  if (!term) return;
+
+  let preselect = null;
+  if (/conference|seminar|webcast|webinar/.test(term)) preselect = 'Conference / Seminar';
+  else if (/agm|annual|general meeting/.test(term)) preselect = 'Annual general meeting';
+  else if (/multiplex|multi[- ]?site/.test(term)) preselect = 'Multiplex / Multi-site';
+  else if (/interview|roundtable|round table/.test(term)) preselect = 'Interview / Roundtable';
+  else if (/launch|product launch/.test(term)) preselect = 'Product launch';
+  else if (/live show|corporate live|broadcast/.test(term)) preselect = 'Corporate live show';
+
+  if (preselect) {
+    document.querySelectorAll('select[name="type"]').forEach(sel => {
+      for (const opt of sel.options) {
+        if (opt.text === preselect) { sel.value = opt.value || opt.text; break; }
+      }
+    });
+  }
+})();
+
+// FOCUS EMAIL — when user clicks a #contact CTA, focus email field after scroll
+document.querySelectorAll('a[href="#contact"], a[href="#contact-hero"]').forEach(a => {
+  a.addEventListener('click', () => {
+    setTimeout(() => {
+      const email = document.querySelector('#email_h, #email_b');
+      if (email) email.focus({ preventScroll: true });
+    }, 700);
+  });
+});
+
+// SUBMIT BUTTON STATE — visual feedback during send (prevents double-clicks)
+document.querySelectorAll('form[name="contact"]').forEach(form => {
+  form.addEventListener('submit', () => {
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.style.cursor = 'wait';
+      const label = btn.querySelector('span') || btn;
+      // replace text without breaking SVG icon
+      const textNode = Array.from(btn.childNodes).find(n => n.nodeType === 3 && n.textContent.trim().length > 0);
+      if (textNode) textNode.textContent = ' Sending…';
+    }
+  });
+});
+
 </script>
 
 </body>
