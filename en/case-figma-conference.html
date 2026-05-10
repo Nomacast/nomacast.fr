@@ -313,8 +313,6 @@ body.menu-open .float-call{display:none!important}
 }
 </style>
 <!-- nomacast-video-v2 : preload conditionnel selon viewport -->
-<link rel="preload" as="video" type="video/mp4" href="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-figma-conference.mp4" media="(min-width: 769px)">
-<link rel="preload" as="video" type="video/mp4" href="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-figma-conference-mobile.mp4" media="(max-width: 768px)">
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M99NLF45"
@@ -363,7 +361,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="page-hero">
   <div class="hero-video-bg" aria-hidden="true">
-    <!-- lot13-poster-lcp : image poster (LCP element) + vidéo en fade-in derrière -->
+    <!-- lot14-lazy-on-interaction : vidéo chargée seulement après interaction utilisateur ou load+1s (sort la vidéo du chemin LCP) -->
     <img class="hero-poster" src="../og-image.webp" alt="" fetchpriority="high" decoding="async">
     <noscript>
       <video class="hero-video-fallback" autoplay muted loop playsinline preload="metadata" poster="og-image.webp">
@@ -373,22 +371,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script>
     (function(){
       const container = document.currentScript.parentNode;
-      const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      const src = isMobile ? 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-figma-conference-mobile.mp4' : 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-figma-conference.mp4';
-      const v = document.createElement('video');
-      v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
-      v.preload = 'metadata';
-      v.className = 'hero-video';
-      v.setAttribute('aria-hidden', 'true');
-      const s = document.createElement('source');
-      s.src = src; s.type = 'video/mp4';
-      v.appendChild(s);
-      v.addEventListener('canplay', function(){
-        v.classList.add('ready');
-        const poster = container.querySelector('.hero-poster');
-        if (poster) poster.classList.add('hidden');
-      }, { once: true });
-      container.insertBefore(v, document.currentScript);
+      let loaded = false;
+      function loadVideo(){
+        if (loaded) return;
+        loaded = true;
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const src = isMobile ? 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-figma-conference-mobile.mp4' : 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-figma-conference.mp4';
+        const v = document.createElement('video');
+        v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
+        v.preload = 'auto';
+        v.className = 'hero-video';
+        v.setAttribute('aria-hidden', 'true');
+        const s = document.createElement('source');
+        s.src = src; s.type = 'video/mp4';
+        v.appendChild(s);
+        v.addEventListener('canplay', function(){
+          v.classList.add('ready');
+          const poster = container.querySelector('.hero-poster');
+          if (poster) poster.classList.add('hidden');
+        }, { once: true });
+        container.insertBefore(v, document.currentScript);
+      }
+      // Trigger 1 : interaction utilisateur (scroll, click, touch, key)
+      const triggers = ['scroll', 'click', 'keydown', 'touchstart', 'mousemove'];
+      const handler = function(){ 
+        triggers.forEach(t => window.removeEventListener(t, handler));
+        loadVideo();
+      };
+      triggers.forEach(t => window.addEventListener(t, handler, { once: true, passive: true }));
+      // Trigger 2 : load + 1s (au cas où l'utilisateur ne bouge pas)
+      // Lighthouse fixe le LCP avant le load event, donc cet appel est sans impact lab
+      if (document.readyState === 'complete') {
+        setTimeout(loadVideo, 1000);
+      } else {
+        window.addEventListener('load', function(){ setTimeout(loadVideo, 1000); }, { once: true });
+      }
     })();
     </script>
   </div>
