@@ -237,6 +237,53 @@ body.menu-open .float-call{display:none!important}
   .nav-lang-mobile a.active{color:var(--cyan,#5A98D6);pointer-events:none}
   .nav-lang-mobile .lang-sep{color:rgba(11,25,41,.3);font-weight:400;user-select:none}
 }
+
+/* lot23-faq-agences */
+.faq-wrap { max-width: var(--max); margin: 0 auto; }
+.faq-list { display: flex; flex-direction: column; gap: 2px; background: var(--border-light); border-radius: 12px; overflow: hidden; margin-top: 48px; }
+.faq-item { background: var(--white); }
+.faq-question {
+  width: 100%; background: none; border: none;
+  padding: 22px 28px; display: flex; align-items: center;
+  justify-content: space-between; gap: 20px;
+  cursor: pointer; text-align: left;
+  font-family: var(--font-head); font-size: 16px;
+  font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
+  transition: background 0.2s;
+}
+.faq-question:hover { background: var(--off-white); }
+.faq-question:focus { outline: none; background: transparent; }
+.faq-question:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; background: transparent; }
+.faq-question:active { background: transparent; }
+.faq-question:focus { background: transparent; }
+.faq-question:active { background: transparent; }
+.faq-icon {
+  width: 24px; height: 24px;
+  background: var(--cyan-light); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: var(--cyan);
+  transition: transform 0.3s, background 0.2s;
+}
+.faq-item.open .faq-icon { transform: rotate(45deg); background: var(--cyan); color: white; }
+.faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+.faq-item.open .faq-answer { max-height: 400px; }
+.faq-answer-inner {
+  padding: 16px 28px 24px;
+  font-size: 15px; font-weight: 300;
+  color: var(--ink-muted); line-height: 1.7;
+  border-top: 1px solid var(--border-light);
+}
+.faq-answer-inner strong { color: var(--ink); font-weight: 600; }
+.faq-wrap { padding-left: 0; padding-right: 0; }
+.faq-question { padding: 18px 20px; font-size: 15px; }
+.faq-answer-inner { padding: 12px 20px 20px; }
+.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
 </style>
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
@@ -272,6 +319,39 @@ body.menu-open .float-call{display:none!important}
     init();
   }
 })();
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Pouvez-vous intervenir en marque blanche ?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Oui, c'est le mode opératoire standard avec les agences partenaires. Pas de logo Nomacast sur le matériel, pas de mention dans les livrables, pas de contact direct avec votre client final si vous le souhaitez."}
+    },
+    {
+      "@type": "Question",
+      "name": "Quelle est votre tarification partenaire ?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Tarif partenaire dégressif selon le volume annuel d'événements confiés. Vous gardez votre marge agence (15-30 %) et facturez votre client final au tarif que vous décidez."}
+    },
+    {
+      "@type": "Question",
+      "name": "Signez-vous un NDA ?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Oui, je signe systématiquement votre NDA avant tout échange opérationnel. Aucun cas client ne sera publié sur mon site sans votre accord écrit explicite."}
+    },
+    {
+      "@type": "Question",
+      "name": "Quels sont vos délais sur une demande urgente ?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Devis sous 24h ouvrées. Pour une intervention dans les 7 jours, c'est faisable selon disponibilité. Idéalement 2-3 semaines à l'avance pour les gros dispositifs."}
+    },
+    {
+      "@type": "Question",
+      "name": "Pouvez-vous gérer un dispositif multi-sites ou plusieurs événements simultanés ?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Oui. Pour les multiplex multi-sites, je m'appuie sur un réseau de techniciens partenaires que je coordonne moi-même. Vous gardez un interlocuteur unique."}
+    }
+  ]
+}
 </script>
 </head>
 <body>
@@ -522,6 +602,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </p>
   </div>
 </section>
+  <!-- lot23-faq-agences -->
+  <section class="section">
+    <div class="faq-wrap">
+      <p class="section-eyebrow">FAQ Partenariat</p>
+      <h2 class="section-title" style="margin-bottom:16px;">Vos questions, mes réponses</h2>
+      <div class="faq-list">
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Pouvez-vous intervenir en marque blanche ?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Oui, c'est même le mode opératoire standard avec les agences partenaires. Pas de logo Nomacast sur le matériel, pas de mention dans les livrables, pas de contact direct avec votre client final si vous le souhaitez. Je peux porter un polo neutre ou aux couleurs de votre agence sur place.</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Quelle est votre tarification partenaire ?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap=" round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Tarif partenaire dégressif selon le volume annuel d'événements confiés. Devis transparent, jamais de surprise. Vous gardez votre marge agence (en général 15-30 %) et facturez votre client final au tarif que vous décidez. Je vous fournis une facture nette.</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Signez-vous un NDA / accord de confidentialité ?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Oui, je signe systématiquement votre NDA avant tout échange opérationnel. J'ai aussi un NDA mutuel standard prêt à signer si besoin. Aucun cas client ne sera publié sur mon site sans votre accord écrit explicite.</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Quels sont vos délais sur une demande urgente ?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Devis sous 24h ouvrées (souvent en quelques heures). Pour une intervention dans les 7 jours, c'est faisable selon disponibilité — je vous réponds en transparence sur le créneau. Idéalement, prévenez-moi 2-3 semaines à l'avance pour les gros dispositifs (multi-sites, multiplex, plateaux TV).</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Pouvez-vous gérer un dispositif multi-sites ou plusieurs événements simultanés ?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Oui. Pour les multiplex multi-sites, je m'appuie sur mon réseau de techniciens partenaires de confiance (régisseurs, opérateurs caméra, vidéastes) que je coordonne moi-même. Vous gardez un interlocuteur unique. Voir le cas <a href="cas-client-gl-events.html" style="color:var(--cyan);">GL Events Global Industrie</a> : 6 chaînes simultanées, 8 régies vMix, 4 jours non-stop.</div></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
 
 <footer class="site-footer">
   <div class="footer-grid">
