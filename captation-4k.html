@@ -63,7 +63,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .nav-links a:hover{color:var(--ink)}
 .nav-cta{background:var(--cyan)!important;color:var(--white)!important;padding:10px 22px!important;border-radius:6px!important;font-weight:600!important;font-size:14px!important;transition:background .2s,transform .15s!important}
 .nav-cta:hover{background:var(--cyan-hover)!important;transform:translateY(-1px)}
-/* nav-cta-fix-v1 — Fix bouton Devis sous 24h header (769-1024px wrap) */
+/* nav-cta-fix-v1, Fix bouton Devis sous 24h header (769-1024px wrap) */
 .nav-links a, .nav-cta { white-space: nowrap; }
 .nav-cta { flex-shrink: 0; }
 @media (max-width: 1024px) and (min-width: 769px) {
@@ -150,7 +150,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .h2-white{color:#fff}
 .h3{font-family:var(--font-head);font-size:19px;font-weight:600;color:var(--ink-mid);margin:32px 0 10px;letter-spacing:-.01em}
 
-/* PROSE — FIX double bullet */
+/* PROSE, FIX double bullet */
 .prose p{font-size:16px;font-weight:300;color:var(--ink-muted);line-height:1.8;margin-bottom:18px}
 .prose p strong{color:var(--ink);font-weight:600}
 .prose a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,.3);transition:border-color .2s}
@@ -261,7 +261,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .prest-arrow{color:var(--cyan);flex-shrink:0;opacity:.5;transition:opacity .2s,transform .2s}
 .prest-card:hover .prest-arrow{opacity:1;transform:translateX(3px)}
 
-/* FOOTER MAILLAGE — fond légèrement différent du formulaire navy */
+/* FOOTER MAILLAGE, fond légèrement différent du formulaire navy */
 .footer-links-section{padding:44px var(--h-pad);background:var(--navy-mid);border-top:2px solid rgba(90,152,214,.18)}
 .footer-links-inner{max-width:var(--max);margin:0 auto}
 .footer-links-header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
@@ -310,7 +310,9 @@ footer{padding:24px var(--h-pad);background:var(--navy);border-top:1px solid rgb
 }
 
 /* ═══════ SITE FOOTER ═══════ */
-.site-footer{display:block;background:#0b1929;color:rgba(255,255,255,.6);padding:72px clamp(24px,5vw,64px) 32px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;line-height:1.65}
+.site-footer{display:block;background:#050b14;color:rgba(255,255,255,.6);padding:96px clamp(24px,5vw,64px) 32px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;line-height:1.65;position:relative}
+.site-footer::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:2px;background:linear-gradient(to right,transparent,var(--cyan),transparent);border-radius:100px}
+.site-footer::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:2px;background:linear-gradient(to right,transparent,var(--cyan),transparent);border-radius:100px}
 .footer-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.08)}
 .footer-col-brand .footer-logo{font-family:'Outfit',system-ui,sans-serif;font-size:20px;font-weight:700;letter-spacing:-.03em;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:20px}
 .footer-logo-dot{width:7px;height:7px;background:#5A98D6;border-radius:50%;display:inline-block}
@@ -526,7 +528,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="page-hero-breadcrumb"><a href="index.html">Accueil</a> / Captation 4K</p>
     <p class="page-hero-eyebrow">Guide technique</p>
     <h1 class="page-hero-title">Captation <span class="accent">4K</span><br>Professionnelle</h1>
-    <p class="page-hero-subtitle">Caméras 4K Canon Ultra HD. Quand la 4K change vraiment la donne, et quand le Full HD suffit. Guide pratique pour faire le bon choix.</p>
+    <p class="page-hero-subtitle">Caméras 4K Canon Ultra HD, régie 4K native, workflow optimisé. Pour les films corporate à fort enjeu, l'archivage durable et les projections grand format.</p>
     <div class="hero-actions">
       <a href="#contact" class="btn-primary"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Devis sous 24h</a>
       <a href="tel:+33660541732" class="btn-ghost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> Appeler</a>
@@ -537,58 +539,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-<section class="section section-off">
-  <div class="wrap reveal">
-    <p class="eyebrow">Nos prestations</p>
-    <h2 class="h2">Captation 4K disponible sur toutes nos prestations</h2>
-    <div class="prest-grid">
-      <a href="captation-conference-seminaire.html" class="prest-card">
-  <div><p class="prest-cat">Prestation</p><p class="prest-name">Conférence & Séminaire</p><p class="prest-desc">3 caméras 4K clé en main</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="captation-interview-table-ronde.html" class="prest-card">
-  <div><p class="prest-cat">Prestation</p><p class="prest-name">Interview & Table ronde</p><p class="prest-desc">Angles dédiés, son HF, éclairage professionnel</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="captation-video-evenement.html" class="prest-card">
-  <div><p class="prest-cat">Guide</p><p class="prest-name">Captation vidéo événement</p><p class="prest-desc">Définition et techniques de captation</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="live-streaming-evenement.html" class="prest-card">
-  <div><p class="prest-cat">Guide</p><p class="prest-name">Live streaming événementiel</p><p class="prest-desc">Tout comprendre sur la diffusion en direct</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-    </div>
-  </div>
-</section>
+
 
 <section class="section section-light">
   <div class="wrap">
     <div class="two-col reveal">
       <div class="prose">
-        <p class="eyebrow">Définition</p>
-        <h2 class="h2">Captation 4K : quand,<br>pourquoi, et comment</h2>
-        <p>Le <strong>4K Ultra HD</strong> (3840 × 2160 pixels) offre une résolution quatre fois supérieure au Full HD 1080p. Appliqué à la <a href="captation-video-evenement.html">captation événementielle</a>, il produit une image d'une précision incomparable. Mais son intérêt varie fortement selon l'usage prévu.</p>
-        <p>Nomacast capte en 4K avec les <strong>Canon CR-N500</strong>, des caméras professionnelles conçues pour la production. Motorisées et contrôlables depuis la régie vidéo, elles allient qualité 4K et discrétion opérationnelle.</p>
-
-        <h3 class="h3">1080p vs 4K en pratique</h3>
-        <p>Pour la <strong><a href="live-streaming-evenement.html">diffusion en direct</a></strong>, le Full HD 1080p reste le standard universel. La quasi-totalité des plateformes et des viewers consomment le live en 1080p. Diffuser en 4K n'améliore pas l'expérience spectateur dans la majorité des cas et consomme 4 fois plus de bande passante.</p>
-        <p>L'intérêt du 4K est dans la <strong>captation enregistrée</strong> : le fichier 4K est une matière première exceptionnelle pour la post-production. Recadrage sans perte de qualité, stabilisation, export en multiples formats, projection sur grand écran ou LED wall. La 4K offre une flexibilité qu'on ne peut pas recréer après coup.</p>
-
-        <h3 class="h3">Les caméras Canon CR-N500</h3>
-        <ul>
-          <li><strong>4K/30p (et Full HD/60p)</strong> avec autofocus professionnel, l'image reste nette même quand les intervenants bougent</li>
-          <li><strong>Plage dynamique étendue</strong> gère bien les contrastes difficiles (fond clair, scène sombre)</li>
-          <li><strong>Colorimétrie professionnelle</strong> rendu naturel et fidèle, compatible avec les workflows de post-production</li>
-          <li><strong>Contrôle à distance</strong> depuis la régie vidéo, sans caméraman au pied de chaque caméra</li>
-          <li><strong>Sortie HDMI et IP</strong> compatible réseau pour les workflows avancés</li>
-        </ul>
-
-        <h3 class="h3">Contraintes techniques du 4K</h3>
-        <p><strong>Stockage</strong> : un fichier 4K en qualité professionnelle pèse 3 à 5 fois plus qu'un fichier 1080p. Pour une journée de 8h, prévoir 400 à 600 Go. <strong>Encodage temps réel</strong> : la régie vidéo doit être suffisamment puissante pour encoder 3 flux 4K simultanément sans latence. <strong>Bande passante</strong> : si vous souhaitez diffuser en 4K live, il faut 25 à 40 Mbps d'upload stables.</p>
-
-        <h3 class="h3">Quand choisir la 4K</h3>
-        <p>La 4K est recommandée pour la <a href="captation-conference-seminaire.html">captation d'événements premium</a> destinés à la post-production, la projection sur grand écran ou LED wall, l'archivage institutionnel à long terme, et les <a href="emission-live-corporate.html">émissions live corporate</a> haut de gamme. Pour une diffusion live pure sans exploitation ultérieure, le Full HD professionnel reste la solution optimale.</p>
+        <p class="eyebrow">Mon approche</p>
+        <h2 class="h2">La 4K, quand ça change<br>vraiment la donne</h2>
+        <p>Une qualité broadcast au service de votre image, pas pour le folklore technique.</p>
+        <div style="margin:28px 0 0;display:flex;flex-direction:column;gap:28px;">
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Caméras 4K natives</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Canon CR-N500 PTZ, capteurs 1/2.5" Ultra HD 60fps. Vraies images broadcast natives, pas d'upscaling depuis du Full HD.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Régie ATEM 4K</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">ATEM 1 M/E Constellation 4K pour la commutation en temps réel. Switcher broadcast professionnel utilisé en télévision.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Encodage et stockage</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Encodage H.265/HEVC pour la diffusion, ProRes ou DNxHR pour l'archivage. Disques SSD haute vitesse pour absorber les débits 4K.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Quand la 4K vaut le coup</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Films corporate à fort enjeu, archivage durable, recadrages possibles en post-prod, projections sur écrans XL ou IMAX. Pas indispensable pour un webinaire interne.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Workflow optimisé</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Du tournage à la livraison : workflow 4K bout-en-bout sans transcodages successifs ni pertes de qualité.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Paris, France, Europe</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Tournage 4K disponible sur toutes mes prestations. Pas de surcoût matériel, supplément ~20% pour le stockage et le workflow.</p>
+          </div>
+        </div>
       </div>
       <aside style="padding-top:8px;">
         <div style="position:sticky;top:100px;">
@@ -603,14 +588,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="incl-card">
     <p class="incl-title">Toujours compris</p>
     <p class="incl-subtitle">dans chaque intervention</p>
-    <ul class="incl-list"><li class="incl-item"><span class="incl-dot"></span>Canon CR-N500 4K UHD jusqu'à 30p</li><li class="incl-item"><span class="incl-dot"></span>Régie vidéo embarquée</li><li class="incl-item"><span class="incl-dot"></span>Full HD inclus en standard</li><li class="incl-item"><span class="incl-dot"></span>Fichier remis le jour même</li></ul>
+    <ul class="incl-list"><li class="incl-item"><span class="incl-dot"></span>3 caméras 4K</li><li class="incl-item"><span class="incl-dot"></span>Éclairage professionnel</li><li class="incl-item"><span class="incl-dot"></span>Régie vidéo</li><li class="incl-item"><span class="incl-dot"></span>Récupération audio depuis la console du lieu</li><li class="incl-item"><span class="incl-dot"></span>Vidéo finale remise dès la fin de l'événement</li><li class="incl-item"><span class="incl-dot"></span>Paris : 0 € de transport · Province et international au devis</li></ul>
     <div class="incl-sep"></div>
     <p class="incl-option-label">Sur demande</p>
-    <ul class="incl-list"><li class="incl-item"><span class="incl-dot-option"></span>4K Ultra HD sur demande</li><li class="incl-item"><span class="incl-dot-option"></span>Diffusion live (YouTube, LinkedIn, X, TikTok, Instagram…)</li><li class="incl-item"><span class="incl-dot-option"></span>Réseau 5G dédié si lieu non couvert</li><li class="incl-item"><span class="incl-dot-option"></span>Micros HF individuels (en supplément)</li></ul>
+    <ul class="incl-list"><li class="incl-item"><span class="incl-dot-option"></span>Diffusion live multi-plateformes</li><li class="incl-item"><span class="incl-dot-option"></span>Routeur 5G dédié si nécessaire</li><li class="incl-item"><span class="incl-dot-option"></span>Livraison des rushes 4K bruts par caméra</li><li class="incl-item"><span class="incl-dot-option"></span>Master ProRes/DNxHR pour archivage</li><li class="incl-item"><span class="incl-dot-option"></span>Encodage H.265 pour livraison web</li><li class="incl-item"><span class="incl-dot-option"></span>Sous-titres SRT générés automatiquement</li></ul>
   </div>
 </div>
         </div>
       </aside>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="section section-off">
+  <div class="wrap reveal">
+    <p class="eyebrow">Le déroulé</p>
+    <h2 class="h2">De la réservation à la remise des fichiers</h2>
+    <div class="features">
+      <div class="feature reveal"><div class="feature-num">01</div><div class="feature-title">Brief & repérage</div><div class="feature-body">Échange sur vos usages prévus (diffusion, archivage, post-prod), votre charte graphique, vos contraintes techniques. Repérage si possible.</div></div>
+      <div class="feature reveal"><div class="feature-num">02</div><div class="feature-title">Installation en 2h</div><div class="feature-body">Plateau opérationnel avant le début : caméras 4K calibrées, régie ATEM 4K, éclairage adapté à la précision UHD.</div></div>
+      <div class="feature reveal"><div class="feature-num">03</div><div class="feature-title">Captation 4K UHD</div><div class="feature-body">Réalisation broadcast en direct depuis la régie. Bascule entre caméras, intégration des slides en 4K, gestion du son broadcast.</div></div>
+      <div class="feature reveal"><div class="feature-num">04</div><div class="feature-title">Fichier 4K livré le soir</div><div class="feature-body">Master 4K + version web optimisée. Lien sécurisé disponible dès la fin de l'événement, prêt à archiver ou monter.</div></div>
     </div>
   </div>
 </section>
@@ -635,25 +635,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-<section class="tarifs-bridge" style="padding:72px var(--h-pad);background:var(--off-white);border-top:1px solid var(--border);text-align:center;">
-  <div style="max-width:680px;margin:0 auto;">
-    <p style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--cyan);background:var(--cyan-light);padding:6px 14px;border-radius:100px;margin-bottom:18px;">Combien ça coûte ?</p>
-    <h2 style="font-family:var(--font-head);font-size:clamp(26px,3.2vw,36px);font-weight:600;line-height:1.15;letter-spacing:-0.02em;color:var(--ink);margin-bottom:14px;">Configurez votre dispositif et obtenez une estimation immédiate.</h2>
-    <p style="font-size:15px;color:var(--ink-muted);margin-bottom:28px;line-height:1.6;">Plateau, durée, options : construisez votre devis sur-mesure et recevez le détail sous 24h.</p>
-    <a href="tarifs.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;transition:background .2s,transform .15s;box-shadow:0 4px 20px rgba(14,165,233,.25);">
-      Voir les tarifs et configurer
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </a>
-  </div>
-</section>
-
 <section id="contact" class="contact-section">
   <div class="contact-glow" aria-hidden="true"></div>
   <div class="contact-wrap">
     <div class="reveal">
       <p class="contact-eyebrow">Votre projet</p>
       <h2 class="contact-title">Parlons de<br>votre événement.</h2>
-      <p class="contact-pitch">Devis gratuit et personnalisé sous 24h. Décrivez-nous votre projet et nous vous rappelons rapidement.</p>
+      <p class="contact-pitch">Devis gratuit et personnalisé sous 24h. Décrivez-moi votre projet et je vous rappelle rapidement. <a href="tarifs.html" style="color:var(--cyan);text-decoration:underline;text-underline-offset:3px;">Vous préférez un chiffre tout de suite ? Estimer en 30 secondes →</a></p>
     </div>
     <form class="contact-form reveal" name="contact" action="envoyer.php" method="POST">
       <input type="text" name="website" style="display:none" tabindex="-1" autocomplete="off">
@@ -695,30 +683,74 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </form>
   </div>
 </section>
-<div class="footer-links-section">
-  <div class="footer-links-inner">
-    <div class="footer-links-header"><span class="footer-links-title">Aller plus loin</span></div>
-    <div class="footer-links-grid"><a href="captation-conference-seminaire.html" class="footer-link">
-  <div><p class="footer-link-cat">prestation</p><p class="footer-link-name">Conférence & Séminaire</p></div>
-</a><a href="captation-interview-table-ronde.html" class="footer-link">
-  <div><p class="footer-link-cat">prestation</p><p class="footer-link-name">Interview & Table ronde</p></div>
-</a><a href="streaming-multiplex-multi-sites.html" class="footer-link">
-  <div><p class="footer-link-cat">prestation</p><p class="footer-link-name">Multiplex & Multi-sites</p></div>
-</a><a href="emission-live-corporate.html" class="footer-link">
-  <div><p class="footer-link-cat">prestation</p><p class="footer-link-name">Émission live corporate</p></div>
-</a><a href="live-streaming-evenement.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Live streaming événementiel</p></div>
-</a><a href="captation-video-evenement.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Captation vidéo événement</p></div>
-</a><a href="streaming-multi-plateformes.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Streaming multi-plateformes</p></div>
-</a><a href="devis-live-streaming-paris.html" class="footer-link">
-  <div><p class="footer-link-cat">ads</p><p class="footer-link-name">Prestataire Paris</p></div>
-</a><a href="prestataire-captation-evenement.html" class="footer-link">
-  <div><p class="footer-link-cat">ads</p><p class="footer-link-name">Prestataire France & Europe</p></div>
-</a></div>
+<section class="section section-off">
+  <div class="wrap reveal">
+    <p class="eyebrow">Et aussi</p>
+    <h2 class="h2">Au-delà de la captation 4K</h2>
+    <p class="lead" style="max-width:680px;margin-bottom:32px;">La 4K est disponible sur toutes mes prestations. Pour comprendre quel dispositif convient à votre événement, voici les autres formats que je couvre. Toujours en interlocuteur unique.</p>
+    <div class="prest-grid">
+      <a href="captation-conference-seminaire.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Conférence & Séminaire</p><p class="prest-desc">Dispositif 3 caméras 4K standard</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="emission-live-corporate.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Émission live corporate</p><p class="prest-desc">Plateau TV-style avec habillage avancé</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="captation-interview-table-ronde.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Interview & Table ronde</p><p class="prest-desc">Angles dédiés, son HF, éclairage 3 points</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="streaming-multiplex-multi-sites.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Multiplex & Multi-sites</p><p class="prest-desc">Plusieurs sites en direct, régie unique</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="streaming-multi-plateformes.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Streaming multi-plateformes</p><p class="prest-desc">Diffusion simultanée multi-canaux</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="agences-partenaires.html" class="prest-card">
+  <div><p class="prest-cat">Pour agences</p><p class="prest-name">Marque blanche</p><p class="prest-desc">Prestataire technique pour agences</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+    </div>
   </div>
-</div>
+</section>
+
+<section class="section section-off">
+  <div class="wrap reveal">
+    <p class="eyebrow">Et aussi</p>
+    <h2 class="h2">Au-delà de la captation 4K</h2>
+    <p class="lead" style="max-width:680px;margin-bottom:32px;">La 4K est disponible sur toutes mes prestations. Pour comprendre quel dispositif convient à votre événement, voici les autres formats que je couvre. Toujours en interlocuteur unique.</p>
+    <div class="prest-grid">
+      <a href="captation-conference-seminaire.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Conférence & Séminaire</p><p class="prest-desc">Dispositif 3 caméras 4K standard</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="emission-live-corporate.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Émission live corporate</p><p class="prest-desc">Plateau TV-style avec habillage avancé</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="captation-interview-table-ronde.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Interview & Table ronde</p><p class="prest-desc">Angles dédiés, son HF, éclairage 3 points</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="streaming-multiplex-multi-sites.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Multiplex & Multi-sites</p><p class="prest-desc">Plusieurs sites en direct, régie unique</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="streaming-multi-plateformes.html" class="prest-card">
+  <div><p class="prest-cat">Prestation</p><p class="prest-name">Streaming multi-plateformes</p><p class="prest-desc">Diffusion simultanée multi-canaux</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="agences-partenaires.html" class="prest-card">
+  <div><p class="prest-cat">Pour agences</p><p class="prest-name">Marque blanche</p><p class="prest-desc">Prestataire technique pour agences</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+    </div>
+  </div>
+</section>
+
 <footer class="site-footer">
   <div class="footer-grid">
     <div class="footer-col footer-col-brand">
@@ -739,8 +771,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <li><a href="captation-interview-table-ronde.html">Interview &amp; table ronde</a></li>
         <li><a href="captation-4k.html">Captation 4K</a></li>
         <li><a href="streaming-multi-plateformes.html">Multi-plateformes</a></li>
-        <li><a href="live-streaming-evenement.html">Guide live streaming</a></li>
-      </ul>
+        </ul>
     </div>
 
     <div class="footer-col">
