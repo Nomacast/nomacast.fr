@@ -369,7 +369,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="page-hero">
   <div class="hero-video-bg" aria-hidden="true">
-    <!-- lot15-interaction-only : vidéo chargée UNIQUEMENT sur interaction utilisateur (pas de timer fallback, sort la vidéo du LCP) -->
+    <!-- lot14-lazy-on-interaction : vidéo chargée seulement après interaction utilisateur ou load+1s (sort la vidéo du chemin LCP) -->
     <img class="hero-poster" src="og-image.webp" alt="" fetchpriority="high" decoding="async">
     <noscript>
       <video class="hero-video-fallback" autoplay muted loop playsinline preload="metadata" poster="og-image.webp">
@@ -401,14 +401,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         container.insertBefore(v, document.currentScript);
       }
       // Trigger 1 : interaction utilisateur (scroll, click, touch, key)
-      const triggers = ['scroll', 'wheel', 'click', 'keydown', 'touchstart', 'mousemove'];
+      const triggers = ['scroll', 'click', 'keydown', 'touchstart', 'mousemove'];
       const handler = function(){ 
         triggers.forEach(t => window.removeEventListener(t, handler));
         loadVideo();
       };
       triggers.forEach(t => window.addEventListener(t, handler, { once: true, passive: true }));
-      // lot15-interaction-only : pas de timer fallback (vidéo UNIQUEMENT sur interaction)
-      // Pour les utilisateurs sans interaction, le poster image reste affiché.
+      // Trigger 2 : load + 1s (au cas où l'utilisateur ne bouge pas)
+      // Lighthouse fixe le LCP avant le load event, donc cet appel est sans impact lab
+      if (document.readyState === 'complete') {
+        setTimeout(loadVideo, 1000);
+      } else {
+        window.addEventListener('load', function(){ setTimeout(loadVideo, 1000); }, { once: true });
+      }
     })();
     </script>
   </div>
