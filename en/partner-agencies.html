@@ -239,6 +239,53 @@ body.menu-open .float-call{display:none!important}
   .nav-lang-mobile a.active{color:var(--cyan,#5A98D6);pointer-events:none}
   .nav-lang-mobile .lang-sep{color:rgba(11,25,41,.3);font-weight:400;user-select:none}
 }
+
+/* lot23-faq-agences */
+.faq-wrap { max-width: var(--max); margin: 0 auto; }
+.faq-list { display: flex; flex-direction: column; gap: 2px; background: var(--border-light); border-radius: 12px; overflow: hidden; margin-top: 48px; }
+.faq-item { background: var(--white); }
+.faq-question {
+  width: 100%; background: none; border: none;
+  padding: 22px 28px; display: flex; align-items: center;
+  justify-content: space-between; gap: 20px;
+  cursor: pointer; text-align: left;
+  font-family: var(--font-head); font-size: 16px;
+  font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
+  transition: background 0.2s;
+}
+.faq-question:hover { background: var(--off-white); }
+.faq-question:focus { outline: none; background: transparent; }
+.faq-question:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; background: transparent; }
+.faq-question:active { background: transparent; }
+.faq-question:focus { background: transparent; }
+.faq-question:active { background: transparent; }
+.faq-icon {
+  width: 24px; height: 24px;
+  background: var(--cyan-light); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: var(--cyan);
+  transition: transform 0.3s, background 0.2s;
+}
+.faq-item.open .faq-icon { transform: rotate(45deg); background: var(--cyan); color: white; }
+.faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+.faq-item.open .faq-answer { max-height: 400px; }
+.faq-answer-inner {
+  padding: 16px 28px 24px;
+  font-size: 15px; font-weight: 300;
+  color: var(--ink-muted); line-height: 1.7;
+  border-top: 1px solid var(--border-light);
+}
+.faq-answer-inner strong { color: var(--ink); font-weight: 600; }
+.faq-wrap { padding-left: 0; padding-right: 0; }
+.faq-question { padding: 18px 20px; font-size: 15px; }
+.faq-answer-inner { padding: 12px 20px 20px; }
+.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
 </style>
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
@@ -274,6 +321,39 @@ body.menu-open .float-call{display:none!important}
     init();
   }
 })();
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Can you operate as a white-label provider?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Yes, that's the default mode with agency partners. No Nomacast branding on equipment, no mention in deliverables, no direct contact with your end client if you prefer."}
+    },
+    {
+      "@type": "Question",
+      "name": "What's your partner pricing structure?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Tiered partner pricing based on yearly volume. You keep your agency margin (15-30%) and bill your end client at whatever rate you decide."}
+    },
+    {
+      "@type": "Question",
+      "name": "Do you sign NDAs?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Yes, I systematically sign your NDA before any operational discussion. No case study will be published on my site without your explicit written approval."}
+    },
+    {
+      "@type": "Question",
+      "name": "What are your turnaround times for urgent requests?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Quote within 24 business hours. For an intervention within 7 days, it's doable depending on availability. Ideally 2-3 weeks notice for larger setups."}
+    },
+    {
+      "@type": "Question",
+      "name": "Can you handle multi-site setups or simultaneous events?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Yes. For multi-site multiplex, I rely on a network of trusted technical partners that I coordinate directly. You keep a single point of contact."}
+    }
+  ]
+}
 </script>
 </head>
 <body>
@@ -525,6 +605,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </p>
   </div>
 </section>
+  <!-- lot23-faq-agences -->
+  <section class="section">
+    <div class="faq-wrap">
+      <p class="section-eyebrow">Partnership FAQ</p>
+      <h2 class="section-title" style="margin-bottom:16px;">Your questions, my answers</h2>
+      <div class="faq-list">
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Can you operate as a white-label provider?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Yes — that's actually the default mode with agency partners. No Nomacast branding on equipment, no mention in deliverables, no direct contact with your end client if you prefer. I can wear a neutral polo or your agency's branded apparel on site.</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">What's your partner pricing structure?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Tiered partner pricing based on yearly volume of events. Transparent quote, no surprises. You keep your agency margin (typically 15-30%) and bill your end client at whatever rate you decide. I provide a net invoice.</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Do you sign NDAs / confidentiality agreements?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Yes — I systematically sign your NDA before any operational discussion. I also have a standard mutual NDA ready to sign if needed. No case study will ever be published on my site without your explicit written approval.</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">What are your turnaround times for urgent requests?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Quote within 24 business hours (often within a few hours). For an intervention within 7 days, it's doable depending on availability — I'll be upfront about the slot. Ideally, give me 2-3 weeks notice for larger setups (multi-site, multiplex, TV-style sets).</div></div>
+        </div>
+
+        <div class="faq-item" data-lot23-faq>
+          <button class="faq-question">Can you handle multi-site setups or simultaneous events?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+          <div class="faq-answer"><div class="faq-answer-inner">Yes. For multi-site multiplex setups, I rely on a network of trusted technical partners (engineers, camera operators, videographers) that I coordinate directly. You keep a single point of contact. See the <a href="case-gl-events.html" style="color:var(--cyan);">GL Events Global Industrie case</a>: 6 simultaneous channels, 8 vMix control rooms, 4 days non-stop.</div></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
 
 <footer class="site-footer">
   <div class="footer-grid">
