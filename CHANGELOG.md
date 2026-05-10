@@ -1,3 +1,209 @@
+# CHANGELOG — Session 10 mai 2026 (finitions LOT 22-26)
+
+> Suite directe du CHANGELOG-session-2026-05-10-suite (LOT 16-21).
+> Cette série corrige des bugs résiduels et finalise la cohérence éditoriale.
+
+---
+
+## 🐛 LOT 22 — Fix posters EN + FAQ position (8 fichiers)
+
+### Bug 1 : 6 cas-clients EN avec poster générique
+
+Le LOT 16 cherchait `src="og-image.webp"` mais sur les pages EN c'est
+`src="../og-image.webp"` (path relatif). Le regex ne matchait pas → 6 pages
+EN n'ont jamais été patchées et affichaient encore le og-image générique.
+
+**Fix** : pattern adapté avec `\.\./og-image\.webp`.
+
+| Page EN | Poster fixé |
+|---|---|
+| en/case-comedie-francaise.html | `../images/cas-clients/comedie-francaise.webp` |
+| en/case-digital-benchmark-berlin.html | `ebg-berlin.webp` |
+| en/case-figma-conference.html | `figma.webp` |
+| en/case-gl-events.html | `gl-events.webp` |
+| en/case-louvre-lahorde.html | `louvre-lahorde.webp` |
+| en/case-morning.html | `morning.webp` |
+
+### Bug 2 : 3 questions FAQ index insérées à l'intérieur du bloc CTA
+
+Le LOT 18 a inséré les 3 nouvelles questions FAQ **entre `</a>` (Appelez-moi
+maintenant) et `</div>` (fermeture du bloc help)**. Visuellement, elles
+apparaissaient **après** le CTA au lieu d'avant.
+
+**Fix** : extraction des 3 blocs `data-lot18-seo` + déplacement avant le bloc
+help (style `border-top:1px solid var(--border-light)`).
+
+**Pages** : index.html + en/index.html
+
+---
+
+## 🤝 LOT 23 — FAQ partenariat agence (2 fichiers)
+
+Ajout d'une **FAQ ciblée B2B2B** sur `agences-partenaires.html` (FR + EN).
+La page n'avait aucune FAQ avant — toutes les objections classiques d'agence
+étaient laissées sans réponse.
+
+### 5 questions ajoutées
+
+| # | FR | EN |
+|---|---|---|
+| 1 | Pouvez-vous intervenir en marque blanche ? | White-label provider? |
+| 2 | Quelle est votre tarification partenaire ? | Partner pricing structure? |
+| 3 | Signez-vous un NDA ? | Do you sign NDAs? |
+| 4 | Quels délais sur une demande urgente ? | Turnaround time on urgent requests? |
+| 5 | Pouvez-vous gérer un dispositif multi-sites ? | Multi-site / simultaneous events? |
+
+Chaque réponse répond à une **objection commerciale précise** :
+- Marque blanche : "Pas de logo Nomacast, polo neutre ou aux couleurs de votre agence sur place"
+- Tarif : "Vous gardez votre marge agence (15-30 %), facture nette"
+- NDA : "Aucun cas client publié sans votre accord écrit explicite"
+- Multi-sites : lien vers cas GL Events comme preuve sociale
+
+### Inserts techniques
+
+- CSS FAQ ajouté dans le `<style>` du `<head>` (réutilise le style de l'index)
+- Section HTML insérée après `</section>` du form, avant `<footer>`
+- JSON-LD `FAQPage` ajouté dans le `<head>` pour Google rich results
+
+**Marqueurs** : `lot23-faq-agences` + `data-lot23-faq`
+
+---
+
+## 🔗 LOT 24 — Nav Agences + marges legal pages (8 fichiers)
+
+### Fix 1 : Bouton "Agences" du menu (index FR + EN)
+
+Le bouton menu pointait vers une **ancre interne `#agences`** qui scrollait
+en bas de l'index, alors que la page dédiée existe.
+
+**Fix** :
+- `index.html` : Agences → `agences-partenaires.html` (au lieu de `#agences`)
+- `en/index.html` : Agencies → `partner-agencies.html`
+
+### Fix 2 : Marges des pages légales (6 pages)
+
+`.divider` (margin: 48px 0) + h2 (margin-top: 44px) créaient **165px d'espace
+vide** entre la section Hébergement et la suivante sur les pages légales.
+
+**Fix CSS** :
+```css
+.divider { margin: 24px 0; }   /* 48px → 24px */
+h2       { margin: 32px 0 12px; }  /* 44px → 32px */
+```
+
+→ **165px → 81px** : respirable sans trou béant.
+
+**Pages** : mentions-legales.html + en/legal-notice.html +
+politique-de-confidentialite.html + en/privacy-policy.html +
+plan-du-site.html + en/sitemap.html
+
+**Marqueur** : `lot24-fix-margins`
+
+---
+
+## 🗺️ LOT 25 — Sitemap revu (2 fichiers)
+
+Réécriture complète du contenu de `plan-du-site.html` + `en/sitemap.html`
+pour refléter la nouvelle stratégie éditoriale (LOT 18 + LOT 23).
+
+### Changements clés
+
+| Élément | Avant | Après |
+|---|---|---|
+| Date de mise à jour | 30 avril 2026 | **10 mai 2026** |
+| Section live streaming | "Live streaming et émission" | "**Live streaming, webcast & webinaire**" |
+| Description live | "Diffusion en direct multi-plateformes" | "Live streaming professionnel, **webcasts multi-caméras, webinaires premium broadcast-quality**" |
+| Section agences | (générique) | + "Tarif partenaire dégressif, NDA, **FAQ partenariat dédiée**" |
+| Cas Johnson & Johnson | "Captation médicale" | "**Multiplex 6 villes en direct**" |
+| Cas GL Events | "Captation salon pro" | "**6 chaînes simultanées, 4 jours**" |
+| Cas Figma | "Figma Conference Paris" | "Figma Customer Nights — **Conférences B2B récurrentes**" |
+| Blog post | "Réussir une AG mixte..." | "**Événement hybride présentiel-distanciel : 7 erreurs à éviter**" (= H1 réel) |
+
+8 sections, 36 liens, intro enrichie avec keywords stratégiques (vidéaste B2B,
+multi-caméra 4K, conférences, séminaires, keynotes, webcasts, webinaires premium,
+Paris/France/Europe).
+
+---
+
+## 🔧 LOT 26 — Logo HVH cliquable + bullets GL Events (4 fichiers)
+
+### Fix 1 : Logo HVH cliquable → page (LA)HORDE
+
+**Avant** :
+```js
+{ nom: "HVH", logo_url: "/images/logos/hvh.webp", alt: "HVH" }
+```
+
+**Après** :
+```js
+{ nom: "HVH", logo_url: "/images/logos/hvh.webp", alt: "HVH",
+  cas_url: "cas-client-louvre-lahorde.html" }
+```
+
+EN : `cas_url: "case-louvre-lahorde.html"`.
+
+→ Le logo HVH dans la grille "Ils me font confiance" envoie désormais vers
+le cas client (LA)HORDE × Louvre. Cohérent : HVH est l'agence de production
+qui pilote la (LA)HORDE.
+
+### Fix 2 : Bullets hero GL Events — équilibrage mobile
+
+Sur mobile, les 4 bullets s'affichent en grille 2×2. Le 2e bullet était
+3× plus long que les autres → cassait l'alignement visuel.
+
+| Bullet | Avant | Après |
+|---|---|---|
+| 1 | 6 chaînes / Live simultanées (16c) | inchangé |
+| 2 | 8 régies vMix / **6 chaînes + 1 redondance + 1 spare** (34c) | **Zéro coupure live** (17c) |
+| 3 | 4 jours / Non-stop (8c) | inchangé |
+| 4 | 8 techniciens / Équipe pilotée (14c) | inchangé |
+
+EN équivalent : "6 channels + 1 redundancy + 1 spare" (35c) → **"Zero downtime"** (13c).
+
+Tous les sous-textes entre **8-17c** : grille 2×2 alignée sur mobile.
+
+**Note marketing** : "Zéro coupure live" parle direct au DT d'agence — c'est
+leur plus grosse peur sur un événement live, et la promesse y répond frontalement.
+
+---
+
+## 📊 Bilan LOT 22-26
+
+| LOT | Pages | Type |
+|---|---|---|
+| 22 | 8 | Bug fixes (posters EN + FAQ position) |
+| 23 | 2 | Nouveau contenu FAQ partenariat |
+| 24 | 8 | UX nav + CSS marges |
+| 25 | 2 | Wording sitemap stratégique |
+| 26 | 4 | UX logo cliquable + wording mobile |
+
+**Total** : 24 patches sur ~22 fichiers uniques.
+
+### Bugs résolus
+1. Posters EN cas-clients (6 pages)
+2. FAQ index — 3 questions positionnées dans le bloc CTA
+3. Bouton Agences vers ancre au lieu de la page
+4. Marges divider/h2 disproportionnées (6 pages)
+5. Bullet GL Events trop long sur mobile
+
+### Nouveaux contenus
+1. FAQ partenariat agence (5 questions FR + EN)
+2. JSON-LD FAQPage sur agences-partenaires
+3. Sitemap réécrit avec keywords stratégiques
+
+### Marqueurs idempotents ajoutés
+`lot23-faq-agences`, `data-lot23-faq`, `lot24-fix-margins`
+
+---
+
+## 📝 Pending pour le launch
+
+1. SIRET dans mentions-legales.html + en/legal-notice.html
+2. Sitemap → Google Search Console (re-soumettre après LOT 25)
+3. LinkedIn Post Inspector + Facebook Debug : forcer refresh og:image après deploy LOT 21
+4. Test formulaire post-deploy (mail-tester.com)
+5. **Dans 3 semaines** : check Field Data CrUX dans Search Console
+
 # CHANGELOG — Session 10 mai 2026 (suite et fin)
 
 > Suite des sessions précédentes (LOT 1-15). Cette session couvre les LOT 16-21
