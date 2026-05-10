@@ -1,3 +1,344 @@
+# CHANGELOG — Session 10 mai 2026 (suite et fin)
+
+> Suite des sessions précédentes (LOT 1-15). Cette session couvre les LOT 16-21
+> qui finalisent l'optimisation mobile, la sécurité CSP, le SEO et les visuels
+> cas-clients.
+
+---
+
+## 🚀 LOT 16 — Mobile sans vidéo + posters cas-clients spécifiques
+
+**16 fichiers patchés** (index FR/EN + 14 cas-clients FR/EN)
+
+### Stratégie
+
+Sur mobile, plus aucune vidéo ne charge — seul le poster image s'affiche.
+Sur desktop, la vidéo se charge normalement (LOT 14 inchangé : load+1s ou interaction).
+
+Pour les pages cas-clients, le poster utilise désormais l'image **spécifique** de
+chaque cas (au lieu du `og-image.webp` générique).
+
+### Mapping poster image
+
+| Cas-client | Image hero |
+|---|---|
+| comedie-francaise (FR/EN) | `images/cas-clients/comedie-francaise.webp` |
+| digital-benchmark-berlin (FR/EN) | `images/cas-clients/ebg-berlin.webp` |
+| figma-conference (FR/EN) | `images/cas-clients/figma.webp` |
+| gl-events (FR/EN) | `images/cas-clients/gl-events.webp` |
+| johnson-johnson (FR/EN) | `images/cas-clients/johnson-johnson.webp` (ajout structure complète) |
+| louvre-lahorde (FR/EN) | `images/cas-clients/louvre-lahorde.webp` |
+| morning (FR/EN) | `images/cas-clients/morning.webp` |
+
+Cas particulier : `cas-client-johnson-johnson` n'avait pas de structure
+hero-video-bg, ajout complet (CSS + HTML + image poster, sans vidéo).
+
+### Code
+
+Ajout de `if (window.matchMedia('(max-width: 768px)').matches) return;` au début
+du script vidéo : sur mobile, le JS sort sans créer la vidéo, le poster reste affiché.
+
+**Marqueur idempotent** : `lot16-desktop-video-only`
+
+**Impact** :
+- Mobile : 0 vidéo téléchargée (~3 MB économisés par page cas-client)
+- LCP mobile attendu : <1s
+- Score Lighthouse mobile attendu : 90+
+
+---
+
+## 🛡️ LOT 17 — Fix critique CSP : URLs relatives + img-src élargi
+
+**32 fichiers HTML + `_headers` patchés, 278 URLs relativisées**
+
+### 🐛 Problème découvert
+
+Le site est servi sur 2 domaines :
+- `https://nomacast.fr/` (sans www)
+- `https://www.nomacast.fr/` (avec www)
+
+Toutes les URLs absolues du HTML pointaient vers `https://www.nomacast.fr/...`.
+Quand un visiteur arrivait sur `https://nomacast.fr/` (sans www), la CSP
+`img-src 'self'` n'autorisait que `nomacast.fr` (l'origine de la page) → toutes
+les images depuis `www.nomacast.fr` étaient **bloquées silencieusement** par la CSP.
+
+Symptôme visible : section "Ils me font confiance depuis 15 ans" avec **tous les
+logos clients cassés** sur la home, alors que les fichiers .webp existaient bien
+sur le CDN.
+
+### ✅ Fix
+
+1. **278 URLs absolues** `https://www.nomacast.fr/images/...` converties en URLs
+   relatives `/images/...` (auto-résolues sur l'origine courante, peu importe
+   www ou non)
+
+2. **CSP élargie** dans `_headers` :
+   ```
+   img-src 'self' https://www.nomacast.fr https://nomacast.fr data: blob: ...
+   connect-src 'self' https://www.nomacast.fr https://nomacast.fr ...
+   ```
+
+### Ce qui n'a PAS été touché
+
+- Meta tags og:image, twitter:image, canonical, Schema.org `image` :
+  **conservés en URL absolue** (utilisés par les bots externes Facebook,
+  Twitter, Google qui exigent du absolu)
+
+**Marqueur idempotent** : `lot17-csp-fix`
+
+---
+
+## 🎯 LOT 18 — Enrichissement SEO ciblé (8 pages clés)
+
+### 1. Meta descriptions enrichies
+
+Mots-clés stratégiques manquants ajoutés : webcast, webinaire, keynote,
+broadcast (FR) / webcast, webinar, keynote, AGM (EN).
+
+Pages mises à jour : index FR/EN + tarifs FR/EN + streaming-multi-plateformes
+FR/EN + captation-evenement-entreprise FR/EN.
+
+### 2. Schema.org `knowsAbout` enrichi (index FR + EN)
+
+10 → **17 entrées**. Ajout de : webcast multi-cam, webinaire premium, keynote,
+colloque, symposium, événement hybride, direction technique live...
+
+### 3. FAQ +3 questions (HTML + JSON-LD synchronisés)
+
+| # | Question (FR) | Couvre les keywords |
+|---|---|---|
+| 1 | Différence webcast / webinaire / live streaming ? | webcast, webinaire, multi-cam, broadcast |
+| 2 | Quels types d'événements captez-vous ? | conférence, séminaire, keynote, AG, AGE, colloque, symposium, lancement, table ronde, hybride |
+| 3 | Êtes-vous une agence audiovisuelle ? | agence audiovisuelle, directeur technique |
+
+Synchronisées en HTML **et** dans le JSON-LD `FAQPage` (Google rich results).
+
+**Marqueurs** : `lot18-seo` (meta), `data-lot18-seo` (FAQ items)
+
+---
+
+## 📈 LOT 18.5 — Extension SEO sur 34 pages services + devis
+
+### Couverture
+
+- **20 pages services** (10 FR + 10 EN) : meta descriptions sur mesure intégrant
+  les keywords stratégiques
+- **14 pages devis** (7 FR + 7 EN) : meta enrichies (légèrement, focus = conversion)
+
+### Pages volontairement non patchées
+
+- 16 cas-clients (focus client unique, ne pas diluer)
+- 4 blog (le SEO blog vient du contenu lui-même)
+- 6 utilitaires (mentions, 404, merci, plan-du-site)
+
+### Bilan SEO complet (LOT 18 + 18.5)
+
+| LOT | Pages |
+|---|---|
+| 18 | 8 |
+| 18.5 | 34 |
+| **Total** | **42 pages** |
+
+**Marqueur** : `lot18-5-seo`
+
+---
+
+## 🎬 Fix wording Figma mobile (entre 18.5 et 19)
+
+`cas-client-figma-conference.html` (FR + EN) — 4ème bullet hero trop long
+qui passait à la ligne sur mobile :
+
+```diff
+- "Direction technique en autonomie" (32c)
++ "Direction tech solo" (19c)
+
+- "Technical direction in autonomy" (31c)
++ "Solo tech direction" (19c)
+```
+
+---
+
+## 🖼️ Fix logo Johnson .webp → .jpg
+
+**16 fichiers** (index FR/EN + 14 pages devis FR/EN) — remplacement de la
+référence `/images/logos/johnson-johnson.webp` par `.jpg` (rendu plus propre du
+texte cursif rouge du logo Johnson).
+
+---
+
+## 🐛 LOT 19 — Fix vidéo demi-bandeau (46 fichiers)
+
+### Problème
+
+Sur les pages cas-clients (et toutes les pages avec hero vidéo), la vidéo
+n'apparaissait que sur **la moitié gauche du bandeau**, au lieu de couvrir toute
+la zone hero.
+
+### Cause
+
+Conflit de cascade CSS introduit par le LOT 13.
+
+Le sélecteur générique `.hero-video-bg video` centrait la vidéo avec :
+```css
+top: 50%; left: 50%; transform: translate(-50%, -50%);
+```
+
+Le LOT 13 avait ajouté un sélecteur plus spécifique `.hero-video-bg .hero-video`
+avec `inset: 0` qui **override le top/left** mais **pas le transform**. Du coup
+la vidéo se retrouvait avec `top: 0; left: 0` **+** `translate(-50%, -50%)`,
+poussée hors-écran en haut-gauche. On voyait uniquement la moitié bas-droite
+qui s'étalait dans la moitié gauche du hero.
+
+### Fix
+
+Redéfinir complètement le positionnement de `.hero-video-bg .hero-video` pour
+neutraliser le transform :
+
+```css
+.hero-video-bg .hero-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  transform: none;
+  object-fit: cover;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+```
+
+**Marqueur** : `lot19-video-fullscreen`
+
+**Pages patchées** : 46 (toutes les pages avec hero vidéo : index, cas-clients,
+services, devis FR + EN).
+
+**Pourquoi pas vu plus tôt** : Lighthouse ne fait pas d'interaction → la vidéo
+ne charge pas pendant le test → bug invisible en audit. Visible uniquement en
+navigation réelle.
+
+---
+
+## 📷 LOT 20 — Photo about ronde sur mobile (2 fichiers)
+
+### Problème
+
+La photo `images/jerome-bouquillon_bw.webp` (carrée 800×800) dans la section
+"Qui je suis" avait sur mobile :
+- `width: 100%` (toute la largeur écran, ~375px)
+- `aspect-ratio: 3/4` → **375×500px**
+
+L'image était donc énorme et zoomée par `object-fit: cover`, écrasant tout le
+reste de la section.
+
+### Fix
+
+CSS mobile spécifique ajouté dans la media query `@media (max-width: 768px)` :
+
+```css
+.apropos-photo {
+  width: 60%;
+  max-width: 240px;
+  aspect-ratio: 1/1;       /* carré */
+  border-radius: 50%;      /* rond */
+  margin: 0 auto;          /* centré */
+}
+.apropos-photo-badge { display: none; }
+```
+
+**Résultat** : photo ronde **~225×225px centrée**, style portrait classique.
+
+**Marqueur** : `lot20-photo-ronde-mobile`
+
+**Pages** : index.html + en/index.html
+
+---
+
+## 🌐 LOT 21 — og:image spécifique par cas-client (14 pages)
+
+### Problème
+
+Toutes les pages cas-clients utilisaient `og-image.webp` (logo Nomacast
+générique) comme image de partage social. Quand quelqu'un partageait par
+exemple `cas-client-louvre-lahorde.html` sur LinkedIn, la preview montrait le
+logo Nomacast au lieu de l'image du Louvre.
+
+### Fix
+
+3 occurrences mises à jour par page :
+1. `<meta property="og:image">` (Facebook, LinkedIn, WhatsApp...)
+2. `<meta name="twitter:image">` ou property équivalent (Twitter/X)
+3. JSON-LD `"image"` field dans le schema Article (Google rich results)
+
+→ **14 pages × 3 occurrences = 42 mises à jour**
+
+### Cohérence parfaite
+
+L'image utilisée pour le partage social = la même que le poster du hero
+(LOT 16) :
+
+| Cas | og:image | hero-poster |
+|---|---|---|
+| Louvre | louvre-lahorde.webp | louvre-lahorde.webp |
+| Figma | figma.webp | figma.webp |
+| Johnson | johnson-johnson.webp | johnson-johnson.webp |
+| ... | ... | ... |
+
+→ Le visiteur qui clique sur le lien partagé voit le **même visuel** que le hero
+de la page. Continuité visuelle.
+
+### Validation post-deploy
+
+Test : https://www.opengraph.xyz/url/https%3A%2F%2Fwww.nomacast.fr%2Fcas-client-louvre-lahorde.html
+
+⚠️ LinkedIn et Facebook cachent les og:image pour 7-30 jours :
+- LinkedIn : https://www.linkedin.com/post-inspector/
+- Facebook : https://developers.facebook.com/tools/debug/
+
+→ Ces outils permettent de forcer le refresh.
+
+---
+
+## 📊 Bilan global de la session 10 mai 2026
+
+| LOT | Pages | Marqueur | Type |
+|---|---|---|---|
+| 16 | 16 | `lot16-desktop-video-only` | Perf mobile |
+| 17 | 32 + _headers | `lot17-csp-fix` | Sécurité CSP |
+| 18 | 8 | `lot18-seo`, `data-lot18-seo` | SEO |
+| 18.5 | 34 | `lot18-5-seo` | SEO |
+| (fix figma) | 2 | – | UX |
+| (fix logo J&J) | 16 | – | Visuel |
+| 19 | 46 | `lot19-video-fullscreen` | Bug CSS critique |
+| 20 | 2 | `lot20-photo-ronde-mobile` | UX mobile |
+| 21 | 14 | – (meta tags) | SEO partage |
+
+**Total** : ~170 patches sur ~70 fichiers HTML uniques (avec recouvrements).
+
+### État de production attendu
+
+- 🚀 Performance mobile : 80+ médian, 90+ sur les pages clean
+- ✅ SEO : 100/100 sur la home (mesure Lighthouse local)
+- ✅ Best Practices : 100/100 sur toutes les pages
+- ✅ Accessibility : 93+ médian
+- ✅ CSP fonctionnelle, logos chargent partout
+- ✅ Vidéos cas-clients en plein écran sur desktop
+- ✅ Photos optimisées sur mobile
+- ✅ Partages sociaux avec image cas-client
+
+### Pending pour le launch (hors scope dev)
+
+1. SIRET dans mentions-legales.html + en/legal-notice.html
+2. Sitemap → Google Search Console
+3. Test mail-tester.com formulaire
+4. Google Business Profile (impact local fort)
+5. Demande backlinks depuis sites cas-clients
+6. **Dans 3 semaines** : check Field Data CrUX dans Search Console
+
+
 # LOT 18.5 — Extension SEO sur 34 pages services + devis
 
 ## 🎯 Objectif
