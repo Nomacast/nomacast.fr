@@ -1,31 +1,43 @@
 #!/usr/bin/env python3
 """
-script_PAGESPEED.py — Test PageSpeed Insights API sur toutes les URLs du sitemap.
+script_PAGESPEED.py v2 — Test PageSpeed Insights API.
 
-Corrige le bug "SEO: 0 ?" : récupère correctement les 4 catégories Lighthouse
-(Performance, Accessibility, Best Practices, SEO) depuis la réponse JSON.
+⚠️ ATTENTION SÉCURITÉ :
+La clé API est en dur ci-dessous. AVANT DE COMMIT CE FICHIER :
+- Soit déplacer dans une variable d'environnement (export PAGESPEED_API_KEY=...)
+- Soit ajouter ce fichier au .gitignore
 
-Prérequis :
-    pip install requests
+Améliorations vs v1 :
+- Récupère les 4 catégories Lighthouse (Perf, A11y, BP, SEO)
+- Support clé API → 25 000 requêtes/jour
+- Backoff exponentiel sur 429
+- Sauvegarde CSV incrémentale après chaque page (pas de perte si plantage)
+- Reprise automatique sur les pages déjà testées (relance le script et il continue)
 
-Usage :
-    py script_PAGESPEED.py
+Prérequis : pip install requests
+Usage : py script_PAGESPEED.py
 """
 import requests
 import csv
 import time
-import sys
+import os
 from urllib.parse import quote
 
-# ─── Configuration ───
-API_URL = "AIzaSyC_F0BRjKpWKpn8aQFUO_sw3OM4BGp7jRs"
-STRATEGY = "mobile"  # "mobile" ou "desktop"
-CATEGORIES = ["performance", "accessibility", "best-practices", "seo"]
+# ─── CONFIG ───
+# La clé peut aussi être lue depuis la variable d'env PAGESPEED_API_KEY (priorité)
+PAGESPEED_API_KEY = os.environ.get("PAGESPEED_API_KEY", "AIzaSyC_F0BRjKpWKpn8aQFUO_sw3OM4BGp7jRs")
+STRATEGY = "mobile"  # ou "desktop"
 OUTPUT_CSV = "resultats_pagespeed.csv"
-DELAY_BETWEEN_REQUESTS = 1.5  # secondes (éviter rate limit)
+CATEGORIES = ["performance", "accessibility", "best-practices", "seo"]
 
-# Liste des URLs à tester
+DELAY_WITH_KEY = 0.5     # secondes entre 2 requêtes avec clé
+DELAY_WITHOUT_KEY = 5.0  # secondes entre 2 requêtes sans clé
+MAX_RETRIES = 5
+INITIAL_BACKOFF = 10  # secondes pour 1ère erreur 429
+
+# ─── URLS À TESTER ───
 URLS = [
+    # FR
     "https://www.nomacast.fr/",
     "https://www.nomacast.fr/tarifs.html",
     "https://www.nomacast.fr/cas-clients.html",
@@ -94,60 +106,115 @@ URLS = [
     "https://www.nomacast.fr/en/blog-hybrid-agm-in-person-remote.html",
 ]
 
+API_URL = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
+FIELDS = ["URL", "Score Performance", "Score Accessibility", "Score Best Practices", "Score SEO"]
 
-def get_score(url, max_retries=2):
-    """Récupère les 4 scores Lighthouse pour une URL via l'API PageSpeed."""
-    # On passe les catégories en query string
+
+def get_score(url):
+    """Récupère les 4 scores Lighthouse pour une URL avec retry/backoff."""
     cat_params = "&".join(f"category={c}" for c in CATEGORIES)
     full_url = f"{API_URL}?url={quote(url)}&strategy={STRATEGY}&{cat_params}"
-    
-    for attempt in range(max_retries + 1):
+    if PAGESPEED_API_KEY:
+        full_url += f"&key={PAGESPEED_API_KEY}"
+
+    backoff = INITIAL_BACKOFF
+    for attempt in range(MAX_RETRIES + 1):
         try:
             r = requests.get(full_url, timeout=120)
+
+            if r.status_code == 429:
+                if attempt < MAX_RETRIES:
+                    print(f"    (429 rate limit, attente {backoff}s avant retry {attempt+1}/{MAX_RETRIES})")
+                    time.sleep(backoff)
+                    backoff *= 2
+                    continue
+                else:
+                    print(f"    (Rate limit persistant après {MAX_RETRIES} tentatives, abandon)")
+                    return {cat: "ERR" for cat in CATEGORIES}
+
             r.raise_for_status()
             data = r.json()
-            
-            # Path JSON : lighthouseResult.categories.{cat}.score (0-1, à multiplier par 100)
+
             cats = data.get("lighthouseResult", {}).get("categories", {})
-            
             scores = {}
             for cat in CATEGORIES:
-                # Les clés API : "performance", "accessibility", "best-practices", "seo"
                 cat_data = cats.get(cat, {})
                 score_val = cat_data.get("score")
-                # Si null → page n'a pas pu être testée (ex. Vitals indisponibles)
-                if score_val is None:
-                    scores[cat] = "N/A"
-                else:
-                    scores[cat] = int(round(score_val * 100))
+                scores[cat] = "N/A" if score_val is None else int(round(score_val * 100))
             return scores
-        
+
         except requests.exceptions.RequestException as e:
-            if attempt < max_retries:
-                print(f"    (retry {attempt+1}/{max_retries} après erreur : {e})")
-                time.sleep(3)
+            if attempt < MAX_RETRIES:
+                print(f"    (erreur {type(e).__name__}, retry dans {backoff}s)")
+                time.sleep(backoff)
+                backoff *= 2
             else:
                 return {cat: "ERR" for cat in CATEGORIES}
         except Exception as e:
             print(f"    Erreur parsing : {e}")
             return {cat: "ERR" for cat in CATEGORIES}
 
+    return {cat: "ERR" for cat in CATEGORIES}
+
+
+def load_existing_results():
+    """Charge le CSV existant pour reprendre où on s'est arrêté (si succès)."""
+    if not os.path.exists(OUTPUT_CSV):
+        return {}
+    existing = {}
+    try:
+        with open(OUTPUT_CSV, encoding='utf-8') as f:
+            for row in csv.DictReader(f, delimiter=';'):
+                perf = row.get("Score Performance", "")
+                # Reprendre seulement les pages testées avec succès (pas ERR)
+                if perf and perf != "ERR" and perf != "":
+                    existing[row["URL"]] = row
+    except Exception:
+        pass
+    return existing
+
+
+def save_results(results):
+    """Sauvegarde tous les résultats dans le CSV (écrasement)."""
+    with open(OUTPUT_CSV, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDS, delimiter=';')
+        writer.writeheader()
+        writer.writerows(results)
+
 
 def main():
-    print(f"Test de {len(URLS)} URLs en stratégie {STRATEGY}...\n")
-    
+    has_key = bool(PAGESPEED_API_KEY)
+    delay = DELAY_WITH_KEY if has_key else DELAY_WITHOUT_KEY
+
+    print(f"━━━ PageSpeed batch test ━━━")
+    print(f"Stratégie : {STRATEGY}")
+    print(f"Clé API   : {'✅ configurée' if has_key else '❌ aucune (rate-limited)'}")
+    print(f"Délai     : {delay}s entre 2 requêtes")
+    print(f"URLs      : {len(URLS)}")
+    print()
+
+    existing = load_existing_results()
+    if existing:
+        print(f"📂 {len(existing)} résultats précédents trouvés → reprise.\n")
+
     results = []
+
     for i, url in enumerate(URLS, 1):
-        print(f"[{i}/{len(URLS)}] Test en cours : {url}")
+        if url in existing:
+            results.append(existing[url])
+            print(f"[{i}/{len(URLS)}] {url}  (déjà testée, sauté)")
+            continue
+
+        print(f"[{i}/{len(URLS)}] {url}")
         scores = get_score(url)
-        
+
         perf = scores.get("performance", "?")
         a11y = scores.get("accessibility", "?")
         bp = scores.get("best-practices", "?")
         seo = scores.get("seo", "?")
-        
-        print(f"    -> Perf: {perf} | A11y: {a11y} | BP: {bp} | SEO: {seo}")
-        
+
+        print(f"    → Perf: {perf} | A11y: {a11y} | BP: {bp} | SEO: {seo}")
+
         results.append({
             "URL": url,
             "Score Performance": perf,
@@ -155,25 +222,36 @@ def main():
             "Score Best Practices": bp,
             "Score SEO": seo,
         })
-        
-        time.sleep(DELAY_BETWEEN_REQUESTS)
-    
-    # Écrire le CSV
-    fieldnames = ["URL", "Score Performance", "Score Accessibility", "Score Best Practices", "Score SEO"]
-    with open(OUTPUT_CSV, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';')
-        writer.writeheader()
-        writer.writerows(results)
-    
+
+        save_results(results)  # Sauvegarde incrémentale après chaque page
+        time.sleep(delay)
+
+    save_results(results)
     print(f"\n✅ Résultats sauvegardés dans {OUTPUT_CSV}")
-    
-    # Stats
-    perf_ok = [r["Score Performance"] for r in results if isinstance(r["Score Performance"], int)]
-    seo_ok = [r["Score SEO"] for r in results if isinstance(r["Score SEO"], int)]
-    if perf_ok:
-        print(f"\n📊 Performance : moyenne {sum(perf_ok)/len(perf_ok):.1f}, médiane {sorted(perf_ok)[len(perf_ok)//2]}")
-    if seo_ok:
-        print(f"📊 SEO         : moyenne {sum(seo_ok)/len(seo_ok):.1f}, médiane {sorted(seo_ok)[len(seo_ok)//2]}")
+
+    # Stats finales
+    def stats(key):
+        vals = [r[key] for r in results if isinstance(r[key], int)
+                or (isinstance(r[key], str) and r[key].isdigit())]
+        vals = [int(v) for v in vals]
+        if not vals:
+            return None
+        avg = sum(vals) / len(vals)
+        median = sorted(vals)[len(vals) // 2]
+        n90 = sum(1 for v in vals if v >= 90)
+        n_low = sum(1 for v in vals if v < 70)
+        return avg, median, n90, n_low, len(vals)
+
+    print("\n━━━ STATS ━━━")
+    for label, key in [("Performance", "Score Performance"),
+                        ("Accessibility", "Score Accessibility"),
+                        ("Best Practices", "Score Best Practices"),
+                        ("SEO", "Score SEO")]:
+        s = stats(key)
+        if s:
+            avg, median, n90, n_low, total = s
+            print(f"  {label:<15} moyenne {avg:>5.1f}  médiane {median:>3}  "
+                  f"≥90: {n90}/{total}  <70: {n_low}/{total}")
 
 
 if __name__ == "__main__":
