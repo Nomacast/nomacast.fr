@@ -378,10 +378,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     (function(){
       const container = document.currentScript.parentNode;
       let loaded = false;
+      // lot16-desktop-video-only : sur mobile, on ne charge pas la vidéo (juste le poster)
+      if (window.matchMedia('(max-width: 768px)').matches) return;
       function loadVideo(){
         if (loaded) return;
         loaded = true;
-        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const isMobile = false;
         const src = isMobile ? 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-comedie-francaise-mobile.mp4' : 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-comedie-francaise.mp4';
         const v = document.createElement('video');
         v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
