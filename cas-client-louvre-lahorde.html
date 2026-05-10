@@ -347,13 +347,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="page-hero">
   <div class="hero-video-bg" aria-hidden="true">
-    <!-- nomacast-video-v2 : 2 balises vidéo cas-client (desktop full + mobile compressé) -->
-    <video class="hero-video-desktop" autoplay muted loop playsinline preload="metadata">
-      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde.mp4" type="video/mp4">
-    </video>
-    <video class="hero-video-mobile" autoplay muted loop playsinline preload="metadata">
-      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde-mobile.mp4" type="video/mp4">
-    </video>
+    <!-- lot12-video-single : vidéo unique injectée par JS selon viewport (évite double-download) -->
+    <noscript>
+      <video class="hero-video-fallback" autoplay muted loop playsinline preload="metadata" poster="og-image.webp">
+        <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde.mp4" type="video/mp4">
+      </video>
+    </noscript>
+    <script>
+    (function(){
+      const container = document.currentScript.parentNode;
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const src = isMobile ? 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde-mobile.mp4' : 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-louvre-lahorde.mp4';
+      const v = document.createElement('video');
+      v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
+      v.preload = 'metadata';
+      v.setAttribute('aria-hidden', 'true');
+      const s = document.createElement('source');
+      s.src = src; s.type = 'video/mp4';
+      v.appendChild(s);
+      container.insertBefore(v, document.currentScript);
+    })();
+    </script>
   </div>
   <div class="hero-video-overlay" aria-hidden="true"></div>
   <div class="page-hero-inner">
