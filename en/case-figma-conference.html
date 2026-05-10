@@ -135,6 +135,30 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .page-hero{padding:140px var(--h-pad) 60px;background:var(--navy);position:relative;overflow:hidden}
 .page-hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(14,165,233,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.06) 1px,transparent 1px);background-size:48px 48px;opacity:.7;z-index:2}
 .page-hero-inner{max-width:var(--max);margin:0 auto;position:relative;z-index:3}.hero-video-bg{position:absolute;inset:0;overflow:hidden;z-index:0}.hero-video-bg video{position:absolute;top:50%;left:50%;min-width:100%;min-height:100%;width:auto;height:auto;transform:translate(-50%,-50%);object-fit:cover}
+/* lot13-poster-lcp : image poster comme LCP element, vidéo en fade-in derrière */
+.hero-video-bg .hero-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  transition: opacity 0.4s ease-out;
+}
+.hero-video-bg .hero-poster.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.hero-video-bg .hero-video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+.hero-video-bg .hero-video.ready {
+  opacity: 1;
+}
 /* nomacast-video-v2 : affichage conditionnel des vidéos hero cas-client */
 .hero-video-mobile { display: none; }
 @media (max-width: 768px) {
@@ -339,7 +363,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section class="page-hero">
   <div class="hero-video-bg" aria-hidden="true">
-    <!-- lot12-video-single : vidéo unique injectée par JS selon viewport (évite double-download) -->
+    <!-- lot13-poster-lcp : image poster (LCP element) + vidéo en fade-in derrière -->
+    <img class="hero-poster" src="../og-image.webp" alt="" fetchpriority="high" decoding="async">
     <noscript>
       <video class="hero-video-fallback" autoplay muted loop playsinline preload="metadata" poster="og-image.webp">
         <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/cas-client-figma-conference.mp4" type="video/mp4">
@@ -353,10 +378,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const v = document.createElement('video');
       v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
       v.preload = 'metadata';
+      v.className = 'hero-video';
       v.setAttribute('aria-hidden', 'true');
       const s = document.createElement('source');
       s.src = src; s.type = 'video/mp4';
       v.appendChild(s);
+      v.addEventListener('canplay', function(){
+        v.classList.add('ready');
+        const poster = container.querySelector('.hero-poster');
+        if (poster) poster.classList.add('hidden');
+      }, { once: true });
       container.insertBefore(v, document.currentScript);
     })();
     </script>
