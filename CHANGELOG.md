@@ -1,3 +1,71 @@
+# LOT 18 — Enrichissement SEO ciblé
+
+## 🎯 Objectif
+
+Inclure les mots-clés stratégiques manquants pour le marché B2B live streaming :
+- **FR** : webcast, webcasting, webinaire, keynote, agence audiovisuelle, colloque, symposium
+- **EN** : webcast, webcasting, webinar, keynote, production company, broadcast services, shareholders meeting
+
+## 📦 Fichiers patchés (8)
+
+### Meta descriptions enrichies
+
+| Page | Avant (chars) | Après (chars) | Keywords ajoutés |
+|---|---|---|---|
+| index.html | 151 | 153 | webcast, webinaire, séminaire |
+| en/index.html | 150 | 152 | webcast, webinar, seminar |
+| streaming-multi-plateformes.html | 137 | 149 | webcast, webinaire, hybride |
+| en/multi-platform-streaming.html | 123 | 145 | webcast, webinar, hybrid |
+| captation-evenement-entreprise.html | 146 | 147 | keynote, webcast, webinaire |
+| en/corporate-event-filming.html | 131 | 147 | keynote, webcast, webinar |
+| tarifs.html | 148 | 137 | conférence, séminaire, webcast, webinaire |
+| en/pricing.html | 143 | 145 | conferences, seminars, webcasts, webinars |
+
+### Schema.org `knowsAbout` enrichi (index FR + EN)
+
+10 → **17 entrées** : ajout de webcast multi-cam, webinaire premium, keynote, colloque, symposium, événement hybride, direction technique...
+
+### FAQ +3 questions (index FR + EN)
+
+| # | Question | Couvre les keywords |
+|---|---|---|
+| 1 | Différence webcast / webinaire / live streaming | webcast, webinaire, multi-cam, broadcast |
+| 2 | Quels types d'événements captez-vous ? | conférence, séminaire, keynote, AG, AGE, colloque, symposium, lancement, table ronde, hybride |
+| 3 | Êtes-vous une agence audiovisuelle ? | agence audiovisuelle, directeur technique |
+
+→ Synchronisées en HTML **et** dans le JSON-LD `FAQPage` (Google rich results)
+
+## 🚀 Déploiement
+
+```cmd
+cd "G:\Mon Drive\NOMACAST"
+# Décompresser le zip → écraser les 8 fichiers
+git add -A
+git commit -m "LOT 18: SEO keyword enrichment (meta + FAQ + Schema knowsAbout)"
+git push
+# Purge cache Cloudflare
+```
+
+## 📊 Validation post-deploy
+
+1. **Test rich snippets** : https://search.google.com/test/rich-results → coller l'URL home
+2. **Outil meta** : https://www.opengraph.xyz/ → vérifier les meta descriptions
+3. **Sitemap** : si pas déjà fait, soumettre à Google Search Console
+
+## 🎯 Attentes réalistes
+
+- **Long-tail dans 2-4 mois** : tu vas commencer à apparaître sur "webcast événement Paris", 
+  "webinaire premium multi-caméra", "captation keynote", "AG hybride streaming"
+- **Mots compétitifs (12-24 mois)** : "agence audiovisuelle Paris", "captation événementielle" 
+  → ne suffira pas seul. Il faut activer en parallèle :
+  - **Google Business Profile** (gratuit, impact rapide)
+  - **Backlinks via tes cas-clients** (Louvre, Comédie-Française, Figma...)
+  - **Contenu régulier** (1 article/mois)
+
+## Marqueur idempotent
+`lot18-seo` (meta descriptions) + `data-lot18-seo` (FAQ items)
+
+
 # LOT 17 — Fix critique CSP : URLs relatives + CSP élargie
 
 ## 🐛 Problème
