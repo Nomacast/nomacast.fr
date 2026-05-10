@@ -1,3 +1,79 @@
+# LOT 17 — Fix critique CSP : URLs relatives + CSP élargie
+
+## 🐛 Problème
+
+Le site est servi sur 2 domaines :
+- `https://nomacast.fr/` (sans www)
+- `https://www.nomacast.fr/` (avec www)
+
+Toutes les URLs absolues dans le HTML pointaient vers `https://www.nomacast.fr/...`.
+
+Quand un visiteur arrive sur `https://nomacast.fr/` (sans www), la CSP `img-src 'self'` 
+n'autorise que `nomacast.fr` (l'origine de la page) → toutes les images depuis 
+`www.nomacast.fr` étaient **bloquées silencieusement** par la CSP.
+
+Visible sur la section "Ils me font confiance depuis 15 ans" : tous les logos clients 
+cassés sur la home, alors que les fichiers .webp existaient bien sur le CDN.
+
+## ✅ Fix appliqué
+
+### 1. URLs relatives (32 HTML, 278 URLs)
+Toutes les URLs `https://www.nomacast.fr/images/...` ont été converties en URLs 
+relatives `/images/...` qui sont **automatiquement résolues sur le domaine de la 
+page courante**, peu importe que ce soit avec ou sans www.
+
+```diff
+- logo_url: "https://www.nomacast.fr/images/logos/louvre.webp"
++ logo_url: "/images/logos/louvre.webp"
+```
+
+### 2. CSP élargie (_headers)
+Ajout explicite des 2 variantes du domaine à `img-src` et `connect-src`, en 
+ceinture + bretelles au cas où il resterait des URLs absolues quelque part :
+
+```
+img-src 'self' https://www.nomacast.fr https://nomacast.fr data: blob: ...
+connect-src 'self' https://www.nomacast.fr https://nomacast.fr ...
+```
+
+## ⚠️ Ce qui n'a PAS été touché
+
+- Meta tags `og:image`, `twitter:image`, `<link rel="canonical">` : **gardent leurs URLs 
+  absolues** (utilisées par les bots externes Facebook, Twitter, Google qui ont 
+  besoin d'absolu)
+- JSON-LD Schema.org : idem, URLs absolues conservées
+
+## 🚀 Déploiement
+
+```cmd
+cd "G:\Mon Drive\NOMACAST"
+
+# 1. Décompresser le zip → écraser les fichiers
+# 2. Push
+git add -A
+git commit -m "LOT 17: fix CSP - relative URLs + img-src expansion"
+git push
+
+# 3. Purge cache Cloudflare (Dashboard → Caching → Purge Everything)
+# 4. Test en incognito sur https://nomacast.fr/ → logos s'affichent ✅
+```
+
+## ✅ Validation
+
+Après deploy, en navigation privée sur `https://nomacast.fr/` :
+- Section "Ils me font confiance" → tous les logos visibles
+- Onglet Network DevTools → toutes les images en 200 OK (plus de CSP error)
+- Console → 0 erreur CSP
+
+## Marqueur idempotent
+`lot17-csp-fix`
+
+## Stats
+- 32 fichiers HTML modifiés
+- 278 URLs absolues converties en relatives
+- _headers : CSP img-src/connect-src élargies
+
+
 # CHANGELOG — Session optimisation Performance (10 mai 2026)
 
 > **Contexte** : suite à la session du 9 mai (LOT 1-10) qui avait amené le site
