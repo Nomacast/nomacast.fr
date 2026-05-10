@@ -452,7 +452,7 @@ function copyLink(code, btn) {
       return;
     }
     // Format ancien : ?code=NOMCODE (rétro-compat)
-    link = `https://nomacast.fr/tarifs.html?code=${code}`;
+    link = `https://www.nomacast.fr/tarifs.html?code=${code}`;
   } else {
     // Format nouveau : ?p=token (token opaque, par défaut)
     const token = tokenForCode(code);
@@ -461,7 +461,7 @@ function copyLink(code, btn) {
       setTimeout(() => { btn.textContent = "Copier"; }, 1500);
       return;
     }
-    link = `https://nomacast.fr/tarifs.html?p=${token}`;
+    link = `https://www.nomacast.fr/tarifs.html?p=${token}`;
   }
   navigator.clipboard.writeText(link).then(() => {
     btn.textContent = "Copié";
