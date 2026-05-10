@@ -1687,11 +1687,15 @@ footer {
   .temo-card { padding: 24px 20px; }
   .apropos-wrap { grid-template-columns: 1fr; gap: 40px; }
   .apropos-photo-badge { right: 0; }
-/* lot20-photo-ronde-mobile : photo about en rond centrée sur mobile */
+/* lot20-photo-ronde-mobile : photo about en rond centrée sur mobile (v2 fix forme allongée) */
 .apropos-photo {
-  width: 60%;
+  width: 60vw;
   max-width: 240px;
-  aspect-ratio: 1/1;
+  height: 60vw;
+  max-height: 240px;
+  aspect-ratio: auto;
+  object-fit: cover;
+  object-position: center top;
   border-radius: 50%;
   margin: 0 auto;
   display: block;
