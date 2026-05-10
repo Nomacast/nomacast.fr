@@ -1,3 +1,74 @@
+# LOT 18.5 — Extension SEO sur 34 pages services + devis
+
+## 🎯 Objectif
+
+Étendre le travail SEO du LOT 18 (limité aux 8 pages clés) à toutes les pages 
+services et devis, qui sont les vraies cibles SEO du site.
+
+## 📦 34 fichiers patchés
+
+### Services (20 pages : 10 FR + 10 EN)
+
+Chaque page reçoit une meta description **sur mesure** qui :
+- Garde le focus thématique de la page (le H1)
+- Ajoute 1-2 keywords stratégiques pertinents (webcast, webinaire, keynote...)
+- Reste sous 160 chars
+
+Exemples :
+
+| Page | Avant | Après |
+|---|---|---|
+| `captation-conference-seminaire.html` | "...conférences. Installation 2h, fichier remis le jour même." | "...conférences, **séminaires** et **keynotes**. Installation 2h, multi-plateformes, **webcast pro**." |
+| `live-streaming-evenement.html` | "...streaming complet : RTMP, plateformes..." | "...**webcast multi-caméra 4K**, **webinaire premium**, multi-plateformes simultanées." |
+| `en/b2b-event-filming-provider.html` | "Corporate filming and live streaming provider..." | "B2B corporate filming and live streaming **production company**. Multi-cam 4K, **webcasts, webinars, keynotes, AGMs**." |
+
+### Devis (14 pages : 7 FR + 7 EN)
+
+Pages de conversion. Enrichissement plus léger (priorité = clarté du devis), 
+mais inclusion des keywords manquants quand pertinent.
+
+## ✅ Pages NON patchées (intentionnel)
+
+| Type | Pages | Pourquoi |
+|---|---|---|
+| Cas-clients | 16 | Chaque page = 1 client précis. Keywords génériques diluiraient le SEO de la page (Louvre, Figma...). |
+| Mentions légales | 2 | Pages utilitaires |
+| 404, merci | 4 | Pages non indexables / utilitaires |
+| Blog | 4 | Le SEO blog vient du contenu lui-même, pas des meta |
+
+## 🧮 Bilan SEO complet (LOT 18 + 18.5)
+
+| LOT | Pages | Action |
+|---|---|---|
+| 18 | 8 | Meta + FAQ +3Q + knowsAbout enrichi |
+| 18.5 | 34 | Meta enrichies sur services + devis |
+| **Total** | **42** | Couverture quasi-complète des pages SEO |
+
+Restent intentionnellement intactes : 16 cas-clients + 4 blog + utilitaires.
+
+## 🚀 Déploiement
+
+```cmd
+cd "G:\Mon Drive\NOMACAST"
+# Décompresser le zip → écraser les 34 fichiers
+git add -A
+git commit -m "LOT 18.5: SEO meta descriptions enrichment (34 pages)"
+git push
+# Purge cache Cloudflare
+```
+
+## 🧪 Validation
+
+Test rich-results (https://search.google.com/test/rich-results) sur :
+- 1 page service (ex: live-streaming-evenement.html)
+- 1 page devis (ex: devis-captation-4k.html)
+
+→ Vérifier que les meta descriptions s'affichent bien et que les keywords sont 
+visibles dans le `<head>`.
+
+## Marqueur idempotent
+`lot18-5-seo` (commentaire HTML juste avant la meta description)
+
 # LOT 18 — Enrichissement SEO ciblé
 
 ## 🎯 Objectif
