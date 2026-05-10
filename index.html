@@ -1810,13 +1810,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <section id="accueil" aria-label="Présentation Nomacast">
   <div class="hero-video-bg" aria-hidden="true">
-    <!-- nomacast-video-v2 : 2 balises vidéo, CSS gère l'affichage selon viewport -->
-    <video class="hero-video-desktop" autoplay muted loop playsinline preload="metadata" poster="og-image.webp">
-      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4" type="video/mp4">
-    </video>
-    <video class="hero-video-mobile" autoplay muted loop playsinline preload="metadata" poster="og-image.webp">
-      <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup-mobile.mp4" type="video/mp4">
-    </video>
+    <!-- lot12-video-single : vidéo unique injectée par JS selon viewport (évite double-download) -->
+    <noscript>
+      <video class="hero-video-fallback" autoplay muted loop playsinline preload="metadata" poster="og-image.webp">
+        <source src="https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4" type="video/mp4">
+      </video>
+    </noscript>
+    <script>
+    (function(){
+      const container = document.currentScript.parentNode;
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const src = isMobile ? 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup-mobile.mp4' : 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4';
+      const v = document.createElement('video');
+      v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
+      v.preload = 'metadata';
+      v.setAttribute('aria-hidden', 'true');
+      const s = document.createElement('source');
+      s.src = src; s.type = 'video/mp4';
+      v.appendChild(s);
+      container.insertBefore(v, document.currentScript);
+    })();
+    </script>
   </div>
   <div class="hero-video-overlay" aria-hidden="true"></div>
 
@@ -2560,36 +2574,36 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 /* ════ DONNÉES EMBARQUÉES ════ */
 const SITE_DATA = {
   clients: [
-    { nom: "Musée du Louvre", logo_url: "https://nomacast.fr/images/logos/louvre.webp", alt: "Musée du Louvre", cas_url: "cas-client-louvre-lahorde.html" },
-    { nom: "Comédie-Française", logo_url: "https://nomacast.fr/images/logos/comedie-francaise.webp", alt: "Comédie-Française", cas_url: "cas-client-comedie-francaise.html" },
-    { nom: "Figma", logo_url: "https://nomacast.fr/images/logos/figma.webp", alt: "Figma", cas_url: "cas-client-figma-conference.html" },
-    { nom: "Databricks", logo_url: "https://nomacast.fr/images/logos/databricks.webp", alt: "Databricks" },
-    { nom: "Fondation des Femmes", logo_url: "https://nomacast.fr/images/logos/fondation-des-femmes.webp", alt: "Fondation des Femmes" },
-    { nom: "(LA)HORDE", logo_url: "https://nomacast.fr/images/logos/lahorde.webp", alt: "(LA)HORDE", cas_url: "cas-client-louvre-lahorde.html" },
-    { nom: "Ministère de la Culture", logo_url: "https://nomacast.fr/images/logos/ministere-culture.webp", alt: "Ministère de la Culture" },
-    { nom: "Morning", logo_url: "https://nomacast.fr/images/logos/morning.webp", alt: "Morning", cas_url: "cas-client-morning.html" },
-    { nom: "Sciences Po", logo_url: "https://nomacast.fr/images/logos/sciences-po.webp", alt: "Sciences Po Paris" },
-    { nom: "ANRS", logo_url: "https://nomacast.fr/images/logos/anrs.webp", alt: "ANRS" },
-    { nom: "Ballet National de Marseille", logo_url: "https://nomacast.fr/images/logos/bnm.webp", alt: "Ballet National de Marseille" },
-    { nom: "Actito", logo_url: "https://nomacast.fr/images/logos/actito.webp", alt: "Actito" },
-    { nom: "Galeria Continua", logo_url: "https://nomacast.fr/images/logos/galeria-continua.webp", alt: "Galeria Continua" },
-    { nom: "HVH", logo_url: "https://nomacast.fr/images/logos/hvh.webp", alt: "HVH" },
-    { nom: "EBG", logo_url: "https://nomacast.fr/images/logos/ebg.webp", alt: "EBG", cas_url: "cas-client-digital-benchmark-berlin.html" },
-    { nom: "MAIF", logo_url: "https://nomacast.fr/images/logos/maif.webp", alt: "MAIF" },
-    { nom: "Stratégies", logo_url: "https://nomacast.fr/images/logos/strategies.webp", alt: "Stratégies" },
-    { nom: "Nexity", logo_url: "https://nomacast.fr/images/logos/nexity.webp", alt: "Nexity" },
-    { nom: "Cegedim", logo_url: "https://nomacast.fr/images/logos/cegedim.webp", alt: "Cegedim" },
-    { nom: "Global Industrie", logo_url: "https://nomacast.fr/images/logos/global-industrie.webp", alt: "Global Industrie", cas_url: "cas-client-gl-events.html" },
-    { nom: "Brainsonic", logo_url: "https://nomacast.fr/images/logos/brainsonic.webp", alt: "Brainsonic" },
-    { nom: "Swapcard", logo_url: "https://nomacast.fr/images/logos/swapcard.webp", alt: "Swapcard" },
-    { nom: "Partie Socialiste", logo_url: "https://nomacast.fr/images/logos/parti-socialiste.webp", alt: "Partie Socialiste" },
-    { nom: "ESRI", logo_url: "https://nomacast.fr/images/logos/esri.webp", alt: "Esri" },
-    { nom: "DEXT", logo_url: "https://nomacast.fr/images/logos/dext.webp", alt: "DEXT" },
-    { nom: "Peech Studio", logo_url: "https://nomacast.fr/images/logos/peech-studio.webp", alt: "Peech Studio" },
-    { nom: "Engie", logo_url: "https://nomacast.fr/images/logos/engie.webp", alt: "Engie" },
-    { nom: "Sextant", logo_url: "https://nomacast.fr/images/logos/sextant.webp", alt: "Sextant" },
-    { nom: "Prêt à Manger", logo_url: "https://nomacast.fr/images/logos/pret-a-manger.webp", alt: "Prêt à Manger" },
-    { nom: "Johnson &amp; Johnson", logo_url: "https://nomacast.fr/images/logos/johnson-johnson.webp", alt: "Johnson &amp; Johnson", cas_url: "cas-client-johnson-johnson.html" }
+    { nom: "Musée du Louvre", logo_url: "https://www.nomacast.fr/images/logos/louvre.webp", alt: "Musée du Louvre", cas_url: "cas-client-louvre-lahorde.html" },
+    { nom: "Comédie-Française", logo_url: "https://www.nomacast.fr/images/logos/comedie-francaise.webp", alt: "Comédie-Française", cas_url: "cas-client-comedie-francaise.html" },
+    { nom: "Figma", logo_url: "https://www.nomacast.fr/images/logos/figma.webp", alt: "Figma", cas_url: "cas-client-figma-conference.html" },
+    { nom: "Databricks", logo_url: "https://www.nomacast.fr/images/logos/databricks.webp", alt: "Databricks" },
+    { nom: "Fondation des Femmes", logo_url: "https://www.nomacast.fr/images/logos/fondation-des-femmes.webp", alt: "Fondation des Femmes" },
+    { nom: "(LA)HORDE", logo_url: "https://www.nomacast.fr/images/logos/lahorde.webp", alt: "(LA)HORDE", cas_url: "cas-client-louvre-lahorde.html" },
+    { nom: "Ministère de la Culture", logo_url: "https://www.nomacast.fr/images/logos/ministere-culture.webp", alt: "Ministère de la Culture" },
+    { nom: "Morning", logo_url: "https://www.nomacast.fr/images/logos/morning.webp", alt: "Morning", cas_url: "cas-client-morning.html" },
+    { nom: "Sciences Po", logo_url: "https://www.nomacast.fr/images/logos/sciences-po.webp", alt: "Sciences Po Paris" },
+    { nom: "ANRS", logo_url: "https://www.nomacast.fr/images/logos/anrs.webp", alt: "ANRS" },
+    { nom: "Ballet National de Marseille", logo_url: "https://www.nomacast.fr/images/logos/bnm.webp", alt: "Ballet National de Marseille" },
+    { nom: "Actito", logo_url: "https://www.nomacast.fr/images/logos/actito.webp", alt: "Actito" },
+    { nom: "Galeria Continua", logo_url: "https://www.nomacast.fr/images/logos/galeria-continua.webp", alt: "Galeria Continua" },
+    { nom: "HVH", logo_url: "https://www.nomacast.fr/images/logos/hvh.webp", alt: "HVH" },
+    { nom: "EBG", logo_url: "https://www.nomacast.fr/images/logos/ebg.webp", alt: "EBG", cas_url: "cas-client-digital-benchmark-berlin.html" },
+    { nom: "MAIF", logo_url: "https://www.nomacast.fr/images/logos/maif.webp", alt: "MAIF" },
+    { nom: "Stratégies", logo_url: "https://www.nomacast.fr/images/logos/strategies.webp", alt: "Stratégies" },
+    { nom: "Nexity", logo_url: "https://www.nomacast.fr/images/logos/nexity.webp", alt: "Nexity" },
+    { nom: "Cegedim", logo_url: "https://www.nomacast.fr/images/logos/cegedim.webp", alt: "Cegedim" },
+    { nom: "Global Industrie", logo_url: "https://www.nomacast.fr/images/logos/global-industrie.webp", alt: "Global Industrie", cas_url: "cas-client-gl-events.html" },
+    { nom: "Brainsonic", logo_url: "https://www.nomacast.fr/images/logos/brainsonic.webp", alt: "Brainsonic" },
+    { nom: "Swapcard", logo_url: "https://www.nomacast.fr/images/logos/swapcard.webp", alt: "Swapcard" },
+    { nom: "Partie Socialiste", logo_url: "https://www.nomacast.fr/images/logos/parti-socialiste.webp", alt: "Partie Socialiste" },
+    { nom: "ESRI", logo_url: "https://www.nomacast.fr/images/logos/esri.webp", alt: "Esri" },
+    { nom: "DEXT", logo_url: "https://www.nomacast.fr/images/logos/dext.webp", alt: "DEXT" },
+    { nom: "Peech Studio", logo_url: "https://www.nomacast.fr/images/logos/peech-studio.webp", alt: "Peech Studio" },
+    { nom: "Engie", logo_url: "https://www.nomacast.fr/images/logos/engie.webp", alt: "Engie" },
+    { nom: "Sextant", logo_url: "https://www.nomacast.fr/images/logos/sextant.webp", alt: "Sextant" },
+    { nom: "Prêt à Manger", logo_url: "https://www.nomacast.fr/images/logos/pret-a-manger.webp", alt: "Prêt à Manger" },
+    { nom: "Johnson &amp; Johnson", logo_url: "https://www.nomacast.fr/images/logos/johnson-johnson.webp", alt: "Johnson &amp; Johnson", cas_url: "cas-client-johnson-johnson.html" }
   ],
   temoignages: [
     { quote: "Nous avons travaillé avec Nomacast sur plusieurs de nos projets marketing. Leurs vidéos ajoutent de la valeur à nos initiatives. Une collaboration efficace que nous souhaitons renouveler.", nom: "Adrien Buisson", role: "Directeur Marketing Figma France &amp; Espagne", avatar: "images/references/dubuisson.webp" },
@@ -2620,8 +2634,8 @@ function renderTemoignages(temos) {
     'Charlotte Marchand':  logoMap['Morning'],
     'Marjorie Barret':     logoMap['Global Industrie'],
     'Adrien Buisson':    logoMap['Figma'],
-    'Jean-Michel Cabon':   'https://nomacast.fr/images/logos/esri.webp',
-    'Malik Goulamhoussen': 'https://nomacast.fr/images/logos/peech-studio.webp',
+    'Jean-Michel Cabon':   'https://www.nomacast.fr/images/logos/esri.webp',
+    'Malik Goulamhoussen': 'https://www.nomacast.fr/images/logos/peech-studio.webp',
   };
 
   grid.innerHTML = temos.map(t => {
