@@ -96,7 +96,7 @@ export async function onRequestPost(context) {
     formData = new FormData();
     formData.append('nom', 'Healthcheck Bot');
     formData.append('societe', 'Healthcheck Automatique');
-    formData.append('email', '[email protected]');
+    formData.append('email', 'evenement@nomacast.fr');
     formData.append('telephone', '0000000000');
     formData.append('message', 'Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne.');
     formData.append('source', 'healthcheck-github');
