@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<!-- Last update: 2026-05-07 19:15 -->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<title>Admin partenaires · Nomacast</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #181a21;
+    --panel-2: #20232c;
+    --border: rgba(255,255,255,0.08);
+    --ink: #e5e7eb;
+    --ink-faint: #94a3b8;
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34, 211, 238, 0.15);
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --radius: 8px;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+  h1 { font-size: 22px; font-weight: 600; margin: 0; }
+  h1 .accent { color: var(--cyan); }
+  .subtitle { color: var(--ink-faint); font-size: 13px; margin-top: 4px; }
+  
+  .btn {
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+  .btn-primary { background: var(--cyan); color: #0f1115; }
+  .btn-primary:hover { background: #67e8f9; }
+  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--panel-2); }
+  .btn-danger { background: var(--red); color: #1a0808; }
+  .btn-danger:hover { background: #fca5a5; }
+  .btn-icon { padding: 6px 10px; font-size: 13px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  
+  .mono { font-family: var(--font-mono); font-size: 13px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .pill-active { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+  .pill-inactive { background: rgba(148, 163, 184, 0.15); color: var(--ink-faint); }
+  .pill-legacy-on { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+  .pill-legacy-off { background: rgba(148, 163, 184, 0.15); color: var(--ink-faint); }
+  .pill-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .pill-type-standard { background: rgba(148, 163, 184, 0.15); color: var(--ink-faint); }
+  .pill-type-premium-reperage { background: rgba(34, 211, 238, 0.15); color: var(--cyan); }
+  .pill-type-premium-reperage-montage { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+  
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none;
+    align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 480px; }
+  .modal h2 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; color: var(--ink-faint); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .field input, .field select {
+    width: 100%; padding: 10px 12px; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-family: inherit; font-size: 14px;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--cyan); }
+  .field-hint { font-size: 12px; color: var(--ink-faint); margin-top: 4px; }
+  .field-checkbox { display: flex; align-items: center; gap: 10px; }
+  .field-checkbox label { margin: 0; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink); font-weight: normal; }
+  .field-checkbox input { width: auto; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+  
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 20px; border-radius: var(--radius); font-size: 14px; z-index: 200; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .toast-success { background: rgba(74, 222, 128, 0.15); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.3); }
+  .toast-error { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.3); }
+  
+  .empty-state { padding: 60px 20px; text-align: center; color: var(--ink-faint); }
+  .loading { padding: 40px; text-align: center; color: var(--ink-faint); }
+  
+  .summary-row { display: flex; gap: 16px; padding: 16px; background: var(--panel-2); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  
+  .header-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .link-format-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); transition: all 0.15s ease; }
+  .link-format-toggle:hover { border-color: var(--cyan); }
+  .link-format-toggle input[type="checkbox"] { margin: 0; cursor: pointer; accent-color: var(--cyan); }
+  .link-format-toggle-label { font-size: 13px; color: var(--ink-faint); }
+  .link-format-toggle:has(input:checked) { background: var(--cyan-dim); border-color: var(--cyan); }
+  .link-format-toggle:has(input:checked) .link-format-toggle-label { color: var(--cyan); }
+  .link-format-toggle code { font-family: var(--font-mono); font-size: 12px; padding: 1px 5px; background: rgba(0,0,0,0.3); border-radius: 3px; }
+  .summary-stat { font-size: 13px; }
+  .summary-stat strong { color: var(--ink); font-weight: 600; }
+  .summary-stat span { color: var(--ink-faint); }
+  
+  .copy-btn { background: transparent; border: 1px solid var(--border); color: var(--ink-faint); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-family: var(--font-mono); }
+  .copy-btn:hover { background: var(--panel-2); color: var(--ink); }
+  .copy-btn.copied { background: rgba(74, 222, 128, 0.15); color: var(--green); border-color: rgba(74, 222, 128, 0.3); }
+  
+  @media (max-width: 768px) {
+    body { padding: 16px 12px; }
+    header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    table { font-size: 13px; }
+    thead { display: none; }
+    tbody td { display: block; padding: 8px 16px; border-bottom: none; }
+    tbody tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    tbody td::before { content: attr(data-label) ": "; color: var(--ink-faint); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; display: inline-block; margin-right: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>Admin <span class="accent">·</span> Partenaires</h1>
+      <div class="subtitle">Gestion des codes partenaires Nomacast (KV temps réel)</div>
+    </div>
+    <div class="header-actions">
+      <label class="link-format-toggle" title="Active la rétro-compat ?code=NOMCODE (ancien format) au lieu du token opaque ?p=xxx (nouveau format).">
+        <input type="checkbox" id="use-legacy-link">
+        <span class="link-format-toggle-label">Format ancien <code>?code=</code></span>
+      </label>
+      <button class="btn btn-primary" onclick="openModal()">+ Ajouter un partenaire</button>
+    </div>
+  </header>
+  
+  <div class="panel">
+    <div class="summary-row" id="summary"></div>
+    <div id="content">
+      <div class="loading">Chargement…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal d'ajout/édition -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">Ajouter un partenaire</h2>
+    <form id="form" onsubmit="event.preventDefault(); savePartner();">
+      <div class="field">
+        <label for="f-displayName">Nom du partenaire</label>
+        <input type="text" id="f-displayName" required maxlength="60" placeholder="Ex : Brainsonic">
+        <div class="field-hint">Tel qu'il sera affiché dans le champ Société du formulaire.</div>
+      </div>
+      <div class="field">
+        <label for="f-code">Code interne</label>
+        <input type="text" id="f-code" required pattern="[A-Z0-9]{2,30}" maxlength="30" placeholder="Ex : BRAINSONIC">
+        <div class="field-hint">Identifiant unique en MAJUSCULES, sans espace ni accent (utilisé en interne et pour la rétro-compat des anciens liens). Modifiable uniquement à la création.</div>
+      </div>
+      <div class="field">
+        <label for="f-type">Type de remise</label>
+        <select id="f-type" required>
+          <option value="standard">Standard (sans option forcée)</option>
+          <option value="premium-reperage">Premium repérage (repérage + veille + 5G inclus)</option>
+          <option value="premium-reperage-montage">Premium repérage + montage (repérage + veille + 5G + montage par chapitres inclus)</option>
+        </select>
+        <div class="field-hint">Tous les types ont la même grille de remise par paliers ; ce qui change c'est les options gratuites incluses.</div>
+      </div>
+      <div class="field field-checkbox">
+        <input type="checkbox" id="f-active" checked>
+        <label for="f-active">Partenaire actif</label>
+      </div>
+      <div class="field field-checkbox">
+        <input type="checkbox" id="f-legacy">
+        <label for="f-legacy">Autoriser l'ancien lien <code>?code=</code> (rétro-compat)</label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary" id="form-submit">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "/nmc-7k9q3p2x/api/partners";
+let store = { tokens: {}, codes: {} };
+let editMode = null;
+
+// ─── API calls ───
+
+async function fetchPartners() {
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    store = await res.json();
+    render();
+  } catch (e) {
+    document.getElementById("content").innerHTML = '<div class="empty-state">Erreur de chargement : ' + e.message + '</div>';
+  }
+}
+
+async function createPartner(data) {
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+async function updatePartner(data) {
+  const res = await fetch(API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+async function deletePartner(code) {
+  const res = await fetch(API, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code })
+  });
+  return res.json();
+}
+
+// ─── Rendering ───
+
+function tokenForCode(code) {
+  for (const [t, c] of Object.entries(store.tokens)) if (c === code) return t;
+  return null;
+}
+
+function render() {
+  const codes = Object.keys(store.codes);
+  
+  // Summary
+  const total = codes.length;
+  const active = codes.filter(c => store.codes[c].active !== false).length;
+  const inactive = total - active;
+  document.getElementById("summary").innerHTML = `
+    <div class="summary-stat"><strong>${total}</strong> <span>partenaires au total</span></div>
+    <div class="summary-stat"><strong>${active}</strong> <span>actifs</span></div>
+    ${inactive > 0 ? `<div class="summary-stat"><strong>${inactive}</strong> <span>inactifs</span></div>` : ""}
+  `;
+  
+  // Tableau
+  const content = document.getElementById("content");
+  if (total === 0) {
+    content.innerHTML = '<div class="empty-state">Aucun partenaire pour le moment. Clique sur « Ajouter un partenaire » pour commencer.</div>';
+    return;
+  }
+  
+  const sortedCodes = codes.sort((a, b) => store.codes[a].displayName.localeCompare(store.codes[b].displayName));
+  
+  let html = '<table><thead><tr>';
+  html += '<th>Nom</th><th>Code</th><th>Token</th><th>Type</th><th>État</th><th>Lien partenaire</th><th>Actions</th>';
+  html += '</tr></thead><tbody>';
+  
+  for (const code of sortedCodes) {
+    const entry = store.codes[code];
+    const token = tokenForCode(code);
+    const isActive = entry.active !== false;
+    // Sémantique : champ absent = activé par défaut (pour les 24 partenaires migrés). Seul `false` désactive.
+    const isLegacyEnabled = entry.legacyEnabled !== false;
+    const typeLabel = {
+      "standard": "Standard",
+      "premium-reperage": "Premium repérage",
+      "premium-reperage-montage": "Premium repérage + montage"
+    }[entry.type] || entry.type;
+    
+    html += `<tr>`;
+    html += `<td data-label="Nom">${escapeHtml(entry.displayName)}</td>`;
+    html += `<td data-label="Code"><span class="mono">${escapeHtml(code)}</span></td>`;
+    html += `<td data-label="Token"><span class="mono">${token || '—'}</span></td>`;
+    html += `<td data-label="Type"><span class="pill pill-type-${entry.type}">${typeLabel}</span></td>`;
+    html += `<td data-label="État"><div class="pill-stack"><span class="pill ${isActive ? 'pill-active' : 'pill-inactive'}">${isActive ? 'Actif' : 'Inactif'}</span><span class="pill ${isLegacyEnabled ? 'pill-legacy-on' : 'pill-legacy-off'}" title="${isLegacyEnabled ? 'Ancien lien ?code= fonctionne' : 'Ancien lien ?code= désactivé'}">Legacy ${isLegacyEnabled ? 'ON' : 'OFF'}</span></div></td>`;
+    html += `<td data-label="Lien"><button class="copy-btn" onclick="copyLink('${escapeHtml(code)}', this)">Copier</button></td>`;
+    html += `<td data-label="Actions"><div class="actions">`;
+    html += `<button class="btn btn-secondary btn-icon" onclick="openModal('${escapeHtml(code)}')">Modifier</button>`;
+    html += `<button class="btn btn-secondary btn-icon" onclick="toggleActive('${escapeHtml(code)}', ${!isActive})">${isActive ? 'Désactiver' : 'Activer'}</button>`;
+    html += `<button class="btn btn-danger btn-icon" onclick="confirmDelete('${escapeHtml(code)}')">Supprimer</button>`;
+    html += `</div></td>`;
+    html += `</tr>`;
+  }
+  
+  html += '</tbody></table>';
+  content.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ─── Modal ───
+
+function openModal(codeToEdit) {
+  editMode = codeToEdit || null;
+  document.getElementById("modal-title").textContent = editMode ? "Modifier le partenaire" : "Ajouter un partenaire";
+  document.getElementById("form-submit").textContent = editMode ? "Enregistrer les modifications" : "Créer";
+  
+  const codeInput = document.getElementById("f-code");
+  if (editMode) {
+    const entry = store.codes[editMode];
+    document.getElementById("f-displayName").value = entry.displayName;
+    codeInput.value = editMode;
+    codeInput.disabled = true;
+    document.getElementById("f-type").value = entry.type;
+    document.getElementById("f-active").checked = entry.active !== false;
+    // Sémantique : champ absent = activé par défaut (pour les 24 partenaires migrés)
+    document.getElementById("f-legacy").checked = entry.legacyEnabled !== false;
+  } else {
+    document.getElementById("form").reset();
+    codeInput.disabled = false;
+    document.getElementById("f-active").checked = true;
+    // Pour un nouveau partenaire : décoché par défaut (sécurité, le partenaire n'a jamais reçu d'ancien lien)
+    document.getElementById("f-legacy").checked = false;
+  }
+  
+  document.getElementById("modal").classList.add("open");
+  setTimeout(() => document.getElementById("f-displayName").focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.remove("open");
+  editMode = null;
+}
+
+// Auto-déduction du code interne depuis le displayName (uniquement en mode création)
+document.getElementById("f-displayName").addEventListener("input", function() {
+  if (editMode) return;
+  const codeInput = document.getElementById("f-code");
+  if (codeInput.dataset.userEdited === "true") return;
+  codeInput.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 30);
+});
+document.getElementById("f-code").addEventListener("input", function() {
+  this.dataset.userEdited = "true";
+  this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 30);
+});
+
+// ─── Save ───
+
+async function savePartner() {
+  const submitBtn = document.getElementById("form-submit");
+  submitBtn.disabled = true;
+  
+  const data = {
+    code: document.getElementById("f-code").value.trim(),
+    displayName: document.getElementById("f-displayName").value.trim(),
+    type: document.getElementById("f-type").value,
+    active: document.getElementById("f-active").checked,
+    legacyEnabled: document.getElementById("f-legacy").checked
+  };
+  
+  try {
+    const res = editMode ? await updatePartner(data) : await createPartner(data);
+    if (!res.ok) {
+      toast(translateError(res.error), "error");
+    } else {
+      toast(editMode ? "Partenaire modifié" : `Partenaire créé. Token : ${res.token}`, "success");
+      closeModal();
+      await fetchPartners();
+    }
+  } catch (e) {
+    toast("Erreur réseau : " + e.message, "error");
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
+async function toggleActive(code, newActive) {
+  try {
+    const res = await updatePartner({ code, active: newActive });
+    if (!res.ok) {
+      toast(translateError(res.error), "error");
+    } else {
+      toast(newActive ? "Partenaire activé" : "Partenaire désactivé", "success");
+      await fetchPartners();
+    }
+  } catch (e) {
+    toast("Erreur réseau : " + e.message, "error");
+  }
+}
+
+async function confirmDelete(code) {
+  const entry = store.codes[code];
+  if (!confirm(`Supprimer définitivement le partenaire "${entry.displayName}" (code ${code}) ?\n\nLe lien partenaire deviendra invalide.`)) return;
+  try {
+    const res = await deletePartner(code);
+    if (!res.ok) {
+      toast(translateError(res.error), "error");
+    } else {
+      toast(`Partenaire ${code} supprimé`, "success");
+      await fetchPartners();
+    }
+  } catch (e) {
+    toast("Erreur réseau : " + e.message, "error");
+  }
+}
+
+function copyLink(code, btn) {
+  const useLegacy = document.getElementById("use-legacy-link").checked;
+  let link;
+  if (useLegacy) {
+    // Vérifier que le partenaire autorise l'ancien lien
+    const entry = store.codes[code];
+    if (entry && entry.legacyEnabled === false) {
+      btn.textContent = "Legacy OFF";
+      btn.title = "L'ancien lien ?code= est désactivé pour ce partenaire. Décoche le toggle global ou modifie le partenaire.";
+      setTimeout(() => {
+        btn.textContent = "Copier";
+        btn.title = "";
+      }, 2000);
+      return;
+    }
+    // Format ancien : ?code=NOMCODE (rétro-compat)
+    link = `https://www.nomacast.fr/tarifs.html?code=${code}`;
+  } else {
+    // Format nouveau : ?p=token (token opaque, par défaut)
+    const token = tokenForCode(code);
+    if (!token) {
+      btn.textContent = "Erreur";
+      setTimeout(() => { btn.textContent = "Copier"; }, 1500);
+      return;
+    }
+    link = `https://www.nomacast.fr/tarifs.html?p=${token}`;
+  }
+  navigator.clipboard.writeText(link).then(() => {
+    btn.textContent = "Copié";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = "Copier";
+      btn.classList.remove("copied");
+    }, 1500);
+  });
+}
+
+function translateError(code) {
+  const map = {
+    "invalid_json": "Données invalides envoyées",
+    "invalid_code": "Code interne invalide (majuscules + chiffres uniquement, 2 à 30 caractères)",
+    "invalid_display_name": "Nom invalide (1 à 60 caractères)",
+    "invalid_type": "Type de remise invalide",
+    "invalid_legacyEnabled": "Valeur invalide pour le flag rétro-compat",
+    "code_already_exists": "Ce code existe déjà",
+    "code_not_found": "Partenaire introuvable",
+    "kv_read_error": "Erreur lecture base",
+    "kv_write_error": "Erreur écriture base",
+    "token_generation_failed": "Erreur de génération du token"
+  };
+  return map[code] || "Erreur : " + code;
+}
+
+function toast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast toast-" + type + " show";
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+// Fermer modal au clic en dehors
+document.getElementById("modal").addEventListener("click", function(e) {
+  if (e.target === this) closeModal();
+});
+// Échap
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closeModal();
+});
+
+// Init
+fetchPartners();
+</script>
+
+</body>
+</html>
