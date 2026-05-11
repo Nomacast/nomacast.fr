@@ -5,10 +5,15 @@
 // Anti-flood via Cloudflare KV (binding RATE_LIMIT)
 // Envoi des emails via Resend API
 // Multi-lingue FR/EN : redirige vers /merci.html ou /en/thank-you.html selon le champ caché `lang`
+// Support healthcheck : header X-Healthcheck-Token + env.HEALTHCHECK_TOKEN bypass Turnstile/Origin/RateLimit
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ALLOWED_ORIGINS = ['https://www.nomacast.fr', 'https://nomacast.fr'];
 const DOMAINE         = 'nomacast.fr';
+
+// IMPORTANT : Resend est configuré sur le sous-domaine send.nomacast.fr (SPF/DKIM amazonses).
+// Le FROM doit utiliser ce sous-domaine sinon les mails sont rejetés pour SPF fail.
+const EMAIL_FROM      = 'Formulaire Nomacast <noreply@send.nomacast.fr>';
 
 // Pages de redirection FR (par défaut)
 const PAGE_MERCI_FR   = 'https://nomacast.fr/merci.html';
@@ -72,6 +77,21 @@ export async function onRequestGet() {
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  // ── HEALTHCHECK DETECTION ─────────────────────────────────────────────────
+  // Si la requête contient un header X-Healthcheck-Token valide,
+  // on bypass Origin/Turnstile/RateLimit mais on garde tout le reste
+  // (validation, anti-spam, envoi Resend). Le sujet sera préfixé [HEALTHCHECK].
+  // Token stocké à 2 endroits : GitHub Secret (côté Action) + env.HEALTHCHECK_TOKEN (côté CF Pages).
+  const healthcheckToken = request.headers.get('X-Healthcheck-Token');
+  const isHealthcheck = !!(
+    healthcheckToken &&
+    env.HEALTHCHECK_TOKEN &&
+    healthcheckToken === env.HEALTHCHECK_TOKEN
+  );
+  if (isHealthcheck) {
+    console.log('[Nomacast] Healthcheck request received');
+  }
+
   // Parse form-data (le browser POST en application/x-www-form-urlencoded ou multipart)
   let formData;
   try {
@@ -96,47 +116,54 @@ export async function onRequestPost(context) {
   }
 
   // ── 2. ORIGIN CHECK ───────────────────────────────────────────────────────
-  const origin = request.headers.get('referer') || '';
-  const validOrigin = ALLOWED_ORIGINS.some((ao) => origin.startsWith(ao));
-  if (!validOrigin) {
-    return redirect(PAGE_ERREUR);
+  // Skip si healthcheck (GitHub Actions n'envoie pas un Referer nomacast.fr)
+  if (!isHealthcheck) {
+    const origin = request.headers.get('referer') || '';
+    const validOrigin = ALLOWED_ORIGINS.some((ao) => origin.startsWith(ao));
+    if (!validOrigin) {
+      return redirect(PAGE_ERREUR);
+    }
   }
 
   // ── 3. TURNSTILE — vérification côté serveur ──────────────────────────────
-  const turnstileToken = formData.get('cf-turnstile-response');
-  if (!turnstileToken) {
-    return redirect(PAGE_ERREUR + '?error=captcha');
-  }
-
+  // Skip si healthcheck (GitHub Actions ne peut pas résoudre un CAPTCHA)
   const ip = request.headers.get('CF-Connecting-IP') || '';
 
-  const verifyBody = new URLSearchParams();
-  verifyBody.append('secret', env.TURNSTILE_SECRET_KEY || '');
-  verifyBody.append('response', String(turnstileToken));
-  verifyBody.append('remoteip', ip);
+  if (!isHealthcheck) {
+    const turnstileToken = formData.get('cf-turnstile-response');
+    if (!turnstileToken) {
+      return redirect(PAGE_ERREUR + '?error=captcha');
+    }
 
-  let turnstileResult;
-  try {
-    const verifyResp = await fetch(
-      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-      { method: 'POST', body: verifyBody }
-    );
-    turnstileResult = await verifyResp.json();
-  } catch (err) {
-    console.error('[Nomacast] Turnstile fetch error:', err);
-    return redirect(PAGE_ERREUR + '?error=verify');
-  }
+    const verifyBody = new URLSearchParams();
+    verifyBody.append('secret', env.TURNSTILE_SECRET_KEY || '');
+    verifyBody.append('response', String(turnstileToken));
+    verifyBody.append('remoteip', ip);
 
-  if (!turnstileResult.success) {
-    console.error(
-      '[Nomacast] Turnstile rejected:',
-      (turnstileResult['error-codes'] || ['unknown']).join(',')
-    );
-    return redirect(PAGE_ERREUR + '?error=captcha');
+    let turnstileResult;
+    try {
+      const verifyResp = await fetch(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        { method: 'POST', body: verifyBody }
+      );
+      turnstileResult = await verifyResp.json();
+    } catch (err) {
+      console.error('[Nomacast] Turnstile fetch error:', err);
+      return redirect(PAGE_ERREUR + '?error=verify');
+    }
+
+    if (!turnstileResult.success) {
+      console.error(
+        '[Nomacast] Turnstile rejected:',
+        (turnstileResult['error-codes'] || ['unknown']).join(',')
+      );
+      return redirect(PAGE_ERREUR + '?error=captcha');
+    }
   }
 
   // ── 4. ANTI-FLOOD — 1 soumission par IP toutes les 30s via KV ─────────────
-  if (env.RATE_LIMIT && ip) {
+  // Skip si healthcheck (sinon 2 checks à 60s d'intervalle se bloqueraient mutuellement)
+  if (!isHealthcheck && env.RATE_LIMIT && ip) {
     const floodKey = `flood:${ip}`;
     const last = await env.RATE_LIMIT.get(floodKey);
     if (last) {
@@ -211,10 +238,12 @@ export async function onRequestPost(context) {
     : [EMAIL_GENERAL, COPIE_ARCHIVAGE];
 
   // ── 9. CONSTRUCTION DU MAIL ───────────────────────────────────────────────
+  const tagHealth = isHealthcheck ? '[HEALTHCHECK] ' : '';
   const tagLang   = isEn ? '[EN] ' : '';
   const tagAgence = isAgence ? '[AGENCE] ' : '';
   const tagSource = source ? `[${source}] ` : '';
   const subject =
+    tagHealth +
     tagLang +
     `Demande de devis - ${tagAgence}${tagSource}` +
     (societe || nom || 'Contact') +
@@ -228,6 +257,7 @@ export async function onRequestPost(context) {
   });
 
   let body = 'Nouvelle demande de devis reçue depuis nomacast.fr\n';
+  if (isHealthcheck) body += 'TYPE       : HEALTHCHECK AUTOMATIQUE (GitHub Action)\n';
   if (isEn)     body += 'LANGUE     : EN (visiteur depuis /en/)\n';
   if (isAgence) body += 'ATTENTION  : DEMANDE AGENCE (marque blanche)\n';
   if (source)   body += `Provenance : ${source}\n`;
@@ -244,7 +274,7 @@ export async function onRequestPost(context) {
   body += sep + '\n';
   body += 'Métadonnées :\n';
   body += `  IP        : ${ip || 'N/A'}\n`;
-  body += `  Provenance: ${origin || 'N/A'}\n`;
+  body += `  Provenance: ${request.headers.get('referer') || 'N/A'}\n`;
   body += `  Date      : ${dateParis}\n`;
 
   // ── 10. ENVOI VIA RESEND ──────────────────────────────────────────────────
@@ -256,7 +286,7 @@ export async function onRequestPost(context) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: `Formulaire Nomacast <noreply@${DOMAINE}>`,
+        from: EMAIL_FROM,
         to: destinataires,
         reply_to: email,
         subject: subject,
@@ -277,6 +307,6 @@ export async function onRequestPost(context) {
   }
 
   // ── 11. REDIRECTION SUCCÈS ────────────────────────────────────────────────
-  const typeConv = isAgence ? 'agence' : 'devis';
+  const typeConv = isHealthcheck ? 'healthcheck' : (isAgence ? 'agence' : 'devis');
   return redirect(`${PAGE_MERCI}?type=${typeConv}`);
 }
