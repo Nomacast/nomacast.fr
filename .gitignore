@@ -18,3 +18,7 @@ desktop.ini
 # Variables d'environnement
 .env
 .env.local
+
+# Claude Code worktrees (à ne JAMAIS versionner)
+.claude/
+.claude/**
