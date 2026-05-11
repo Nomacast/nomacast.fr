@@ -96,7 +96,7 @@ export async function onRequestPost(context) {
     formData = new FormData();
     formData.append('nom', 'Healthcheck Bot');
     formData.append('societe', 'Healthcheck Automatique');
-    formData.append('email', '[evenement@nomacast.fr]');
+    formData.append('email', '[email protected]');
     formData.append('telephone', '0000000000');
     formData.append('message', 'Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne.');
     formData.append('source', 'healthcheck-github');
@@ -308,6 +308,15 @@ export async function onRequestPost(context) {
       console.error(
         `[Nomacast] Resend error: ${resendResp.status} ${errBody}`
       );
+      // En mode healthcheck, on expose l'erreur dans l'URL pour debug facile
+      // depuis les logs GitHub Actions (sinon obligé de fouiller logs Cloudflare).
+      if (isHealthcheck) {
+        return redirect(
+          PAGE_ERREUR + '?error=send'
+          + '&status=' + resendResp.status
+          + '&detail=' + encodeURIComponent(errBody.substring(0, 300))
+        );
+      }
       return redirect(PAGE_ERREUR + '?error=send');
     }
   } catch (err) {
