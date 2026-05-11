@@ -41,17 +41,12 @@ jobs:
 
           # On capture le code HTTP + l'URL de redirection.
           # Sans -L, curl ne suit pas la 302 : on lit juste la première réponse.
+          # Pas besoin d'envoyer de body : envoyer.php.js injecte des données
+          # de test fixes en mode healthcheck (déclenché par le header).
           RESPONSE=$(curl -sS -o /dev/null \
             -w "HTTP_CODE=%{http_code}|REDIRECT=%{redirect_url}" \
             -X POST "https://nomacast.fr/envoyer.php" \
-            -H "X-Healthcheck-Token: $HEALTHCHECK_TOKEN" \
-            --form "nom=Healthcheck Bot" \
-            --form "societe=Healthcheck Automatique" \
-            --form "[email protected]" \
-            --form "telephone=0000000000" \
-            --form "message=Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne." \
-            --form "source=healthcheck-github" \
-            --form "lang=fr")
+            -H "X-Healthcheck-Token: $HEALTHCHECK_TOKEN")
 
           echo "Réponse : $RESPONSE"
 
