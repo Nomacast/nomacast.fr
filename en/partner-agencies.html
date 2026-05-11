@@ -279,13 +279,6 @@ body.menu-open .float-call{display:none!important}
 .faq-wrap { padding-left: 0; padding-right: 0; }
 .faq-question { padding: 18px 20px; font-size: 15px; }
 .faq-answer-inner { padding: 12px 20px 20px; }
-.faq-question').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const item = btn.closest('.faq-item');
-    const isOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
-    if (!isOpen) item.classList.add('open');
-  }
 </style>
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
@@ -721,6 +714,18 @@ window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', windo
   overlay.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeMenu)});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
 })();
+</script>
+
+<script>
+/* FAQ toggle - lot34 */
+document.querySelectorAll('.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
 </script>
 </body>
 </html>
