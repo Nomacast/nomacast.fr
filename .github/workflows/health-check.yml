@@ -1,0 +1,80 @@
+name: Health Check — Formulaire de contact
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Vérifie quotidiennement que le formulaire de contact nomacast.fr fonctionne
+# end-to-end : soumission → bypass Turnstile (via token) → envoi Resend → 302 OK.
+#
+# En cas d'échec, GitHub envoie automatiquement un email à l'auteur du repo.
+#
+# Configuration requise :
+#   - Secret GitHub : HEALTHCHECK_TOKEN (Settings → Secrets and variables → Actions)
+#   - Variable env Cloudflare Pages : HEALTHCHECK_TOKEN (même valeur)
+#
+# Lancement manuel possible via l'onglet Actions → "Run workflow"
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    # Tous les jours à 08:00 UTC (= 10h Paris été / 9h Paris hiver)
+    - cron: '0 8 * * *'
+  workflow_dispatch:  # Permet de lancer manuellement depuis l'UI GitHub
+
+jobs:
+  healthcheck:
+    name: Submit test form
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: POST formulaire avec token healthcheck
+        env:
+          HEALTHCHECK_TOKEN: ${{ secrets.HEALTHCHECK_TOKEN }}
+        run: |
+          set -e
+
+          if [ -z "$HEALTHCHECK_TOKEN" ]; then
+            echo "❌ FAIL: secret HEALTHCHECK_TOKEN non configuré dans le repo"
+            exit 1
+          fi
+
+          echo "→ Soumission du formulaire test..."
+
+          # On capture le code HTTP + l'URL de redirection.
+          # Sans -L, curl ne suit pas la 302 : on lit juste la première réponse.
+          RESPONSE=$(curl -sS -o /dev/null \
+            -w "HTTP_CODE=%{http_code}|REDIRECT=%{redirect_url}" \
+            -X POST "https://nomacast.fr/envoyer.php" \
+            -H "X-Healthcheck-Token: $HEALTHCHECK_TOKEN" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "nom=Healthcheck Bot" \
+            --data-urlencode "societe=Healthcheck Automatique" \
+            --data-urlencode "[email protected]" \
+            --data-urlencode "telephone=0000000000" \
+            --data-urlencode "message=Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne." \
+            --data-urlencode "source=healthcheck-github" \
+            --data-urlencode "lang=fr")
+
+          echo "Réponse : $RESPONSE"
+
+          HTTP_CODE=$(echo "$RESPONSE" | sed -E 's/.*HTTP_CODE=([0-9]+).*/\1/')
+          REDIRECT=$(echo "$RESPONSE" | sed -E 's/.*REDIRECT=([^|]*).*/\1/')
+
+          # Vérification 1 : code HTTP 302 attendu
+          if [ "$HTTP_CODE" != "302" ]; then
+            echo "❌ FAIL: code HTTP attendu 302, reçu $HTTP_CODE"
+            echo "→ Le formulaire ne traite plus correctement les soumissions."
+            echo "→ Vérifier : Cloudflare Pages logs, env vars (HEALTHCHECK_TOKEN, RESEND_API_KEY)"
+            exit 1
+          fi
+
+          # Vérification 2 : redirection vers /merci.html (success)
+          # Une redirection vers /index.html#contact = erreur applicative
+          if echo "$REDIRECT" | grep -q "merci.html"; then
+            echo "✅ PASS: redirection 302 → $REDIRECT"
+            echo "→ Le pipeline complet fonctionne (validation, anti-spam, Resend)."
+          else
+            echo "❌ FAIL: redirection inattendue vers $REDIRECT"
+            echo "→ Le formulaire a renvoyé une erreur applicative (Turnstile, Resend, validation...)"
+            echo "→ Vérifier les Cloudflare Pages logs pour le détail."
+            exit 1
+          fi
