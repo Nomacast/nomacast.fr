@@ -1,3 +1,125 @@
+─────────────────────────────────────────────────────────────────
+LOT 28 │ Création page hub /prestations.html FR + EN
+─────────────────────────────────────────────────────────────────
+✅ NEW : prestations.html (FR) + en/services.html (EN)
+✅ MOD : index.html + en/index.html
+        → section #prestations refondue style #offre (navy)
+        → 6 cards services (Conférence, Émission live, Interview, 
+          Multiplex, Multi-plateformes, Marque blanche)
+        → price-card "Tarif de départ 1 500 € HT"
+        → CSS #prestations ajouté aux règles de #offre
+
+
+─────────────────────────────────────────────────────────────────
+LOT 29 │ Création page FAQ dédiée /faq.html (FR)
+─────────────────────────────────────────────────────────────────
+✅ NEW : faq.html (FR)
+        → 40 questions agglomérées en 9 catégories
+        → Sommaire ancré (chips cliquables)
+        → Schema.org FAQPage (25 questions top)
+        → Format <details>/<summary> natif (pas de JS)
+
+
+─────────────────────────────────────────────────────────────────
+LOT 30 │ FAQ EN + logique globale + fix header tarifs
+─────────────────────────────────────────────────────────────────
+✅ NEW : en/faq.html (40 questions traduites)
+✅ MOD : 48 pages — menu "FAQ" logique :
+        • sur index FR/EN  → #faq (ancre)
+        • sur faq.html     → inactif (current page)
+        • sur autres       → faq.html
+✅ MOD : footer FAQ idem (sauf index = #faq)
+✅ MOD : tarifs.html + en/pricing.html
+        → ordre menu corrigé : Tarifs avant Agences
+        → CTA "Devis sous 24h" ajouté
+
+
+─────────────────────────────────────────────────────────────────
+LOT 31 │ Réduction FAQ index 14 → 8 questions
+─────────────────────────────────────────────────────────────────
+✅ MOD : index.html + en/index.html
+        → 6 questions retirées (techniques, doublons, niche)
+        → 8 questions finales (essentielles + SEO + positionnement)
+        → "Êtes-vous une agence ?" reformulée (commence par "Non.")
+        → footer FAQ → faq.html (alors que menu = #faq)
+
+
+─────────────────────────────────────────────────────────────────
+LOT 32 │ Alignement CTA cas-clients + menu Prestations
+─────────────────────────────────────────────────────────────────
+✅ MOD : cas-clients.html + en/case-studies.html
+        → bloc CTAs centré (align-items, margin auto, max-content)
+✅ MOD : 46 pages — menu "Prestations" / "Services"
+        • sur index FR/EN  → #prestations (ancre)
+        • sur prestations  → inactif (current page)
+        • sur autres       → prestations.html (page hub)
+
+
+─────────────────────────────────────────────────────────────────
+LOT 33 │ Refonte complète /prestations + suppression emojis
+─────────────────────────────────────────────────────────────────
+✅ MOD : prestations.html + en/services.html — refonte totale
+        Template copié de agences-partenaires.html
+        → 4 sections : Hero / 6 cards / Toujours compris / CTA
+        → "À partir de 1 500 € HT" répété 3x dans la page
+        → Cards 01-06 cliquables (hover cyan + flèche)
+        → menu : Prestations / Services = current page
+✅ MOD : 8 pages — suppression de tous emojis Unicode
+        prestations, services, faq FR/EN, index FR/EN, 
+        tarifs, en/pricing
+        (📹 💡 🎛️ 🎙️ 📦 🌍 💬 💰 📅 🌍 🌐 📡 🎥 🎨 📦 🎬)
+
+
+─────────────────────────────────────────────────────────────────
+LOT 34 │ Fix bug FAQ toggle (root cause)
+─────────────────────────────────────────────────────────────────
+🐛 ROOT CAUSE : du JS s'était inséré DANS le <style> au lieu 
+                d'être dans <script> sur 6 pages.
+
+✅ MOD : 6 pages — bug JS dans CSS retiré
+        agences-partenaires, en/partner-agencies, 
+        faq FR/EN, prestations, en/services
+✅ MOD : 14 pages devis/quote — JS toggle FAQ ajouté
+        (devis-* et en/quote-*)
+
+→ 42 pages avec .faq-item maintenant toutes fonctionnelles
+
+
+─────────────────────────────────────────────────────────────────
+LOT 35 │ FAQ ajoutée à prestations.html FR + EN
+─────────────────────────────────────────────────────────────────
+✅ MOD : prestations.html + en/services.html
+        → section FAQ (5 questions contextuelles) avant section-dark
+        → JS toggle + schema FAQPage
+        → Lien "Voir toutes les FAQ →" vers faq.html
+
+
+─────────────────────────────────────────────────────────────────
+LOT 36 │ Polish prestations + sitemap.xml + plan du site
+─────────────────────────────────────────────────────────────────
+✅ MOD : prestations.html + en/services.html
+        → espaces insécables sur "1 500 € HT" (12+2 occurrences)
+        → Q1 FAQ reformulée : "Quel dispositif choisir ?" 
+          → "Travaillez-vous avec notre charte graphique ?"
+        → <br> avant "à 1 500 € HT" (Toujours compris)
+        → <br> avant "Voir toutes les FAQ" (intro FAQ)
+✅ MOD : sitemap.xml
+        → +2 entrées : faq.html + en/faq.html
+        → 8 pages lastmod refresh à 2026-05-11
+✅ MOD : plan-du-site.html + en/sitemap.html
+        → Prestations + FAQ ajoutés aux "Pages principales"
+        → date "Mis à jour le" → 11 mai 2026
+
+
+─────────────────────────────────────────────────────────────────
+LOT 37 │ Footer "Voir toutes les prestations →" partout
+─────────────────────────────────────────────────────────────────
+✅ MOD : 48 pages (24 FR + 24 EN)
+        → footer colonne Prestations : nouvelle <li> en gras 
+          "Voir toutes les prestations →" / "View all services →"
+        → Pattern identique à "Voir tous les cas clients →"
+─────────────────────────────────────────────────────────────────
+
 # CHANGELOG — Session 10 mai 2026 (finitions LOT 22-26)
 
 > Suite directe du CHANGELOG-session-2026-05-10-suite (LOT 16-21).
