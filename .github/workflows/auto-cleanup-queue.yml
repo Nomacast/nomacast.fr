@@ -1,0 +1,119 @@
+name: Auto-Cleanup Cloudflare Queue
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Surveille la queue Cloudflare Pages toutes les 15 minutes.
+# Si plus de 3 déploiements sont bloqués (queued/active/building/idle),
+# cancel les plus anciens pour ne garder que les 2 plus récents.
+#
+# Évite l'accumulation type "100 queued bloquent le pipeline".
+# Aucune action requise de ta part : ça tourne en background tout seul.
+#
+# Secrets requis (Settings → Secrets and variables → Actions) :
+#   - CLOUDFLARE_API_TOKEN   (le même que pour les scripts Python)
+#   - CLOUDFLARE_ACCOUNT_ID  (idem)
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # toutes les 15 minutes
+  workflow_dispatch:  # bouton manuel "Run workflow" disponible
+
+# Empêche que plusieurs runs se chevauchent (ex : si un run prend > 15 min)
+concurrency:
+  group: cf-queue-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Cleanup queue Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check and clean queue
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: nomacast-fr
+          # Seuil de déclenchement : on agit seulement si > N stuck
+          MAX_STUCK: 3
+          # On garde toujours les N plus récents (pour que le pipeline avance)
+          KEEP_RECENT: 2
+        run: |
+          set -e
+
+          if [ -z "$CF_TOKEN" ] || [ -z "$CF_ACCOUNT" ]; then
+            echo "❌ Secrets CLOUDFLARE_API_TOKEN ou CLOUDFLARE_ACCOUNT_ID manquants"
+            exit 1
+          fi
+
+          API="https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT/pages/projects/$PROJECT"
+
+          echo "→ Récupération de la liste des déploiements..."
+          DATA=$(curl -sS -H "Authorization: Bearer $CF_TOKEN" "$API/deployments")
+
+          # Vérifie que la réponse API est OK
+          if ! echo "$DATA" | jq -e '.success == true' > /dev/null; then
+            echo "❌ Erreur API Cloudflare :"
+            echo "$DATA" | jq '.errors // .' | head -20
+            exit 1
+          fi
+
+          # Extrait les ID + dates des déploiements bloqués, triés par date desc
+          STUCK=$(echo "$DATA" | jq -r '
+            .result[]
+            | select(.latest_stage.status == "active"
+                  or .latest_stage.status == "queued"
+                  or .latest_stage.status == "building"
+                  or .latest_stage.status == "idle")
+            | "\(.created_on)|\(.id)"
+          ' | sort -r)
+
+          if [ -z "$STUCK" ]; then
+            echo "✅ Aucun déploiement bloqué."
+            exit 0
+          fi
+
+          STUCK_COUNT=$(echo "$STUCK" | wc -l)
+          echo "→ $STUCK_COUNT déploiements bloqués détectés"
+
+          if [ "$STUCK_COUNT" -le "$MAX_STUCK" ]; then
+            echo "✅ $STUCK_COUNT ≤ $MAX_STUCK (seuil), pas d'action requise."
+            exit 0
+          fi
+
+          echo "⚠️ $STUCK_COUNT > $MAX_STUCK : cleanup en cours..."
+          echo "→ On garde les $KEEP_RECENT plus récents, on cancel le reste."
+          echo ""
+
+          # Garde les KEEP_RECENT premiers (les plus récents), cancel le reste
+          TO_CANCEL=$(echo "$STUCK" | tail -n +$((KEEP_RECENT+1)) | cut -d'|' -f2)
+          NB_TO_CANCEL=$(echo "$TO_CANCEL" | wc -l)
+          echo "→ $NB_TO_CANCEL à cancel"
+
+          CANCELLED=0
+          FAILED=0
+          for ID in $TO_CANCEL; do
+            RESPONSE=$(curl -sS -X POST \
+              -H "Authorization: Bearer $CF_TOKEN" \
+              "$API/deployments/$ID/cancel")
+            if echo "$RESPONSE" | jq -e '.success == true' > /dev/null 2>&1; then
+              CANCELLED=$((CANCELLED+1))
+            else
+              # Fallback : DELETE
+              DEL=$(curl -sS -X DELETE \
+                -H "Authorization: Bearer $CF_TOKEN" \
+                "$API/deployments/$ID")
+              if echo "$DEL" | jq -e '.success == true' > /dev/null 2>&1; then
+                CANCELLED=$((CANCELLED+1))
+              else
+                FAILED=$((FAILED+1))
+              fi
+            fi
+          done
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  ✅ $CANCELLED cancellé(s) · ❌ $FAILED échec(s)"
+          echo "  Si > 25 stuck restent, le prochain run dans 15 min continuera."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
