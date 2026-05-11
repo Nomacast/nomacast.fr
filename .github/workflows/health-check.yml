@@ -45,14 +45,13 @@ jobs:
             -w "HTTP_CODE=%{http_code}|REDIRECT=%{redirect_url}" \
             -X POST "https://nomacast.fr/envoyer.php" \
             -H "X-Healthcheck-Token: $HEALTHCHECK_TOKEN" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            --data-urlencode "nom=Healthcheck Bot" \
-            --data-urlencode "societe=Healthcheck Automatique" \
-            --data-urlencode "[email protected]" \
-            --data-urlencode "telephone=0000000000" \
-            --data-urlencode "message=Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne." \
-            --data-urlencode "source=healthcheck-github" \
-            --data-urlencode "lang=fr")
+            --form "nom=Healthcheck Bot" \
+            --form "societe=Healthcheck Automatique" \
+            --form "[email protected]" \
+            --form "telephone=0000000000" \
+            --form "message=Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne." \
+            --form "source=healthcheck-github" \
+            --form "lang=fr")
 
           echo "Réponse : $RESPONSE"
 
