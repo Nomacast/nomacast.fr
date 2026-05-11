@@ -675,5 +675,40 @@ window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', windo
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
 })();
 </script>
+<!-- nomacast-cta-bubble-add-v1 : floating CTA bubble mobile -->
+<a aria-label="Get a quote within 24 hours" class="float-call" href="index.html#contact">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><path d="M22 6l-10 7L2 6"></path></svg>
+  Quote in 24h
+</a>
+<script>
+/* nomacast-cta-bubble-add-v1 : masque .float-call quand #contact OU footer est visible */
+(function(){
+  var btn = document.querySelector('.float-call');
+  if (!btn || !('IntersectionObserver' in window)) return;
+  var targets = [
+    document.querySelector('#contact'),
+    document.querySelector('.site-footer') || document.querySelector('footer')
+  ].filter(Boolean);
+  if (!targets.length) return;
+  var visible = new WeakSet();
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting) visible.add(e.target); else visible.delete(e.target);
+    });
+    var anyVisible = targets.some(function(t){ return visible.has(t); });
+    btn.style.transition = 'opacity .25s, transform .25s';
+    if (anyVisible) {
+      btn.style.opacity = '0';
+      btn.style.transform = 'translateY(20px)';
+      btn.style.pointerEvents = 'none';
+    } else {
+      btn.style.opacity = '';
+      btn.style.transform = '';
+      btn.style.pointerEvents = '';
+    }
+  }, {threshold: 0.01, rootMargin: '0px'});
+  targets.forEach(function(t){ io.observe(t); });
+})();
+</script>
 </body>
 </html>
