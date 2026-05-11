@@ -484,7 +484,6 @@ nav.scrolled {
   .nav-links { gap: 18px; }
 }
 
-
 /* Switcher de langue FR/EN */
 .lang-switch {
   display: inline-flex;
@@ -509,12 +508,6 @@ nav.scrolled {
 .lang-switch a:hover { color: var(--cyan); background: var(--cyan-light); }
 .lang-switch a.active { color: var(--cyan); pointer-events: none; }
 .lang-switch .lang-sep { color: var(--ink-faint); font-weight: 400; user-select: none; }
-
-
-
-
-
-
 
 /* ════════════════════════════════
    HERO
@@ -823,7 +816,7 @@ nav.scrolled {
 /* ════════════════════════════════
    OFFRE COMMERCIALE
 ════════════════════════════════ */
-#offre {
+#offre, #services {
   padding: var(--pad) var(--h-pad);
   background: var(--navy);
   color: var(--white);
@@ -1695,7 +1688,7 @@ footer {
   .nav-tel-mobile { display: none !important; }
   .float-call { display: flex; }
   nav { padding: 16px 20px; }
-  #accueil, #offre, #cas-clients, #temoignages, #contact, #clients, #chiffres, #apropos, #faq { padding-left: 20px; padding-right: 20px; }
+  #accueil, #offre, #services, #cas-clients, #temoignages, #contact, #clients, #chiffres, #apropos, #faq { padding-left: 20px; padding-right: 20px; }
   .offre-wrap, .section-wrap, .chiffres-wrap, .contact-wrap, .apropos-wrap, .faq-wrap { padding-left: 0; padding-right: 0; }
   
   /* Feature correction grid mobile */
@@ -1803,7 +1796,6 @@ body.menu-open .mobile-overlay-links li:nth-child(5){transition-delay:.3s}
 @media(max-width:768px){.burger-btn{display:flex}}
 @media(min-width:769px){.mobile-overlay{display:none!important}body.menu-open{overflow:auto!important}}
 
-
 body.menu-open .float-call{display:none!important}
 body.menu-open .float-call{display:none!important}
 
@@ -1902,7 +1894,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a href="tel:+33660541732">+33 6 60 54 17 32</a> · <a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
   </div>
 </div>
-
 
 <a href="tel:+33660541732" class="float-call" aria-label="Call Nomacast">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
@@ -2030,62 +2021,84 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </div>
 
-<section class="section section-light" id="services">
-  <div class="wrap reveal">
-    <p class="eyebrow">Services</p>
-    <h2 class="h2">5 setups for your B2B events</h2>
-    <p class="lead" style="max-width:720px;margin-bottom:48px;">From conference filming to multi-site live shows, I adapt to your needs. Always as a single point of contact, in Paris, France and Europe.</p>
-    <div class="prest-grid">
-      <a href="conference-seminar-filming.html" class="prest-card">
-        <div>
-          <p class="prest-cat">Most popular</p>
-          <p class="prest-name">Conference & seminar</p>
-          <p class="prest-desc">3-camera 4K setup, 2h installation. Live broadcast available.</p>
-        </div>
-        <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </a>
-      <a href="corporate-live-show.html" class="prest-card">
-        <div>
-          <p class="prest-cat">TV-style set</p>
-          <p class="prest-name">Corporate live show</p>
-          <p class="prest-desc">TV-style set with animated graphic branding in real time.</p>
-        </div>
-        <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </a>
-      <a href="interview-roundtable-filming.html" class="prest-card">
-        <div>
-          <p class="prest-cat">Broadcast standards</p>
-          <p class="prest-name">Interview & roundtable</p>
-          <p class="prest-desc">Dedicated angles, HF audio, 3-point lighting per speaker.</p>
-        </div>
-        <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </a>
-      <a href="multi-site-live-streaming.html" class="prest-card">
-        <div>
-          <p class="prest-cat">Multi-site</p>
-          <p class="prest-name">Multi-site live streaming</p>
-          <p class="prest-desc">Multiple sites connected live, single control room, SRT/RIST link.</p>
-        </div>
-        <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </a>
-      <a href="multi-platform-streaming.html" class="prest-card">
-        <div>
-          <p class="prest-cat">Parallel broadcast</p>
-          <p class="prest-name">Multi-platform streaming</p>
-          <p class="prest-desc">YouTube, LinkedIn, Vimeo, Twitch simultaneously from a single setup.</p>
-        </div>
-        <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </a>
+<section id="services" aria-label="My services">
+  <div class="offre-grid-bg" aria-hidden="true"></div>
+  <div class="offre-wrap">
+
+    <div class="offre-top">
+      <div class="reveal">
+        <p class="offre-eyebrow">Services</p>
+        <h2 class="offre-title">5 setups for<br>your B2B events.</h2>
+        <p class="offre-desc">
+          From conference filming to multi-site live shows, I adapt to your needs. Always as a <a href="#apropos" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,0.3);">single point of contact</a>.
+        </p>
+      </div>
+      <div class="offre-price-card reveal">
+        <p class="price-label">Starting at</p>
+        <p class="price-amount">€1,500 <span>HT</span></p>
+        <p class="price-sub">3 4K cameras &amp; Lights setup</p>
+        <a href="#contact" class="price-cta">Request a quote</a>
+      </div>
     </div>
-    <div style="margin-top:56px;display:flex;flex-direction:column;align-items:center;gap:18px;">
-      <a href="#contact" class="btn-primary" style="font-size:15px;padding:14px 32px;">Request a custom quote →</a>
-      <a href="services.html" style="color:var(--cyan);text-decoration:none;font-size:14px;font-weight:500;letter-spacing:-0.01em;">See all services in detail →</a>
-      <a href="pricing.html" style="color:var(--ink-muted);text-decoration:none;font-size:13px;">Estimate in 30 seconds</a>
+
+    <div class="offre-features">
+
+      <div class="offre-feature reveal">
+        <div class="offre-feature-num">01</div>
+        <div class="offre-feature-body">
+          <h3><a href="conference-seminar-filming.html" style="color:inherit;text-decoration:none;">Conference<br>&amp; seminar</a></h3>
+          <p>3-camera 4K setup, 2h installation. Most popular for conferences, keynotes and seminars.</p>
+        </div>
+      </div>
+
+      <div class="offre-feature reveal">
+        <div class="offre-feature-num">02</div>
+        <div class="offre-feature-body">
+          <h3><a href="corporate-live-show.html" style="color:inherit;text-decoration:none;">Corporate<br>live show</a></h3>
+          <p>TV-style set with animated graphic branding, remote speakers integrated on set.</p>
+        </div>
+      </div>
+
+      <div class="offre-feature reveal">
+        <div class="offre-feature-num">03</div>
+        <div class="offre-feature-body">
+          <h3><a href="interview-roundtable-filming.html" style="color:inherit;text-decoration:none;">Interview<br>&amp; roundtable</a></h3>
+          <p>Dedicated angles, HF broadcast audio, 3-point lighting per speaker. TV-grade standards, turnkey.</p>
+        </div>
+      </div>
+
+      <div class="offre-feature reveal">
+        <div class="offre-feature-num">04</div>
+        <div class="offre-feature-body">
+          <h3><a href="multi-site-live-streaming.html" style="color:inherit;text-decoration:none;">Multi-site<br>live streaming</a></h3>
+          <p>Multiple sites connected live, single control room, broadcast-grade SRT/RIST link with redundancy.</p>
+        </div>
+      </div>
+
+      <div class="offre-feature reveal">
+        <div class="offre-feature-num">05</div>
+        <div class="offre-feature-body">
+          <h3><a href="multi-platform-streaming.html" style="color:inherit;text-decoration:none;">Multi-platform<br>streaming</a></h3>
+          <p>YouTube, LinkedIn, Vimeo, Twitch or private server simultaneously from a single control room.</p>
+        </div>
+      </div>
+      <div class="offre-feature reveal">
+        <div class="offre-feature-num">06</div>
+        <div class="offre-feature-body">
+          <h3><a href="partner-agencies.html" style="color:inherit;text-decoration:none;">White-label<br>partner</a></h3>
+          <p>Technical provider for event agencies. NDA, partner margins, multi-site events.</p>
+        </div>
+      </div>
+
+
     </div>
+
+    <div style="margin-top:48px;text-align:center;">
+      <a href="services.html" style="color:var(--cyan);text-decoration:none;font-size:14px;font-weight:500;letter-spacing:-0.005em;border-bottom:1px solid rgba(90,152,214,0.3);padding-bottom:2px;">See all services in detail →</a>
+    </div>
+
   </div>
 </section>
-
-
 
 <div id="chiffres" aria-label="Key figures">
   <div class="chiffres-wrap">
@@ -2255,32 +2268,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-<section id="temoignages" aria-label="Client testimonials" style="background:var(--off-white);">
-  <div class="section-wrap">
-    <div class="section-header reveal">
-      <div>
-        <p class="section-eyebrow">Client voices</p>
-        <h2 class="section-title">What they<br>say.</h2>
-      </div>
-      <p class="section-desc">Demanding partners.<br>Long-lasting collaborations.</p>
-    </div>
-    <div class="temoignages-grid" id="temoignagesGrid">
-      <noscript>
-        <div style="max-width:900px;margin:0 auto;display:grid;gap:24px;">
-          <blockquote style="background:var(--off-white);padding:28px;border-radius:12px;border-left:3px solid var(--cyan);">
-            <p style="margin-bottom:12px;">"We've worked with Nomacast on several of our marketing projects. Their videos add value to our initiatives. An effective collaboration we look forward to renewing."</p>
-            <cite style="font-style:normal;font-weight:600;">Adrien Buisson, Marketing Director Figma France &amp; Spain</cite>
-          </blockquote>
-          <blockquote style="background:var(--off-white);padding:28px;border-radius:12px;border-left:3px solid var(--cyan);">
-            <p style="margin-bottom:12px;">"We regularly bring Nomacast in alongside our teams for live streaming, on the production side. The collaboration is always highly effective and consistently satisfies both our teams and our clients."</p>
-            <cite style="font-style:normal;font-weight:600;">Malik Goulamhoussen, CEO &amp; Founder, Peech Studio</cite>
-          </blockquote>
-        </div>
-      </noscript>
-    </div>
-  </div>
-</section>
-
 <section id="offre" aria-label="Our services">
   <div class="offre-grid-bg" aria-hidden="true"></div>
   <div class="offre-wrap">
@@ -2353,6 +2340,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     </div>
 
+  </div>
+</section>
+
+<section id="temoignages" aria-label="Client testimonials" style="background:var(--off-white);">
+  <div class="section-wrap">
+    <div class="section-header reveal">
+      <div>
+        <p class="section-eyebrow">Client voices</p>
+        <h2 class="section-title">What they<br>say.</h2>
+      </div>
+      <p class="section-desc">Demanding partners.<br>Long-lasting collaborations.</p>
+    </div>
+    <div class="temoignages-grid" id="temoignagesGrid">
+      <noscript>
+        <div style="max-width:900px;margin:0 auto;display:grid;gap:24px;">
+          <blockquote style="background:var(--off-white);padding:28px;border-radius:12px;border-left:3px solid var(--cyan);">
+            <p style="margin-bottom:12px;">"We've worked with Nomacast on several of our marketing projects. Their videos add value to our initiatives. An effective collaboration we look forward to renewing."</p>
+            <cite style="font-style:normal;font-weight:600;">Adrien Buisson, Marketing Director Figma France &amp; Spain</cite>
+          </blockquote>
+          <blockquote style="background:var(--off-white);padding:28px;border-radius:12px;border-left:3px solid var(--cyan);">
+            <p style="margin-bottom:12px;">"We regularly bring Nomacast in alongside our teams for live streaming, on the production side. The collaboration is always highly effective and consistently satisfies both our teams and our clients."</p>
+            <cite style="font-style:normal;font-weight:600;">Malik Goulamhoussen, CEO &amp; Founder, Peech Studio</cite>
+          </blockquote>
+        </div>
+      </noscript>
+    </div>
   </div>
 </section>
 
@@ -2465,7 +2478,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-
 <section id="contact" aria-label="Contact form">
   <div class="contact-glow" aria-hidden="true"></div>
   <div class="contact-wrap">
@@ -2562,7 +2574,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </label>
       <!-- Cloudflare Turnstile: anti-bot protection -->
       <div class="cf-turnstile" data-sitekey="0x4AAAAAADFA3CK0v2Nj6np8" data-theme="dark" style="margin: 16px 0;"></div>
-
 
       <button type="submit" class="form-submit">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -2695,7 +2706,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
   </div>
 </section>
-
 
 <footer class="site-footer">
   <div class="footer-grid">
