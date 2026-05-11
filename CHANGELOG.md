@@ -1,3 +1,74 @@
+═════════════════════════════════════════════════════════════════
+SESSION 11 mai 2026 — Sécurité & monitoring
+═════════════════════════════════════════════════════════════════
+
+─────────────────────────────────────────────────────────────────
+LOT 38 │ Audit sécurité + repo passé en public
+─────────────────────────────────────────────────────────────────
+✅ Repo Nomacast/nomacast.fr passé en PUBLIC sur GitHub
+🔍 Audit secrets exposés (5493 commits scannés) :
+    • Clé Google PageSpeed (script.py + script_PAGESPEED.py) :
+      laissée en l'état (décision assumée, risque maîtrisé)
+    • Clé Turnstile Secret Key (envoyer.php) : RÉVOQUÉE
+🔄 Turnstile Secret Key rotée via Cloudflare Dashboard → Turnstile
+    → nouvelle clé en env var TURNSTILE_SECRET_KEY (Pages)
+✅ DEL : envoyer.php (ancien fichier PHP obsolète, plus utilisé
+        depuis la migration vers Cloudflare Pages Functions)
+✅ Test formulaire post-rotation : OK
+
+
+─────────────────────────────────────────────────────────────────
+LOT 39 │ Support healthcheck dans functions/envoyer.php.js
+─────────────────────────────────────────────────────────────────
+✅ MOD : functions/envoyer.php.js
+    → bypass conditionnel Origin/Turnstile/RateLimit si la
+      requête contient un header X-Healthcheck-Token valide
+    → token vérifié contre env.HEALTHCHECK_TOKEN (Cloudflare Pages)
+    → sujet du mail préfixé [HEALTHCHECK] pour filtrage Gmail
+    → comportement inchangé pour les vraies soumissions
+
+⚠️ NOTE pour futur intervenant :
+    NE PAS modifier le FROM vers `noreply@send.nomacast.fr` même si
+    cette valeur apparaît ailleurs dans ce CHANGELOG (note d'intention
+    jamais appliquée). Le domaine racine `nomacast.fr` est celui qui
+    est validé dans Resend. Toute modif vers le sous-domaine casse
+    Resend avec `?error=send` (testé et confirmé 11/05/2026).
+    Code correct : `from: \`Formulaire Nomacast <noreply@\${DOMAINE}>\``
+
+
+─────────────────────────────────────────────────────────────────
+LOT 40 │ Workflow GitHub Action health-check quotidien
+─────────────────────────────────────────────────────────────────
+✅ NEW : .github/workflows/health-check.yml
+    → cron daily 08:00 UTC (10h Paris été / 9h Paris hiver)
+    → workflow_dispatch pour lancement manuel depuis l'UI GitHub
+    → POST sur https://nomacast.fr/envoyer.php avec X-Healthcheck-Token
+    → vérifie redirection 302 vers /merci.html
+    → en cas d'échec : GitHub envoie un mail auto à l'owner
+✅ NEW : Secret repo HEALTHCHECK_TOKEN (Settings → Secrets → Actions)
+✅ NEW : Env var Cloudflare Pages HEALTHCHECK_TOKEN (même valeur)
+
+🐛 BUG en cours d'investigation :
+    Le premier run manuel renvoie `?error=email` (validation rejet).
+    Le bypass fonctionne (sinon on aurait `?error=captcha`), donc
+    le request.formData() Cloudflare Workers ne lit pas correctement
+    les champs envoyés par curl --data-urlencode.
+    À investiguer : passer en multipart/form-data dans le workflow,
+    ou ajouter du debug logging pour voir le payload reçu.
+
+
+─────────────────────────────────────────────────────────────────
+LOT 41 │ Workflow Drive ↔ Claude ↔ GitHub
+─────────────────────────────────────────────────────────────────
+✅ Repo public → Claude peut fetcher les fichiers directement
+    via https://github.com/Nomacast/nomacast.fr/blob/main/{fichier}
+    pour les fichiers < ~1000 lignes
+    (au-delà : upload en pièce jointe nécessaire)
+⚠️ Constat sync Drive → GitHub : propage uniquement les ajouts et
+    modifications, PAS les suppressions. Pour supprimer un fichier
+    du repo, passer par l'interface GitHub web (icône poubelle).
+
+
 ─────────────────────────────────────────────────────────────────
 LOT 28 │ Création page hub /prestations.html FR + EN
 ─────────────────────────────────────────────────────────────────
