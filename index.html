@@ -380,92 +380,90 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   --pad:          clamp(80px, 10vw, 140px);
   --h-pad:        clamp(24px, 5vw, 64px);
 }
-
-html { scroll-behavior: smooth; overflow-x: hidden; }
-
-body {
-  font-family: var(--font-body);
-  color: var(--ink);
-  background: var(--white);
-  line-height: 1.65;
-  font-size: 16px;
+ html { scroll-behavior: smooth; overflow-x: hidden; }
+ body {
+ font-family: var(--font-body);
+ color: var(--ink);
+ background: var(--white);
+ line-height: 1.65;
+ font-size: 16px;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  max-width: 100vw;
+ overflow-x: hidden;
+ max-width: 100vw;
 }
 
 /* Empêche tout débordement horizontal */
 *, *::before, *::after {
-  max-width: 100%;
+ max-width: 100%;
 }
 
 /* ════════════════════════════════
-   NAV
+ NAV
 ════════════════════════════════ */
 nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22px var(--h-pad);
-  background: rgba(255,255,255,0.94);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.3s, padding 0.3s, box-shadow 0.3s;
+ position: fixed;
+ top: 0; left: 0; right: 0;
+ z-index: 100;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ padding: 22px var(--h-pad);
+ background: rgba(255,255,255,0.94);
+ backdrop-filter: blur(16px);
+ border-bottom: 1px solid transparent;
+ transition: border-color 0.3s, padding 0.3s, box-shadow 0.3s;
 }
 nav.scrolled {
-  border-bottom-color: var(--border);
-  padding-top: 14px;
-  padding-bottom: 14px;
-  box-shadow: 0 1px 20px rgba(11,25,41,0.06);
+ border-bottom-color: var(--border);
+ padding-top: 14px;
+ padding-bottom: 14px;
+ box-shadow: 0 1px 20px rgba(11,25,41,0.06);
 }
 .nav-logo {
-  font-family: var(--font-head);
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+ font-family: var(--font-head);
+ font-size: 19px;
+ font-weight: 700;
+ letter-spacing: -0.03em;
+ color: var(--ink);
+ text-decoration: none;
+ display: flex;
+ align-items: center;
+ gap: 8px;
 }
 .nav-logo-dot {
-  width: 7px; height: 7px;
-  background: var(--cyan);
-  border-radius: 50%;
-  display: inline-block;
-  animation: pulse-dot 2.5s ease-in-out infinite;
+ width: 7px; height: 7px;
+ background: var(--cyan);
+ border-radius: 50%;
+ display: inline-block;
+ animation: pulse-dot 2.5s ease-in-out infinite;
 }
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(0.7); }
 }
 .nav-links {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  list-style: none;
+ display: flex;
+ align-items: center;
+ gap: 32px;
+ list-style: none;
 }
 .nav-links a {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--ink-muted);
-  text-decoration: none;
-  transition: color 0.2s;
-  letter-spacing: 0.01em;
+ font-size: 14px;
+ font-weight: 400;
+ color: var(--ink-muted);
+ text-decoration: none;
+ transition: color 0.2s;
+ letter-spacing: 0.01em;
 }
 .nav-links a:hover { color: var(--ink); }
 .nav-cta {
-  background: var(--cyan) !important;
-  color: var(--white) !important;
-  padding: 10px 22px !important;
-  border-radius: 6px !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  transition: background 0.2s, transform 0.15s !important;
+ background: var(--cyan) !important;
+ color: var(--white) !important;
+ padding: 10px 22px !important;
+ border-radius: 6px !important;
+ font-weight: 600 !important;
+ font-size: 14px !important;
+ transition: background 0.2s, transform 0.15s !important;
 }
 .nav-cta:hover { background: var(--cyan-hover) !important; transform: translateY(-1px); }
 /* nav-cta-fix-v1, Fix bouton Devis sous 24h header (769-1024px wrap) */
@@ -476,59 +474,59 @@ nav.scrolled {
 }
 
 /* ════════════════════════════════
-   HERO
+ HERO
 ════════════════════════════════ */
 #accueil {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 140px 0 100px;
-  position: relative;
-  overflow: hidden;
-  background: var(--ink);
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+ padding: 140px 0 100px;
+ position: relative;
+ overflow: hidden;
+ background: var(--ink);
 }
 .hero-video-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
+ position: absolute;
+ inset: 0;
+ z-index: 0;
+ overflow: hidden;
 }
 .hero-video-bg video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+ width: 100%;
+ height: 100%;
+ object-fit: cover;
 }
 /* lot13-poster-lcp : image poster comme LCP element, vidéo en fade-in derrière */
 .hero-video-bg .hero-poster {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 2;
-  transition: opacity 0.4s ease-out;
+ position: absolute;
+ inset: 0;
+ width: 100%;
+ height: 100%;
+ object-fit: cover;
+ z-index: 2;
+ transition: opacity 0.4s ease-out;
 }
 .hero-video-bg .hero-poster.hidden {
-  opacity: 0;
-  pointer-events: none;
+ opacity: 0;
+ pointer-events: none;
 }
 /* lot19-video-fullscreen : fix override transform du sélecteur générique */
 .hero-video-bg .hero-video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  min-width: 100%;
-  min-height: 100%;
-  transform: none;
-  object-fit: cover;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.4s ease-out;
+ position: absolute;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+ min-width: 100%;
+ min-height: 100%;
+ transform: none;
+ object-fit: cover;
+ z-index: 1;
+ opacity: 0;
+ transition: opacity 0.4s ease-out;
 }
 .hero-video-bg .hero-video.ready {
-  opacity: 1;
+ opacity: 1;
 }
 /* nomacast-video-v2 : affichage conditionnel des vidéos hero */
 .hero-video-mobile { display: none; }
@@ -537,541 +535,541 @@ nav.scrolled {
   .hero-video-mobile { display: block; }
 }
 .hero-video-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: linear-gradient(
+ position: absolute;
+ inset: 0;
+ z-index: 0;
+ background: linear-gradient(
     180deg,
-    rgba(11,25,41,0.65) 0%,
-    rgba(11,25,41,0.50) 30%,
-    rgba(11,25,41,0.70) 100%
+ rgba(11,25,41,0.65) 0%,
+ rgba(11,25,41,0.50) 30%,
+ rgba(11,25,41,0.70) 100%
   );
 }
 .hero-inner {
-  max-width: var(--max);
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 var(--h-pad);
-  position: relative;
-  z-index: 1;
+ max-width: var(--max);
+ width: 100%;
+ margin: 0 auto;
+ padding: 0 var(--h-pad);
+ position: relative;
+ z-index: 1;
 }
 .hero-grid-bg {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(14,165,233,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14,165,233,0.08) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-  z-index: 0;
+ position: absolute;
+ inset: 0;
+ background-image:
+ linear-gradient(rgba(14,165,233,0.08) 1px, transparent 1px),
+ linear-gradient(90deg, rgba(14,165,233,0.08) 1px, transparent 1px);
+ background-size: 60px 60px;
+ mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+ z-index: 0;
 }
 .hero-glow {
-  position: absolute;
-  top: -20%;
-  right: -10%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%);
-  pointer-events: none;
+ position: absolute;
+ top: -20%;
+ right: -10%;
+ width: 600px;
+ height: 600px;
+ background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%);
+ pointer-events: none;
 }
 .hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(14,165,233,0.15);
-  color: var(--cyan);
-  padding: 6px 14px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 28px;
-  width: fit-content;
-  opacity: 0;
-  animation: fadeUp 0.7s 0.15s ease forwards;
+ display: inline-flex;
+ align-items: center;
+ gap: 8px;
+ background: rgba(14,165,233,0.15);
+ color: var(--cyan);
+ padding: 6px 14px;
+ border-radius: 100px;
+ font-size: 12px;
+ font-weight: 600;
+ letter-spacing: 0.06em;
+ text-transform: uppercase;
+ margin-bottom: 28px;
+ width: fit-content;
+ opacity: 0;
+ animation: fadeUp 0.7s 0.15s ease forwards;
 }
 .hero-badge-dot {
-  width: 6px; height: 6px;
-  background: var(--cyan);
-  border-radius: 50%;
-  animation: pulse-dot 2.5s ease-in-out infinite;
+ width: 6px; height: 6px;
+ background: var(--cyan);
+ border-radius: 50%;
+ animation: pulse-dot 2.5s ease-in-out infinite;
 }
 .hero-title {
-  font-family: var(--font-head);
-  font-size: clamp(44px, 7.5vw, 100px);
-  font-weight: 700;
-  line-height: 1.0;
-  letter-spacing: -0.04em;
-  color: var(--white);
-  max-width: 860px;
-  margin-bottom: 16px;
-  opacity: 0;
-  animation: fadeUp 0.85s 0.3s ease forwards;
+ font-family: var(--font-head);
+ font-size: clamp(44px, 7.5vw, 100px);
+ font-weight: 700;
+ line-height: 1.0;
+ letter-spacing: -0.04em;
+ color: var(--white);
+ max-width: 860px;
+ margin-bottom: 16px;
+ opacity: 0;
+ animation: fadeUp 0.85s 0.3s ease forwards;
 }
 .hero-title .accent { color: var(--cyan); }
 .hero-subtitle {
-  font-family: var(--font-body);
-  font-size: clamp(16px, 2vw, 20px);
-  font-weight: 300;
-  color: var(--ink-faint);
-  max-width: 620px;
-  line-height: 1.65;
-  margin-bottom: 40px;
-  opacity: 0;
-  animation: fadeUp 0.85s 0.45s ease forwards;
+ font-family: var(--font-body);
+ font-size: clamp(16px, 2vw, 20px);
+ font-weight: 300;
+ color: var(--ink-faint);
+ max-width: 620px;
+ line-height: 1.65;
+ margin-bottom: 40px;
+ opacity: 0;
+ animation: fadeUp 0.85s 0.45s ease forwards;
 }
 .hero-subtitle strong { color: var(--white); font-weight: 600; }
 .hero-kpis {
-  display: flex;
-  gap: 32px;
-  margin-bottom: 44px;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: fadeUp 0.85s 0.55s ease forwards;
+ display: flex;
+ gap: 32px;
+ margin-bottom: 44px;
+ flex-wrap: wrap;
+ opacity: 0;
+ animation: fadeUp 0.85s 0.55s ease forwards;
 }
 .hero-kpi {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255,255,255,0.85);
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ font-size: 14px;
+ font-weight: 500;
+ color: rgba(255,255,255,0.85);
 }
 .hero-kpi-icon {
-  width: 32px; height: 32px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cyan);
-  flex-shrink: 0;
+ width: 32px; height: 32px;
+ background: rgba(255,255,255,0.08);
+ border: 1px solid rgba(255,255,255,0.15);
+ border-radius: 8px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ color: var(--cyan);
+ flex-shrink: 0;
 }
 .hero-kpi-icon svg { width: 16px; height: 16px; }
 .hero-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: fadeUp 0.85s 0.65s ease forwards;
+ display: flex;
+ align-items: center;
+ gap: 16px;
+ flex-wrap: wrap;
+ opacity: 0;
+ animation: fadeUp 0.85s 0.65s ease forwards;
 }
 .btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--cyan);
-  color: var(--white);
-  padding: 15px 30px;
-  border-radius: 8px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 4px 20px rgba(14,165,233,0.3);
+ display: inline-flex;
+ align-items: center;
+ gap: 8px;
+ background: var(--cyan);
+ color: var(--white);
+ padding: 15px 30px;
+ border-radius: 8px;
+ font-family: var(--font-body);
+ font-size: 15px;
+ font-weight: 600;
+ text-decoration: none;
+ transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+ box-shadow: 0 4px 20px rgba(14,165,233,0.3);
 }
 .btn-primary:hover {
-  background: var(--cyan-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(14,165,233,0.35);
+ background: var(--cyan-hover);
+ transform: translateY(-2px);
+ box-shadow: 0 8px 28px rgba(14,165,233,0.35);
 }
 .btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--white);
-  color: var(--ink);
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 500;
-  text-decoration: none;
-  border: 1.5px solid var(--border);
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
+ display: inline-flex;
+ align-items: center;
+ gap: 8px;
+ background: var(--white);
+ color: var(--ink);
+ padding: 14px 28px;
+ border-radius: 8px;
+ font-family: var(--font-body);
+ font-size: 15px;
+ font-weight: 500;
+ text-decoration: none;
+ border: 1.5px solid var(--border);
+ transition: border-color 0.2s, color 0.2s, background 0.2s;
 }
 .btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-light); }
 
 /* ════════════════════════════════
-   CLIENTS
+ CLIENTS
 ════════════════════════════════ */
 #clients {
-  padding: 64px var(--h-pad);
-  border-bottom: 1px solid var(--border-light);
-  background: var(--off-white);
+ padding: 64px var(--h-pad);
+ border-bottom: 1px solid var(--border-light);
+ background: var(--off-white);
 }
 .clients-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  text-align: center;
-  margin-bottom: 40px;
-  max-width: var(--max);
-  margin-left: auto;
-  margin-right: auto;
+ font-size: 11px;
+ font-weight: 600;
+ letter-spacing: 0.12em;
+ text-transform: uppercase;
+ color: var(--ink-faint);
+ text-align: center;
+ margin-bottom: 40px;
+ max-width: var(--max);
+ margin-left: auto;
+ margin-right: auto;
 }
 .clients-row {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  align-items: stretch;
-  max-width: var(--max);
-  margin: 0 auto;
+ display: grid;
+ grid-template-columns: repeat(5, 1fr);
+ gap: 12px;
+ align-items: stretch;
+ max-width: var(--max);
+ margin: 0 auto;
 }
 .client-logo-wrap {
-  height: 88px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--white);
-  border: 1px solid var(--border-light);
-  border-radius: 10px;
-  padding: 18px 24px;
-  transition: border-color 0.25s, box-shadow 0.25s;
-  filter: grayscale(0);
+ height: 88px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ background: var(--white);
+ border: 1px solid var(--border-light);
+ border-radius: 10px;
+ padding: 18px 24px;
+ transition: border-color 0.25s, box-shadow 0.25s;
+ filter: grayscale(0);
 }
 .client-logo-wrap:hover {
-  border-color: var(--border);
-  box-shadow: 0 4px 16px rgba(11,25,41,0.07);
+ border-color: var(--border);
+ box-shadow: 0 4px 16px rgba(11,25,41,0.07);
 }
 .client-logo-wrap img {
-  height: 100%;
-  width: auto;
-  max-width: 130px;
-  object-fit: contain;
+ height: 100%;
+ width: auto;
+ max-width: 130px;
+ object-fit: contain;
 }
 .client-logo-text {
-  font-family: var(--font-head);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-muted);
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  text-align: center;
+ font-family: var(--font-head);
+ font-size: 13px;
+ font-weight: 600;
+ color: var(--ink-muted);
+ letter-spacing: 0.03em;
+ white-space: nowrap;
+ text-align: center;
 }
 .client-logo-link {
-  text-decoration: none;
-  cursor: pointer;
-  position: relative;
+ text-decoration: none;
+ cursor: pointer;
+ position: relative;
 }
 .client-logo-link:hover {
-  border-color: var(--cyan);
-  box-shadow: 0 4px 16px rgba(90,152,214,0.15);
+ border-color: var(--cyan);
+ box-shadow: 0 4px 16px rgba(90,152,214,0.15);
 }
 .client-logo-link::after {
-  content: "";
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 6px;
-  height: 6px;
-  background: var(--cyan);
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.25s;
+ content: "";
+ position: absolute;
+ top: 6px;
+ right: 6px;
+ width: 6px;
+ height: 6px;
+ background: var(--cyan);
+ border-radius: 50%;
+ opacity: 0;
+ transition: opacity 0.25s;
 }
 .client-logo-link:hover::after {
-  opacity: 1;
+ opacity: 1;
 }
 
 /* ════════════════════════════════
-   OFFRE COMMERCIALE
+ OFFRE COMMERCIALE
 ════════════════════════════════ */
 #offre, #prestations {
-  padding: var(--pad) var(--h-pad);
-  background: var(--navy);
-  color: var(--white);
-  position: relative;
-  overflow: hidden;
+ padding: var(--pad) var(--h-pad);
+ background: var(--navy);
+ color: var(--white);
+ position: relative;
+ overflow: hidden;
 }
 .offre-grid-bg {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(14,165,233,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14,165,233,0.06) 1px, transparent 1px);
-  background-size: 48px 48px;
-  opacity: 0.6;
+ position: absolute;
+ inset: 0;
+ background-image:
+ linear-gradient(rgba(14,165,233,0.06) 1px, transparent 1px),
+ linear-gradient(90deg, rgba(14,165,233,0.06) 1px, transparent 1px);
+ background-size: 48px 48px;
+ opacity: 0.6;
 }
 .offre-wrap {
-  max-width: var(--max);
-  margin: 0 auto;
-  position: relative;
+ max-width: var(--max);
+ margin: 0 auto;
+ position: relative;
 }
 .offre-top {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 80px;
-  align-items: center;
-  margin-bottom: 72px;
+ display: grid;
+ grid-template-columns: 1.2fr 1fr;
+ gap: 80px;
+ align-items: center;
+ margin-bottom: 72px;
 }
 .offre-eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--cyan);
-  margin-bottom: 20px;
+ font-size: 11px;
+ font-weight: 600;
+ letter-spacing: 0.14em;
+ text-transform: uppercase;
+ color: var(--cyan);
+ margin-bottom: 20px;
 }
 .offre-title {
-  font-family: var(--font-head);
-  font-size: clamp(32px, 4vw, 52px);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  margin-bottom: 20px;
+ font-family: var(--font-head);
+ font-size: clamp(32px, 4vw, 52px);
+ font-weight: 700;
+ line-height: 1.1;
+ letter-spacing: -0.03em;
+ margin-bottom: 20px;
 }
 .offre-desc {
-  font-size: 16px;
-  font-weight: 300;
-  color: rgba(255,255,255,0.65);
-  line-height: 1.7;
-  max-width: 460px;
+ font-size: 16px;
+ font-weight: 300;
+ color: rgba(255,255,255,0.65);
+ line-height: 1.7;
+ max-width: 460px;
 }
 .offre-price-card {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(14,165,233,0.25);
-  border-radius: 16px;
-  padding: 40px;
-  text-align: center;
+ background: rgba(255,255,255,0.05);
+ border: 1px solid rgba(14,165,233,0.25);
+ border-radius: 16px;
+ padding: 40px;
+ text-align: center;
 }
 .price-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 16px;
+ font-size: 11px;
+ font-weight: 600;
+ letter-spacing: 0.1em;
+ text-transform: uppercase;
+ color: rgba(255,255,255,0.4);
+ margin-bottom: 16px;
 }
 .price-amount {
-  font-family: var(--font-head);
-  font-size: 54px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  color: var(--white);
-  line-height: 1;
-  margin-bottom: 6px;
+ font-family: var(--font-head);
+ font-size: 54px;
+ font-weight: 700;
+ letter-spacing: -0.04em;
+ color: var(--white);
+ line-height: 1;
+ margin-bottom: 6px;
 }
 .price-amount span { font-size: 24px; font-weight: 400; color: rgba(255,255,255,0.5); }
 .price-sub {
-  font-size: 13px;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 28px;
+ font-size: 13px;
+ color: rgba(255,255,255,0.4);
+ margin-bottom: 28px;
 }
 .price-cta {
-  display: block;
-  background: var(--cyan);
-  color: white;
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 15px;
-  text-decoration: none;
-  transition: background 0.2s, transform 0.15s;
-  box-shadow: 0 4px 20px rgba(14,165,233,0.35);
+ display: block;
+ background: var(--cyan);
+ color: white;
+ padding: 14px 28px;
+ border-radius: 8px;
+ font-weight: 600;
+ font-size: 15px;
+ text-decoration: none;
+ transition: background 0.2s, transform 0.15s;
+ box-shadow: 0 4px 20px rgba(14,165,233,0.35);
 }
 .price-cta:hover { background: var(--cyan-hover); transform: translateY(-1px); }
 
 .offre-features {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 12px;
-  overflow: hidden;
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 2px;
+ background: rgba(255,255,255,0.06);
+ border-radius: 12px;
+ overflow: hidden;
 }
 .offre-feature {
-  background: rgba(11,25,41,0.85);
-  padding: 36px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  transition: background 0.2s;
-  border-bottom: 2px solid transparent;
+ background: rgba(11,25,41,0.85);
+ padding: 36px 32px;
+ display: flex;
+ flex-direction: column;
+ gap: 16px;
+ transition: background 0.2s;
+ border-bottom: 2px solid transparent;
 }
 .offre-feature:hover {
-  background: rgba(14,165,233,0.07);
-  border-bottom-color: var(--cyan);
+ background: rgba(14,165,233,0.07);
+ border-bottom-color: var(--cyan);
 }
 .offre-feature-num {
-  font-family: var(--font-head);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--cyan);
-  opacity: 0.7;
+ font-family: var(--font-head);
+ font-size: 13px;
+ font-weight: 700;
+ letter-spacing: 0.08em;
+ color: var(--cyan);
+ opacity: 0.7;
 }
 .offre-feature-body h3 {
-  font-family: var(--font-head);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--white);
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  margin-bottom: 10px;
+ font-family: var(--font-head);
+ font-size: 22px;
+ font-weight: 700;
+ color: var(--white);
+ letter-spacing: -0.03em;
+ line-height: 1.1;
+ margin-bottom: 10px;
 }
 .offre-feature-body p {
-  font-size: 13px;
-  font-weight: 300;
-  color: rgba(255,255,255,0.45);
-  line-height: 1.6;
+ font-size: 13px;
+ font-weight: 300;
+ color: rgba(255,255,255,0.45);
+ line-height: 1.6;
 }
 
 /* ════════════════════════════════
-   CAS CLIENTS
+ CAS CLIENTS
 ════════════════════════════════ */
 #cas-clients {
-  padding: var(--pad) var(--h-pad);
-  background: var(--off-white);
+ padding: var(--pad) var(--h-pad);
+ background: var(--off-white);
 }
 .section-wrap { max-width: var(--max); margin: 0 auto; }
 .section-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 48px;
-  gap: 40px;
+ display: flex;
+ align-items: flex-end;
+ justify-content: space-between;
+ margin-bottom: 48px;
+ gap: 40px;
 }
 .section-eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--cyan);
-  margin-bottom: 10px;
+ font-size: 11px;
+ font-weight: 600;
+ letter-spacing: 0.12em;
+ text-transform: uppercase;
+ color: var(--cyan);
+ margin-bottom: 10px;
 }
 .section-title {
-  font-family: var(--font-head);
-  font-size: clamp(28px, 4vw, 46px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  color: var(--ink);
+ font-family: var(--font-head);
+ font-size: clamp(28px, 4vw, 46px);
+ font-weight: 700;
+ letter-spacing: -0.03em;
+ line-height: 1.1;
+ color: var(--ink);
 }
 .section-desc {
-  font-size: 15px;
-  font-weight: 300;
-  color: var(--ink-muted);
-  line-height: 1.65;
-  max-width: 360px;
-  text-align: right;
+ font-size: 15px;
+ font-weight: 300;
+ color: var(--ink-muted);
+ line-height: 1.65;
+ max-width: 360px;
+ text-align: right;
 }
 
 /* Grille cas clients */
 .cases-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+ display: flex;
+ flex-direction: column;
+ gap: 28px;
 }
 
 .cases-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 28px;
 }
 
 /* Cards : base commune */
 .case-feature, .case-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  display: flex;
+ background: var(--white);
+ border: 1px solid var(--border);
+ border-radius: 16px;
+ overflow: hidden;
+ text-decoration: none;
+ color: inherit;
+ transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+ display: flex;
 }
 
 /* --- CORRECTION MOBILE IMAGE FEATURE --- */
 .case-feature {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  align-items: stretch;
+ display: grid;
+ grid-template-columns: 1.4fr 1fr;
+ align-items: stretch;
 }
 
 .case-card {
-  flex-direction: column;
+ flex-direction: column;
 }
 
 .case-feature:hover, .case-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(11, 25, 41, 0.08);
-  border-color: var(--cyan);
+ transform: translateY(-4px);
+ box-shadow: 0 20px 40px rgba(11, 25, 41, 0.08);
+ border-color: var(--cyan);
 }
 
 /* Image / placeholder */
 .case-image {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+ position: relative;
+ aspect-ratio: 16 / 9;
+ overflow: hidden;
+ display: flex;
+ align-items: center;
+ justify-content: center;
 }
 
 /* Correction spécifique pour le mode "feature" */
 .case-feature .case-image {
-  aspect-ratio: 16 / 9; /* Défaut pour mobile */
-  min-height: auto;
+ aspect-ratio: 16 / 9; /* Défaut pour mobile */
+ min-height: auto;
 }
 
 @media (min-width: 769px) {
   .case-feature .case-image {
-    aspect-ratio: auto;
-    min-height: 100%;
+ aspect-ratio: auto;
+ min-height: 100%;
   }
 }
 
 .case-image img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-  transition: transform 0.4s ease;
+ position: absolute;
+ inset: 0;
+ width: 100%;
+ height: 100%;
+ object-fit: cover;
+ z-index: 0;
+ transition: transform 0.4s ease;
 }
 .case-feature:hover .case-image img,
 .case-card:hover .case-image img { transform: scale(1.04); }
 .case-image.has-image::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(11,25,41,0.5) 0%, transparent 60%);
-  z-index: 1;
+ content: '';
+ position: absolute;
+ inset: 0;
+ background: linear-gradient(to top, rgba(11,25,41,0.5) 0%, transparent 60%);
+ z-index: 1;
 }
 
 .case-image::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 32px 32px;
-  pointer-events: none;
+ content: '';
+ position: absolute;
+ inset: 0;
+ background-image: linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+ linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+ background-size: 32px 32px;
+ pointer-events: none;
 }
 
 .case-placeholder-text {
-  position: relative;
-  z-index: 1;
-  color: var(--white);
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 22px;
-  letter-spacing: -0.01em;
-  text-align: center;
-  padding: 0 24px;
-  line-height: 1.2;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+ position: relative;
+ z-index: 1;
+ color: var(--white);
+ font-family: var(--font-head);
+ font-weight: 700;
+ font-size: 22px;
+ letter-spacing: -0.01em;
+ text-align: center;
+ padding: 0 24px;
+ line-height: 1.2;
+ text-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
 
 .case-feature .case-placeholder-text {
-  font-size: 32px;
+ font-size: 32px;
 }
 
 /* Variantes dégradées par cas */
@@ -1085,464 +1083,464 @@ nav.scrolled {
 
 /* Contenu cards */
 .case-content {
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
+ padding: 28px;
+ display: flex;
+ flex-direction: column;
+ gap: 12px;
+ flex: 1;
 }
 
 .case-feature .case-content {
-  padding: 40px;
-  justify-content: center;
+ padding: 40px;
+ justify-content: center;
 }
 
 .case-eyebrow {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--cyan);
-  font-weight: 600;
-  margin: 0;
+ font-size: 12px;
+ text-transform: uppercase;
+ letter-spacing: 0.06em;
+ color: var(--cyan);
+ font-weight: 600;
+ margin: 0;
 }
 
 .case-title {
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 20px;
-  margin: 0;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  line-height: 1.25;
+ font-family: var(--font-head);
+ font-weight: 700;
+ font-size: 20px;
+ margin: 0;
+ color: var(--ink);
+ letter-spacing: -0.01em;
+ line-height: 1.25;
 }
 
 .case-feature .case-title {
-  font-size: clamp(24px, 2.4vw, 32px);
-  letter-spacing: -0.02em;
+ font-size: clamp(24px, 2.4vw, 32px);
+ letter-spacing: -0.02em;
 }
 
 .case-pitch {
-  font-size: 15px;
-  color: var(--ink-mid);
-  line-height: 1.55;
-  margin: 0;
+ font-size: 15px;
+ color: var(--ink-mid);
+ line-height: 1.55;
+ margin: 0;
 }
 
 .case-feature .case-pitch {
-  font-size: 16px;
+ font-size: 16px;
 }
 
 .case-stats {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 4px;
+ display: flex;
+ gap: 18px;
+ flex-wrap: wrap;
+ margin-top: 4px;
 }
 
 .case-stats span {
-  font-size: 13px;
-  color: var(--ink-mid);
+ font-size: 13px;
+ color: var(--ink-mid);
 }
 
 .case-stats span strong {
-  color: var(--ink);
-  font-weight: 700;
-  font-family: var(--font-head);
-  font-size: 14px;
-  letter-spacing: -0.01em;
+ color: var(--ink);
+ font-weight: 700;
+ font-family: var(--font-head);
+ font-size: 14px;
+ letter-spacing: -0.01em;
 }
 
 .case-cta-link {
-  margin-top: auto;
-  padding-top: 8px;
-  color: var(--cyan);
-  font-weight: 600;
-  font-size: 14px;
-  display: inline-block;
-  transition: color 0.2s;
+ margin-top: auto;
+ padding-top: 8px;
+ color: var(--cyan);
+ font-weight: 600;
+ font-size: 14px;
+ display: inline-block;
+ transition: color 0.2s;
 }
 
 .case-card:hover .case-cta-link,
 .case-feature:hover .case-cta-link {
-  color: var(--cyan-hover);
+ color: var(--cyan-hover);
 }
 
 /* CTA bottom */
 .cases-cta-wrap {
-  text-align: center;
-  margin-top: 56px;
+ text-align: center;
+ margin-top: 56px;
 }
 
 .cases-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 32px;
-  background: var(--ink);
-  color: var(--white);
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 15px;
-  transition: background 0.3s, transform 0.3s;
+ display: inline-flex;
+ align-items: center;
+ gap: 10px;
+ padding: 16px 32px;
+ background: var(--ink);
+ color: var(--white);
+ border-radius: 10px;
+ text-decoration: none;
+ font-weight: 600;
+ font-size: 15px;
+ transition: background 0.3s, transform 0.3s;
 }
 
 .cases-cta:hover {
-  background: var(--cyan);
-  transform: translateY(-2px);
+ background: var(--cyan);
+ transform: translateY(-2px);
 }
 
 /* ════════════════════════════════
-   CHIFFRES
+ CHIFFRES
 ════════════════════════════════ */
 #chiffres {
-  padding: 72px var(--h-pad);
-  background: var(--white);
-  border-top: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
+ padding: 72px var(--h-pad);
+ background: var(--white);
+ border-top: 1px solid var(--border-light);
+ border-bottom: 1px solid var(--border-light);
 }
 .chiffres-wrap {
-  max-width: var(--max);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2px;
-  background: var(--border-light);
-  border-radius: 12px;
-  overflow: hidden;
+ max-width: var(--max);
+ margin: 0 auto;
+ display: grid;
+ grid-template-columns: repeat(4, 1fr);
+ gap: 2px;
+ background: var(--border-light);
+ border-radius: 12px;
+ overflow: hidden;
 }
 .chiffre-item {
-  background: var(--white);
-  padding: 36px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: background 0.2s;
+ background: var(--white);
+ padding: 36px 32px;
+ display: flex;
+ flex-direction: column;
+ gap: 8px;
+ transition: background 0.2s;
 }
 .chiffre-item:hover { background: var(--off-white); }
 .chiffre-num {
-  font-family: var(--font-head);
-  font-size: clamp(36px, 4vw, 56px);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: var(--ink);
+ font-family: var(--font-head);
+ font-size: clamp(36px, 4vw, 56px);
+ font-weight: 700;
+ letter-spacing: -0.04em;
+ line-height: 1;
+ color: var(--ink);
 }
 .chiffre-num .c { color: var(--cyan); }
 .chiffre-label {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--ink-muted);
-  line-height: 1.45;
+ font-size: 13px;
+ font-weight: 400;
+ color: var(--ink-muted);
+ line-height: 1.45;
 }
 
 /* ════════════════════════════════
-   TÉMOIGNAGES
+ TÉMOIGNAGES
 ════════════════════════════════ */
 #temoignages {
-  padding: var(--pad) var(--h-pad);
-  background: var(--off-white);
+ padding: var(--pad) var(--h-pad);
+ background: var(--off-white);
 }
 .temoignages-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 3px;
-  margin-top: 48px;
-  background: var(--border-light);
-  border-radius: 12px;
-  overflow: hidden;
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 3px;
+ margin-top: 48px;
+ background: var(--border-light);
+ border-radius: 12px;
+ overflow: hidden;
 }
 .temo-card {
-  background: var(--white);
-  padding: 36px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  transition: background 0.2s, box-shadow 0.2s;
+ background: var(--white);
+ padding: 36px 32px;
+ display: flex;
+ flex-direction: column;
+ gap: 24px;
+ transition: background 0.2s, box-shadow 0.2s;
 }
 .temo-card:hover { background: #fafcff; }
 .temo-quote {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1.65;
-  flex: 1;
-  font-style: italic;
+ font-size: 15px;
+ font-weight: 400;
+ color: var(--ink);
+ line-height: 1.65;
+ flex: 1;
+ font-style: italic;
 }
 .temo-author {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-light);
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ padding-top: 20px;
+ border-top: 1px solid var(--border-light);
 }
 .temo-avatar {
-  width: 42px; height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--border-light);
-  flex-shrink: 0;
-  border: 2px solid var(--border);
+ width: 42px; height: 42px;
+ border-radius: 50%;
+ object-fit: cover;
+ background: var(--border-light);
+ flex-shrink: 0;
+ border: 2px solid var(--border);
 }
 .temo-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  line-height: 1.3;
+ font-size: 13px;
+ font-weight: 600;
+ color: var(--ink);
+ line-height: 1.3;
 }
 .temo-role {
-  font-size: 12px;
-  font-weight: 300;
-  color: var(--ink-muted);
-  line-height: 1.3;
+ font-size: 12px;
+ font-weight: 300;
+ color: var(--ink-muted);
+ line-height: 1.3;
 }
 
 /* ════════════════════════════════
-   CONTACT
+ CONTACT
 ════════════════════════════════ */
 #contact {
-  padding: var(--pad) var(--h-pad);
-  background: var(--navy);
-  color: var(--white);
-  position: relative;
-  overflow: hidden;
+ padding: var(--pad) var(--h-pad);
+ background: var(--navy);
+ color: var(--white);
+ position: relative;
+ overflow: hidden;
 }
 .contact-glow {
-  position: absolute;
-  bottom: -20%;
-  left: -10%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 70%);
-  pointer-events: none;
+ position: absolute;
+ bottom: -20%;
+ left: -10%;
+ width: 500px;
+ height: 500px;
+ background: radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 70%);
+ pointer-events: none;
 }
 .contact-wrap {
-  max-width: var(--max);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 100px;
-  align-items: start;
-  position: relative;
+ max-width: var(--max);
+ margin: 0 auto;
+ display: grid;
+ grid-template-columns: 1fr 1.2fr;
+ gap: 100px;
+ align-items: start;
+ position: relative;
 }
 .contact-eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--cyan);
-  margin-bottom: 20px;
+ font-size: 11px;
+ font-weight: 600;
+ letter-spacing: 0.14em;
+ text-transform: uppercase;
+ color: var(--cyan);
+ margin-bottom: 20px;
 }
 .contact-title {
-  font-family: var(--font-head);
-  font-size: clamp(32px, 4vw, 52px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  margin-bottom: 24px;
+ font-family: var(--font-head);
+ font-size: clamp(32px, 4vw, 52px);
+ font-weight: 700;
+ letter-spacing: -0.03em;
+ line-height: 1.1;
+ margin-bottom: 24px;
 }
 .contact-pitch {
-  font-size: 16px;
-  font-weight: 300;
-  color: rgba(255,255,255,0.6);
-  line-height: 1.7;
-  margin-bottom: 44px;
+ font-size: 16px;
+ font-weight: 300;
+ color: rgba(255,255,255,0.6);
+ line-height: 1.7;
+ margin-bottom: 44px;
 }
 .contact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+ display: flex;
+ flex-direction: column;
+ gap: 14px;
 }
 .contact-info-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: rgba(255,255,255,0.65);
-  font-size: 15px;
-  font-weight: 300;
-  text-decoration: none;
-  transition: color 0.2s;
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ color: rgba(255,255,255,0.65);
+ font-size: 15px;
+ font-weight: 300;
+ text-decoration: none;
+ transition: color 0.2s;
 }
 .contact-info-item:hover { color: var(--white); }
 .contact-info-item svg {
-  width: 16px; height: 16px;
-  color: var(--cyan);
-  flex-shrink: 0;
+ width: 16px; height: 16px;
+ color: var(--cyan);
+ flex-shrink: 0;
 }
 
 /* FORM */
 .contact-form {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(14,165,233,0.18);
-  border-radius: 16px;
-  padding: 44px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+ background: rgba(255,255,255,0.04);
+ border: 1px solid rgba(14,165,233,0.18);
+ border-radius: 16px;
+ padding: 44px;
+ display: flex;
+ flex-direction: column;
+ gap: 18px;
 }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-field { display: flex; flex-direction: column; gap: 7px; }
 .form-field label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
+ font-size: 11px;
+ font-weight: 600;
+ letter-spacing: 0.08em;
+ text-transform: uppercase;
+ color: rgba(255,255,255,0.35);
 }
 .form-field input,
 .form-field select,
 .form-field textarea {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
-  padding: 13px 16px;
-  color: var(--white);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 300;
-  outline: none;
-  transition: border-color 0.2s, background 0.2s;
-  width: 100%;
-  appearance: none;
+ background: rgba(255,255,255,0.06);
+ border: 1px solid rgba(255,255,255,0.1);
+ border-radius: 8px;
+ padding: 13px 16px;
+ color: var(--white);
+ font-family: var(--font-body);
+ font-size: 14px;
+ font-weight: 300;
+ outline: none;
+ transition: border-color 0.2s, background 0.2s;
+ width: 100%;
+ appearance: none;
 }
 .form-field input::placeholder,
 .form-field textarea::placeholder { color: rgba(255,255,255,0.2); }
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
-  border-color: rgba(14,165,233,0.5);
-  background: rgba(14,165,233,0.05);
+ border-color: rgba(14,165,233,0.5);
+ background: rgba(14,165,233,0.05);
 }
 .form-field textarea { resize: vertical; min-height: 110px; }
 .form-field select option { background: #132338; color: white; }
 .form-submit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: var(--cyan);
-  color: var(--white);
-  border: none;
-  padding: 16px 32px;
-  border-radius: 8px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  width: 100%;
-  margin-top: 6px;
-  box-shadow: 0 4px 20px rgba(14,165,233,0.3);
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ gap: 10px;
+ background: var(--cyan);
+ color: var(--white);
+ border: none;
+ padding: 16px 32px;
+ border-radius: 8px;
+ font-family: var(--font-body);
+ font-size: 15px;
+ font-weight: 600;
+ cursor: pointer;
+ transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+ width: 100%;
+ margin-top: 6px;
+ box-shadow: 0 4px 20px rgba(14,165,233,0.3);
 }
 .form-submit:hover {
-  background: var(--cyan-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 28px rgba(14,165,233,0.4);
+ background: var(--cyan-hover);
+ transform: translateY(-1px);
+ box-shadow: 0 8px 28px rgba(14,165,233,0.4);
 }
 
 /* ════════════════════════════════
-   FOOTER
+ FOOTER
 ════════════════════════════════ */
 footer {
-  padding: 28px var(--h-pad);
-  background: var(--navy);
-  border-top: 1px solid rgba(255,255,255,0.07);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
+ padding: 28px var(--h-pad);
+ background: var(--navy);
+ border-top: 1px solid rgba(255,255,255,0.07);
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ flex-wrap: wrap;
+ gap: 16px;
 }
 .footer-logo {
-  font-family: var(--font-head);
-  font-size: 15px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: -0.02em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+ font-family: var(--font-head);
+ font-size: 15px;
+ font-weight: 700;
+ color: rgba(255,255,255,0.4);
+ letter-spacing: -0.02em;
+ display: flex;
+ align-items: center;
+ gap: 6px;
 }
 .footer-credits {
-  font-size: 12px;
-  color: rgba(255,255,255,0.25);
-  font-weight: 300;
+ font-size: 12px;
+ color: rgba(255,255,255,0.25);
+ font-weight: 300;
 }
 
 /* ════════════════════════════════
-   NAV MOBILE TEL + FLOAT BUTTON
+ NAV MOBILE TEL + FLOAT BUTTON
 ════════════════════════════════ */
 .nav-tel-mobile {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--cyan);
-  text-decoration: none;
+ display: none;
+ align-items: center;
+ gap: 6px;
+ font-size: 14px;
+ font-weight: 600;
+ color: var(--cyan);
+ text-decoration: none;
 }
 .nav-tel-mobile svg { width: 16px; height: 16px; }
 .float-call {
-  display: none;
-  position: fixed;
-  bottom: 24px;
-  right: 20px;
-  z-index: 99;
-  background: var(--cyan);
-  color: white;
-  border-radius: 100px;
-  padding: 14px 20px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 4px 24px rgba(14,165,233,0.45);
-  align-items: center;
-  gap: 8px;
-  transition: transform 0.2s, box-shadow 0.2s;
+ display: none;
+ position: fixed;
+ bottom: 24px;
+ right: 20px;
+ z-index: 99;
+ background: var(--cyan);
+ color: white;
+ border-radius: 100px;
+ padding: 14px 20px;
+ font-family: var(--font-body);
+ font-size: 15px;
+ font-weight: 600;
+ text-decoration: none;
+ box-shadow: 0 4px 24px rgba(14,165,233,0.45);
+ align-items: center;
+ gap: 8px;
+ transition: transform 0.2s, box-shadow 0.2s;
 }
 .float-call svg { width: 18px; height: 18px; flex-shrink: 0; }
 .float-call:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(14,165,233,0.5); }
 
 /* ════════════════════════════════
-   À PROPOS
+ À PROPOS
 ════════════════════════════════ */
 #apropos {
-  padding: var(--pad) var(--h-pad);
-  background: var(--white);
+ padding: var(--pad) var(--h-pad);
+ background: var(--white);
 }
 .apropos-wrap {
-  max-width: var(--max);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 80px;
-  align-items: center;
+ max-width: var(--max);
+ margin: 0 auto;
+ display: grid;
+ grid-template-columns: 1fr 1.6fr;
+ gap: 80px;
+ align-items: center;
 }
 .apropos-photo-wrap {
-  position: relative;
+ position: relative;
 }
 .apropos-photo {
-  width: 100%;
-  aspect-ratio: 3/4;
-  object-fit: cover;
-  border-radius: 16px;
-  background: var(--border);
-  display: block;
+ width: 100%;
+ aspect-ratio: 3/4;
+ object-fit: cover;
+ border-radius: 16px;
+ background: var(--border);
+ display: block;
 }
 .apropos-photo-badge {
-  position: absolute;
-  bottom: -16px;
-  right: -16px;
-  background: var(--navy);
-  color: white;
-  border-radius: 12px;
-  padding: 16px 20px;
-  font-family: var(--font-head);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(11,25,41,0.2);
+ position: absolute;
+ bottom: -16px;
+ right: -16px;
+ background: var(--navy);
+ color: white;
+ border-radius: 12px;
+ padding: 16px 20px;
+ font-family: var(--font-head);
+ font-size: 13px;
+ font-weight: 600;
+ text-align: center;
+ box-shadow: 0 8px 24px rgba(11,25,41,0.2);
 }
 .apropos-photo-badge strong { display: block; font-size: 28px; letter-spacing: -0.03em; color: var(--cyan); }
 .apropos-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 14px; }
@@ -1550,47 +1548,47 @@ footer {
 .apropos-text { font-size: 16px; font-weight: 300; color: var(--ink-muted); line-height: 1.75; margin-bottom: 14px; }
 .apropos-text strong { color: var(--ink); font-weight: 600; }
 .apropos-equip {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 28px;
-  padding-top: 28px;
-  border-top: 1px solid var(--border-light);
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+ margin-top: 28px;
+ padding-top: 28px;
+ border-top: 1px solid var(--border-light);
 }
 .apropos-equip-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--ink-mid);
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ font-size: 14px;
+ font-weight: 400;
+ color: var(--ink-mid);
 }
 .apropos-equip-item::before {
-  content: '';
-  width: 6px; height: 6px;
-  background: var(--cyan);
-  border-radius: 50%;
-  flex-shrink: 0;
+ content: '';
+ width: 6px; height: 6px;
+ background: var(--cyan);
+ border-radius: 50%;
+ flex-shrink: 0;
 }
 
 /* ════════════════════════════════
-   FAQ
+ FAQ
 ════════════════════════════════ */
 #faq {
-  padding: var(--pad) var(--h-pad);
-  background: var(--off-white);
+ padding: var(--pad) var(--h-pad);
+ background: var(--off-white);
 }
 .faq-wrap { max-width: var(--max); margin: 0 auto; }
 .faq-list { display: flex; flex-direction: column; gap: 2px; background: var(--border-light); border-radius: 12px; overflow: hidden; margin-top: 48px; }
 .faq-item { background: var(--white); }
 .faq-question {
-  width: 100%; background: none; border: none;
-  padding: 22px 28px; display: flex; align-items: center;
-  justify-content: space-between; gap: 20px;
-  cursor: pointer; text-align: left;
-  font-family: var(--font-head); font-size: 16px;
-  font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
-  transition: background 0.2s;
+ width: 100%; background: none; border: none;
+ padding: 22px 28px; display: flex; align-items: center;
+ justify-content: space-between; gap: 20px;
+ cursor: pointer; text-align: left;
+ font-family: var(--font-head); font-size: 16px;
+ font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
+ transition: background 0.2s;
 }
 .faq-question:hover { background: var(--off-white); }
 .faq-question:focus { outline: none; background: transparent; }
@@ -1601,46 +1599,46 @@ footer {
   .faq-question:active { background: transparent; }
 }
 .faq-icon {
-  width: 24px; height: 24px;
-  background: var(--cyan-light); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; color: var(--cyan);
-  transition: transform 0.3s, background 0.2s;
+ width: 24px; height: 24px;
+ background: var(--cyan-light); border-radius: 50%;
+ display: flex; align-items: center; justify-content: center;
+ flex-shrink: 0; color: var(--cyan);
+ transition: transform 0.3s, background 0.2s;
 }
 .faq-item.open .faq-icon { transform: rotate(45deg); background: var(--cyan); color: white; }
 .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
 .faq-item.open .faq-answer { max-height: 400px; }
 .faq-answer-inner {
-  padding: 16px 28px 24px;
-  font-size: 15px; font-weight: 300;
-  color: var(--ink-muted); line-height: 1.7;
-  border-top: 1px solid var(--border-light);
+ padding: 16px 28px 24px;
+ font-size: 15px; font-weight: 300;
+ color: var(--ink-muted); line-height: 1.7;
+ border-top: 1px solid var(--border-light);
 }
 .faq-answer-inner strong { color: var(--ink); font-weight: 600; }
 
 /* Logo dans témoignage */
 .temo-company-logo {
-  height: 22px; width: auto; max-width: 90px;
-  object-fit: contain;
-  margin-left: auto;
+ height: 22px; width: auto; max-width: 90px;
+ object-fit: contain;
+ margin-left: auto;
 }
 
 /* ════════════════════════════════
-   ANIMATIONS
+ ANIMATIONS
 ════════════════════════════════ */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(22px); }
-  to   { opacity: 1; transform: translateY(0); }
+ from { opacity: 0; transform: translateY(22px); }
+ to   { opacity: 1; transform: translateY(0); }
 }
 .reveal {
-  opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 0.65s ease, transform 0.65s ease;
+ opacity: 0;
+ transform: translateY(18px);
+ transition: opacity 0.65s ease, transform 0.65s ease;
 }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
 /* ════════════════════════════════
-   RESPONSIVE
+ RESPONSIVE
 ════════════════════════════════ */
 @media (max-width: 1024px) {
   .offre-top { grid-template-columns: 1fr; gap: 48px; }
@@ -1653,14 +1651,14 @@ footer {
   .nav-links { display: none; }
   .nav-tel-mobile { display: none !important; }
   .float-call { display: flex; }
-  nav { padding: 16px 20px; }
+ nav { padding: 16px 20px; }
   #accueil, #offre, #prestations, #cas-clients, #temoignages, #contact, #clients, #chiffres, #apropos, #faq { padding-left: 20px; padding-right: 20px; }
   .offre-wrap, .section-wrap, .chiffres-wrap, .contact-wrap, .apropos-wrap, .faq-wrap { padding-left: 0; padding-right: 0; }
-  
+
   /* Feature correction grid mobile */
   .case-feature { grid-template-columns: 1fr; display: flex; flex-direction: column; }
   .case-feature .case-content { padding: 28px; }
-  
+
   .cases-row { grid-template-columns: 1fr 1fr; gap: 20px; }
   .chiffres-wrap { grid-template-columns: repeat(2, 1fr); }
   .temoignages-grid { grid-template-columns: 1fr; }
@@ -1671,7 +1669,7 @@ footer {
   .contact-form { padding: 20px; }
   .contact-wrap { grid-template-columns: 1fr; gap: 40px; }
   .form-row { grid-template-columns: 1fr; }
-  footer { flex-direction: column; text-align: center; padding: 20px; }
+ footer { flex-direction: column; text-align: center; padding: 20px; }
   .clients-row { grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: 100%; }
   .client-logo-wrap { height: 60px; padding: 10px 12px; }
   .hero-inner { padding: 0; }
@@ -1681,19 +1679,19 @@ footer {
   .apropos-photo-badge { right: 0; }
 /* lot20-photo-ronde-mobile : photo about en rond centrée sur mobile (v2 fix forme allongée) */
 .apropos-photo {
-  width: 60vw;
-  max-width: 240px;
-  height: 60vw;
-  max-height: 240px;
-  aspect-ratio: auto;
-  object-fit: cover;
-  object-position: center top;
-  border-radius: 50%;
-  margin: 0 auto;
-  display: block;
+ width: 60vw;
+ max-width: 240px;
+ height: 60vw;
+ max-height: 240px;
+ aspect-ratio: auto;
+ object-fit: cover;
+ object-position: center top;
+ border-radius: 50%;
+ margin: 0 auto;
+ display: block;
 }
 .apropos-photo-badge {
-  display: none;
+ display: none;
 }
 }
 @media (max-width: 560px) {
@@ -1783,35 +1781,35 @@ body.menu-open .float-call{display:none!important}
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
 (function(){
-  let loaded = false;
-  function loadTurnstile(){
-    if (loaded) return;
-    loaded = true;
-    const s = document.createElement('script');
-    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    s.async = true;
-    s.defer = true;
-    document.head.appendChild(s);
+ let loaded = false;
+ function loadTurnstile(){
+ if (loaded) return;
+ loaded = true;
+ const s = document.createElement('script');
+ s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+ s.async = true;
+ s.defer = true;
+ document.head.appendChild(s);
   }
-  function init(){
-    const form = document.querySelector('form');
-    if (!form) { loadTurnstile(); return; }
+ function init(){
+ const form = document.querySelector('form');
+ if (!form) { loadTurnstile(); return; }
     // Trigger 1 : focus dans un champ du form (intention utilisateur)
-    form.addEventListener('focusin', loadTurnstile, { once: true, passive: true });
+ form.addEventListener('focusin', loadTurnstile, { once: true, passive: true });
     // Trigger 2 (fallback mobile) : form approche du viewport
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver(entries => {
-        if (entries.some(e => e.isIntersecting)) { loadTurnstile(); io.disconnect(); }
+ if ('IntersectionObserver' in window) {
+ const io = new IntersectionObserver(entries => {
+ if (entries.some(e => e.isIntersecting)) { loadTurnstile(); io.disconnect(); }
       }, { rootMargin: '300px' });
-      io.observe(form);
+ io.observe(form);
     } else {
-      loadTurnstile();
+ loadTurnstile();
     }
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+ if (document.readyState === 'loading') {
+ document.addEventListener('DOMContentLoaded', init);
   } else {
-    init();
+ init();
   }
 })();
 </script>
@@ -1821,9 +1819,8 @@ body.menu-open .float-call{display:none!important}
 <noscript><iframe height="0" src="https://www.googletagmanager.com/ns.html?id=GTM-M99NLF45" style="display:none;visibility:hidden" width="0"></iframe></noscript>
 <nav id="navbar">
 <a class="nav-logo" href="#accueil">
-<span class="nav-logo-dot"></span>
-    Nomacast
-  </a>
+<span class="nav-logo-dot"></span> Nomacast
+</a>
 <ul class="nav-links">
 <li><a href="#prestations">Prestations</a></li>
 <li><a href="#cas-clients">Cas clients</a></li>
@@ -1838,9 +1835,8 @@ body.menu-open .float-call{display:none!important}
 </li>
 </ul>
 <a aria-label="Appeler Nomacast" class="nav-tel-mobile" href="tel:+33660541732">
-<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path></svg>
-    Appeler
-  </a>
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path></svg> Appeler
+</a>
 <ul aria-label="Choisir la langue" class="nav-lang-mobile">
 <li><a aria-current="page" class="active" href="">FR</a></li>
 <li><span aria-hidden="true" class="lang-sep">·</span></li>
@@ -1862,7 +1858,7 @@ body.menu-open .float-call{display:none!important}
 <li><a class="mobile-cta" href="#contact">Devis sous 24h</a></li>
 </ul>
 <div class="mobile-overlay-footer">
-<a href="tel:+33660541732">06 60 54 17 32</a> · <a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
+<a href="tel:+33660541732">06 60 54 17 32</a> ·<a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
 </div>
 </div>
 <a aria-label="Appeler Nomacast" class="float-call" href="tel:+33660541732">
@@ -1880,46 +1876,46 @@ body.menu-open .float-call{display:none!important}
 </noscript>
 <script>
     (function(){
-      const container = document.currentScript.parentNode;
-      let loaded = false;
+ const container = document.currentScript.parentNode;
+ let loaded = false;
       // lot16-desktop-video-only : sur mobile, on ne charge pas la vidéo (juste le poster)
-      if (window.matchMedia('(max-width: 768px)').matches) return;
-      function loadVideo(){
-        if (loaded) return;
-        loaded = true;
-        const isMobile = false;
-        const src = isMobile ? 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup-mobile.mp4' : 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4';
-        const v = document.createElement('video');
-        v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
-        v.preload = 'auto';
-        v.className = 'hero-video';
-        v.setAttribute('aria-hidden', 'true');
-        const s = document.createElement('source');
-        s.src = src; s.type = 'video/mp4';
-        v.appendChild(s);
-        v.addEventListener('canplay', function(){
-          v.classList.add('ready');
-          const poster = container.querySelector('.hero-poster');
-          if (poster) poster.classList.add('hidden');
+ if (window.matchMedia('(max-width: 768px)').matches) return;
+ function loadVideo(){
+ if (loaded) return;
+ loaded = true;
+ const isMobile = false;
+ const src = isMobile ? 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup-mobile.mp4' : 'https://pub-70a39fad29f24255bdbfb5f3574e51cc.r2.dev/mashup.mp4';
+ const v = document.createElement('video');
+ v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
+ v.preload = 'auto';
+ v.className = 'hero-video';
+ v.setAttribute('aria-hidden', 'true');
+ const s = document.createElement('source');
+ s.src = src; s.type = 'video/mp4';
+ v.appendChild(s);
+ v.addEventListener('canplay', function(){
+ v.classList.add('ready');
+ const poster = container.querySelector('.hero-poster');
+ if (poster) poster.classList.add('hidden');
         }, { once: true });
-        container.insertBefore(v, document.currentScript);
+ container.insertBefore(v, document.currentScript);
       }
       // Trigger 1 : interaction utilisateur (scroll, click, touch, key)
-      const triggers = ['scroll', 'click', 'keydown', 'touchstart', 'mousemove'];
-      const handler = function(){ 
-        triggers.forEach(t => window.removeEventListener(t, handler));
-        loadVideo();
+ const triggers = ['scroll', 'click', 'keydown', 'touchstart', 'mousemove'];
+ const handler = function(){
+ triggers.forEach(t => window.removeEventListener(t, handler));
+ loadVideo();
       };
-      triggers.forEach(t => window.addEventListener(t, handler, { once: true, passive: true }));
+ triggers.forEach(t => window.addEventListener(t, handler, { once: true, passive: true }));
       // Trigger 2 : load + 1s (au cas où l'utilisateur ne bouge pas)
       // Lighthouse fixe le LCP avant le load event, donc cet appel est sans impact lab
-      if (document.readyState === 'complete') {
-        setTimeout(loadVideo, 1000);
+ if (document.readyState === 'complete') {
+ setTimeout(loadVideo, 1000);
       } else {
-        window.addEventListener('load', function(){ setTimeout(loadVideo, 1000); }, { once: true });
+ window.addEventListener('load', function(){ setTimeout(loadVideo, 1000); }, { once: true });
       }
     })();
-    </script>
+</script>
 </div>
 <div aria-hidden="true" class="hero-video-overlay"></div>
 <div aria-hidden="true" class="hero-grid-bg"></div>
@@ -1932,52 +1928,44 @@ body.menu-open .float-call{display:none!important}
 </div>
 <span style="font-family:var(--font-head);font-size:clamp(12px,1.3vw,14px);font-weight:600;letter-spacing:0.08em;color:var(--cyan);padding-left:20px;text-transform:uppercase;">Qualité agence. Un seul interlocuteur.</span>
 </div>
-<h1 class="hero-title">
-    Tournage vidéo<br/>
-<span class="accent">&amp; live streaming</span><br/>
-    d'événement d'entreprise.
-  </h1>
+<h1 class="hero-title"> Tournage vidéo<br/>
+<span class="accent">&amp; live streaming</span><br/> d'événement d'entreprise.
+</h1>
 <p class="hero-subtitle">
-<strong>3 caméras 4K</strong> clé en main, installation en <strong>2h chrono</strong>, n'importe où. Vidéo finale livrée le <strong>jour même</strong>, prête à être déclinée sur vos réseaux.
-  </p>
+<strong>3 caméras 4K</strong> clé en main, installation en<strong>2h chrono</strong>, n'importe où. Vidéo finale livrée le<strong>jour même</strong>, prête à être déclinée sur vos réseaux.
+</p>
 <div class="hero-kpis">
 <div class="hero-kpi">
 <div class="hero-kpi-icon">
 <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+</div> À partir de 1 500 € HT
 </div>
-      À partir de 1 500 € HT
-    </div>
 <div class="hero-kpi">
 <div class="hero-kpi-icon">
 <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+</div> Installation en 2h
 </div>
-      Installation en 2h
-    </div>
 <div class="hero-kpi">
 <div class="hero-kpi-icon">
 <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path></svg>
+</div> Devis sous 24h
 </div>
-      Devis sous 24h
-    </div>
 </div>
 <div class="hero-actions">
-<a class="btn-primary" href="#contact">
-      Obtenir mon devis
-      <svg fill="none" height="14" viewbox="0 0 14 14" width="14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+<a class="btn-primary" href="#contact"> Obtenir mon devis
+<svg fill="none" height="14" viewbox="0 0 14 14" width="14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
 </a>
 <a class="btn-ghost" href="#cas-clients">Voir les cas clients</a>
 </div>
-<p style="margin-top:18px;font-size:14px;color:rgba(255,255,255,.55);">
-    ou <a href="tarifs.html" style="color:rgba(255,255,255,.85);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;">Vous voulez un chiffre tout de suite ? Estimez en 30 secondes</a>
+<p style="margin-top:18px;font-size:14px;color:rgba(255,255,255,.55);"> ou<a href="tarifs.html" style="color:rgba(255,255,255,.85);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;">Vous voulez un chiffre tout de suite ? Estimez en 30 secondes</a>
 </p>
 </div></section>
 <div aria-label="Nos clients" id="clients">
 <p class="clients-label">Ils me font confiance depuis 15 ans</p>
 <div class="clients-row" id="clientsRow">
 <noscript>
-<p style="color:var(--ink-muted);font-size:14px;line-height:1.7;max-width:900px;margin:0 auto;text-align:center;padding:0 20px;">
-        Musée du Louvre · Comédie-Française · Figma · Databricks · Fondation des Femmes · (LA)HORDE · Ministère de la Culture · Morning · Sciences Po · ANRS · Ballet National de Marseille · Actito · Galeria Continua · EBG · MAIF · Stratégies · Nexity · Cegedim · Global Industrie · Brainsonic · Swapcard · Parti Socialiste · ESRI · DEXT · Peech Studio · Engie · Sextant · Johnson &amp; Johnson · GL Events
-      </p>
+<p style="color:var(--ink-muted);font-size:14px;line-height:1.7;max-width:900px;margin:0 auto;text-align:center;padding:0 20px;"> Musée du Louvre · Comédie-Française · Figma · Databricks · Fondation des Femmes · (LA)HORDE · Ministère de la Culture · Morning · Sciences Po · ANRS · Ballet National de Marseille · Actito · Galeria Continua · EBG · MAIF · Stratégies · Nexity · Cegedim · Global Industrie · Brainsonic · Swapcard · Parti Socialiste · ESRI · DEXT · Peech Studio · Engie · Sextant · Johnson &amp; Johnson · GL Events
+</p>
 </noscript>
 </div>
 </div>
@@ -1988,13 +1976,12 @@ body.menu-open .float-call{display:none!important}
 <div class="reveal">
 <p class="offre-eyebrow">Prestations</p>
 <h2 class="offre-title">5 dispositifs pour<br/>vos événements B2B.</h2>
-<p class="offre-desc">
-          De la captation conférence à l'émission live multi-sites, je m'adapte à tous vos besoins. Toujours en <a href="#apropos" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,0.3);">interlocuteur unique</a>.
-        </p>
+<p class="offre-desc"> De la captation conférence à l'émission live multi-sites, je m'adapte à tous vos besoins. Toujours en<a href="#apropos" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,0.3);">interlocuteur unique</a>.
+</p>
 </div>
 <div class="offre-price-card reveal">
 <p class="price-label">Tarif de départ</p>
-<p class="price-amount">1 500 <span>€ HT</span></p>
+<p class="price-amount">1 500<span>€ HT</span></p>
 <p class="price-sub">Plateau 3 caméras 4K &amp; Lumières</p>
 <a class="price-cta" href="#contact">Demander un devis</a>
 </div>
@@ -2194,9 +2181,8 @@ body.menu-open .float-call{display:none!important}
 </div>
 </div>
 <div class="cases-cta-wrap reveal">
-<a class="cases-cta" href="cas-clients.html">
-        Voir tous les cas clients en détail
-        <svg fill="none" height="14" viewbox="0 0 14 14" width="14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+<a class="cases-cta" href="cas-clients.html"> Voir tous les cas clients en détail
+<svg fill="none" height="14" viewbox="0 0 14 14" width="14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
 </a>
 </div>
 </div>
@@ -2209,13 +2195,12 @@ body.menu-open .float-call{display:none!important}
 <div class="reveal">
 <p class="offre-eyebrow">Captation clé en main</p>
 <h2 class="offre-title">Dispositif 3 caméras 4K,<br/>installé en 2h.</h2>
-<p class="offre-desc">
-          Je m'occupe de toute la <a href="live-streaming-evenement.html" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,0.3);">technique</a>. Vous, vous profitez de votre événement.
-        </p>
+<p class="offre-desc"> Je m'occupe de toute la<a href="live-streaming-evenement.html" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,0.3);">technique</a>. Vous, vous profitez de votre événement.
+</p>
 </div>
 <div class="offre-price-card reveal">
 <p class="price-label">Tarif de départ</p>
-<p class="price-amount">1 500 <span>€ HT</span></p>
+<p class="price-amount">1 500<span>€ HT</span></p>
 <p class="price-sub">Plateau 3 caméras 4K &amp; Lumières</p>
 <a class="price-cta" href="#contact">Demander un devis</a>
 </div>
@@ -2260,7 +2245,7 @@ body.menu-open .float-call{display:none!important}
 <div class="offre-feature-num">06</div>
 <div class="offre-feature-body">
 <h3>Votre vidéo,<br/>le jour même</h3>
-<p>Vous repartez avec le , prêt à être mis en ligne, découpé en extraits pour vos <a href="streaming-multi-plateformes.html" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,0.3);">réseaux sociaux</a>, ou rediffusé à vos absents.</p>
+<p>Vous repartez avec le , prêt à être mis en ligne, découpé en extraits pour vos<a href="streaming-multi-plateformes.html" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,0.3);">réseaux sociaux</a>, ou rediffusé à vos absents.</p>
 </div>
 </div>
 </div>
@@ -2298,26 +2283,20 @@ body.menu-open .float-call{display:none!important}
 <div class="agences-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;">
 <div class="reveal">
 <p style="font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:18px;display:flex;align-items:center;gap:10px;">
-<span style="width:24px;height:1px;background:var(--cyan);display:inline-block;"></span>
-          Marque blanche
-        </p>
-<h2 style="font-family:var(--font-head);font-size:clamp(30px,4vw,48px);font-weight:700;letter-spacing:-.03em;line-height:1.05;color:#fff;margin-bottom:22px;">
-          Vous êtes une<br/>agence événementielle ?
-        </h2>
-<p style="font-size:16px;font-weight:300;color:rgba(255,255,255,0.7);line-height:1.75;margin-bottom:16px;">
-          J'interviens régulièrement en <strong style="color:#fff;font-weight:600;">prestataire technique intégré</strong> pour des agences audiovisuelles et événementielles. Directement sur vos productions, en marque blanche, avec votre habillage et votre charte graphique.
-        </p>
-<p style="font-size:16px;font-weight:300;color:rgba(255,255,255,0.7);line-height:1.75;margin-bottom:32px;">
-          Tarification <strong style="color:#fff;font-weight:600;">spécifique partenaire</strong>, planning aligné avec le vôtre, facturation simplifiée. Déjà partenaire technique de Brainsonic, Peech Studio, 87 Seconds, GL Events, Stratégies, Livee, Ekoss, Plissken et Havas Event.
-        </p>
+<span style="width:24px;height:1px;background:var(--cyan);display:inline-block;"></span> Marque blanche
+</p>
+<h2 style="font-family:var(--font-head);font-size:clamp(30px,4vw,48px);font-weight:700;letter-spacing:-.03em;line-height:1.05;color:#fff;margin-bottom:22px;"> Vous êtes une<br/>agence événementielle ?
+</h2>
+<p style="font-size:16px;font-weight:300;color:rgba(255,255,255,0.7);line-height:1.75;margin-bottom:16px;"> J'interviens régulièrement en<strong style="color:#fff;font-weight:600;">prestataire technique intégré</strong> pour des agences audiovisuelles et événementielles. Directement sur vos productions, en marque blanche, avec votre habillage et votre charte graphique.
+</p>
+<p style="font-size:16px;font-weight:300;color:rgba(255,255,255,0.7);line-height:1.75;margin-bottom:32px;"> Tarification<strong style="color:#fff;font-weight:600;">spécifique partenaire</strong>, planning aligné avec le vôtre, facturation simplifiée. Déjà partenaire technique de Brainsonic, Peech Studio, 87 Seconds, GL Events, Stratégies, Livee, Ekoss, Plissken et Havas Event.
+</p>
 <div style="display:flex;gap:14px;flex-wrap:wrap;">
-<a href="agences-partenaires.html" onmouseout="this.style.background='var(--cyan)';this.style.transform='translateY(0)'" onmouseover="this.style.background='#407DB8';this.style.transform='translateY(-2px)'" style="display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:#fff;padding:15px 28px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:background 0.2s,transform 0.15s;box-shadow:0 4px 20px rgba(14,165,233,0.3);">
-            Voir l'offre agences
-            <svg fill="none" height="14" viewbox="0 0 14 14" width="14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+<a href="agences-partenaires.html" onmouseout="this.style.background='var(--cyan)';this.style.transform='translateY(0)'" onmouseover="this.style.background='#407DB8';this.style.transform='translateY(-2px)'" style="display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:#fff;padding:15px 28px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:background 0.2s,transform 0.15s;box-shadow:0 4px 20px rgba(14,165,233,0.3);"> Voir l'offre agences
+<svg fill="none" height="14" viewbox="0 0 14 14" width="14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
 </a>
-<a href="mailto:agences@nomacast.fr" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)';this.style.color='rgba(255,255,255,0.85)'" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='#fff'" style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.85);padding:14px 26px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid rgba(255,255,255,0.15);transition:border-color 0.2s,color 0.2s;">
-            agences@nomacast.fr
-          </a>
+<a href="mailto:agences@nomacast.fr" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)';this.style.color='rgba(255,255,255,0.85)'" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='#fff'" style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.85);padding:14px 26px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid rgba(255,255,255,0.15);transition:border-color 0.2s,color 0.2s;"> agences@nomacast.fr
+</a>
 </div>
 </div>
 <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:36px;backdrop-filter:blur(8px);">
@@ -2370,22 +2349,18 @@ body.menu-open .float-call{display:none!important}
 <div class="apropos-photo-wrap reveal">
 <img alt="Jérôme Bouquillon, Fondateur Nomacast" class="apropos-photo" fetchpriority="high" height="800" loading="eager" onerror="this.style.background='var(--border-light)'" src="images/jerome-bouquillon_bw.webp" width="800"/>
 <div class="apropos-photo-badge">
-<strong>15+</strong>
-        ans d'expérience
-      </div>
+<strong>15+</strong> ans d'expérience
+</div>
 </div>
 <div class="reveal">
 <p class="apropos-eyebrow">Qui je suis</p>
 <h2 class="apropos-title">Jérôme Bouquillon,<br/>Fondateur &amp; Directeur Technique.</h2>
-<p class="apropos-text">
-        Spécialisé depuis <strong>15 ans</strong> dans la <a href="captation-video-evenement.html" style="color:var(--ink-mid);text-decoration:none;border-bottom:1px solid var(--border);">réalisation multi-caméras</a> et le <a href="live-streaming-evenement.html" style="color:var(--ink-mid);text-decoration:none;border-bottom:1px solid var(--border);">live streaming</a>, je prends en charge toute la direction technique de vos événements, de <strong>20 à plusieurs milliers de participants</strong>, partout en Europe. Pour les configurations les <strong>plus complexes</strong>, je mobilise et pilote une équipe <strong>sur-mesure</strong> (son, cadre, régie).
-      </p>
-<p class="apropos-text">
-        Mon engagement : un <strong>interlocuteur unique</strong>, du brief à la remise des fichiers. Matériel en propriété, équipes partenaires de confiance assemblées sur-mesure quand le scope l'exige. Pas de surprise sur le devis, pas d'inconnu sur l'équipe.
-      </p>
-<p class="apropos-text">
-        Clients récents : le Musée du Louvre, (LA)HORDE, la Comédie-Française, Figma, Databricks, la Fondation des Femmes, ANRS…
-      </p>
+<p class="apropos-text"> Spécialisé depuis<strong>15 ans</strong> dans la<a href="captation-video-evenement.html" style="color:var(--ink-mid);text-decoration:none;border-bottom:1px solid var(--border);">réalisation multi-caméras</a> et le<a href="live-streaming-evenement.html" style="color:var(--ink-mid);text-decoration:none;border-bottom:1px solid var(--border);">live streaming</a>, je prends en charge toute la direction technique de vos événements, de<strong>20 à plusieurs milliers de participants</strong>, partout en Europe. Pour les configurations les<strong>plus complexes</strong>, je mobilise et pilote une équipe<strong>sur-mesure</strong> (son, cadre, régie).
+</p>
+<p class="apropos-text"> Mon engagement : un<strong>interlocuteur unique</strong>, du brief à la remise des fichiers. Matériel en propriété, équipes partenaires de confiance assemblées sur-mesure quand le scope l'exige. Pas de surprise sur le devis, pas d'inconnu sur l'équipe.
+</p>
+<p class="apropos-text"> Clients récents : le Musée du Louvre, (LA)HORDE, la Comédie-Française, Figma, Databricks, la Fondation des Femmes, ANRS…
+</p>
 <div class="apropos-equip">
 <div class="apropos-equip-item"></div>
 <div class="apropos-equip-item">Régie vMix Pro : réalisation broadcast en direct</div>
@@ -2403,25 +2378,20 @@ body.menu-open .float-call{display:none!important}
 <div class="reveal">
 <p class="contact-eyebrow">Votre projet</p>
 <h2 class="contact-title">Parlons de<br/>votre événement.</h2>
-<p class="contact-pitch">
-        Devis gratuit et personnalisé sous 24h.<br/>Décrivez-moi votre projet et je vous rappelle rapidement.
-      </p>
-<p style="font-size:13px;color:var(--ink-faint);margin-top:10px;font-style:italic;">
-        💡 Vous voulez une estimation immédiate ? <br/><a href="tarifs.html" style="color:var(--cyan);text-decoration:underline;">Faites votre estimation chiffrée en 30 secondes →</a>
+<p class="contact-pitch"> Devis gratuit et personnalisé sous 24h.<br/>Décrivez-moi votre projet et je vous rappelle rapidement.
+</p>
+<p style="font-size:13px;color:var(--ink-faint);margin-top:10px;font-style:italic;"> Vous voulez une estimation immédiate ?<br/><a href="tarifs.html" style="color:var(--cyan);text-decoration:underline;">Faites votre estimation chiffrée en 30 secondes →</a>
 </p>
 <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:28px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">
 <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.75);">
-<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="color:var(--cyan);flex-shrink:0;" viewbox="0 0 24 24" width="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          Réponse sous 24h ouvrées
-        </div>
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="color:var(--cyan);flex-shrink:0;" viewbox="0 0 24 24" width="16"><polyline points="20 6 9 17 4 12"></polyline></svg> Réponse sous 24h ouvrées
+</div>
 <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.75);">
-<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="color:var(--cyan);flex-shrink:0;" viewbox="0 0 24 24" width="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          Devis sans engagement
-        </div>
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="color:var(--cyan);flex-shrink:0;" viewbox="0 0 24 24" width="16"><polyline points="20 6 9 17 4 12"></polyline></svg> Devis sans engagement
+</div>
 <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.75);">
-<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="color:var(--cyan);flex-shrink:0;" viewbox="0 0 24 24" width="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          Déplacement France &amp; Europe inclus
-        </div>
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="color:var(--cyan);flex-shrink:0;" viewbox="0 0 24 24" width="16"><polyline points="20 6 9 17 4 12"></polyline></svg> Déplacement France &amp; Europe inclus
+</div>
 </div>
 </div>
 <form action="envoyer.php" class="contact-form reveal" id="contactForm" method="POST" name="contact">
@@ -2482,20 +2452,19 @@ body.menu-open .float-call{display:none!important}
 </div>
 <label style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px;background:rgba(90,152,214,0.06);border:1px solid rgba(90,152,214,0.2);border-radius:8px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.8);line-height:1.5;">
 <input id="is_agence" name="is_agence" style="margin-top:2px;accent-color:var(--cyan);flex-shrink:0;" type="checkbox" value="1"/>
-<span>Je représente une <strong style="color:#fff;">agence événementielle ou de production</strong> et souhaite une prestation en marque blanche. <a href="agences-partenaires.html" style="color:var(--cyan);text-decoration:underline;">En savoir plus</a></span>
+<span>Je représente une<strong style="color:#fff;">agence événementielle ou de production</strong> et souhaite une prestation en marque blanche.<a href="agences-partenaires.html" style="color:var(--cyan);text-decoration:underline;">En savoir plus</a></span>
 </label>
 <!-- Cloudflare Turnstile : protection anti-bot -->
 <div class="cf-turnstile" data-sitekey="0x4AAAAAADFA3CK0v2Nj6np8" data-theme="dark" style="margin: 16px 0;"></div>
 <button class="form-submit" type="submit">
-<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><line x1="22" x2="11" y1="2" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        Obtenir mon devis personnalisé sous 24h
-      </button>
+<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><line x1="22" x2="11" y1="2" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Obtenir mon devis personnalisé sous 24h
+</button>
 <a aria-label="Appeler Nomacast" href="tel:+33660541732" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(255,255,255,.22)'" onmouseover="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.4)'" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;padding:12px 16px;margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:12px;color:#fff;text-decoration:none;cursor:pointer;transition:all .2s ease;-webkit-tap-highlight-color:transparent;">
 <span style="font-size:12px;font-weight:400;color:rgba(255,255,255,.65);letter-spacing:0;">Besoin d'en parler en direct ?</span>
 <span style="display:flex;align-items:center;gap:8px;font-family:var(--font-head);font-size:15px;font-weight:500;letter-spacing:0.02em;color:#fff;">
 <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="flex-shrink:0;" viewbox="0 0 24 24" width="14"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path></svg>
           06 60 54 17 32
-        </span>
+</span>
 </a>
 </form>
 </div>
@@ -2512,63 +2481,57 @@ body.menu-open .float-call{display:none!important}
 <div class="faq-list">
 <div class="faq-item">
 <button class="faq-question">Combien coûte un tournage vidéo d'événement d'entreprise ?<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div></button>
-<div class="faq-answer"><div class="faq-answer-inner">Mes prestations démarrent à <strong>1 500 € HT</strong> pour un tournage 3 caméras 4K en demi-journée à Paris, et peuvent atteindre <strong>5 000 € HT</strong> pour des dispositifs étendus avec live streaming, pack lumière et son. Le tarif final dépend de la durée et des options. <a href="tarifs.html" style="color:var(--cyan);font-weight:500;">Faites votre estimation chiffrée en 30 secondes →</a></div></div>
+<div class="faq-answer"><div class="faq-answer-inner">Mes prestations démarrent à<strong>1 500 € HT</strong> pour un tournage 3 caméras 4K en demi-journée à Paris, et peuvent atteindre<strong>5 000 € HT</strong> pour des dispositifs étendus avec live streaming, pack lumière et son. Le tarif final dépend de la durée et des options.<a href="tarifs.html" style="color:var(--cyan);font-weight:500;">Faites votre estimation chiffrée en 30 secondes →</a></div></div>
 </div>
 
 <div class="faq-item">
-<button class="faq-question">
-          Travaillez-vous avec notre charte graphique ?
-          <div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
+<button class="faq-question"> Travaillez-vous avec notre charte graphique ?
+<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
 </button>
-<div class="faq-answer"><div class="faq-answer-inner">Oui, systématiquement. Logo, couleurs, polices, bandeaux nominatifs des intervenants, slides, transitions : tout est intégré à votre charte avant le live. Si vous avez une agence qui produit votre habillage vidéo, je travaille directement à partir de ses fichiers. Si vous n'en avez pas encore, je peux concevoir un <a href="emission-live-corporate.html" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);">habillage live de type émission TV</a> à partir de votre logo et de votre charte.</div></div>
+<div class="faq-answer"><div class="faq-answer-inner">Oui, systématiquement. Logo, couleurs, polices, bandeaux nominatifs des intervenants, slides, transitions : tout est intégré à votre charte avant le live. Si vous avez une agence qui produit votre habillage vidéo, je travaille directement à partir de ses fichiers. Si vous n'en avez pas encore, je peux concevoir un<a href="emission-live-corporate.html" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);">habillage live de type émission TV</a> à partir de votre logo et de votre charte.</div></div>
 </div>
 <div class="faq-item">
-<button class="faq-question">
-          Que se passe-t-il si la connexion internet tombe en plein live ?
-          <div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
+<button class="faq-question"> Que se passe-t-il si la connexion internet tombe en plein live ?
+<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
 </button>
-<div class="faq-answer"><div class="faq-answer-inner">La continuité fait partie du dispositif standard. Je travaille toujours avec deux liens internet en redondance : si l'un faiblit, le second prend le relais sans interruption visible pour vos spectateurs. Pour les <a href="live-streaming-evenement.html" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);">événements à fort enjeu en live streaming</a>, j'ajoute un troisième lien (5G d'un autre opérateur ou satellite). Le dispositif est dimensionné en fonction de la criticité de votre diffusion, pas du tarif.</div></div>
+<div class="faq-answer"><div class="faq-answer-inner">La continuité fait partie du dispositif standard. Je travaille toujours avec deux liens internet en redondance : si l'un faiblit, le second prend le relais sans interruption visible pour vos spectateurs. Pour les<a href="live-streaming-evenement.html" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);">événements à fort enjeu en live streaming</a>, j'ajoute un troisième lien (5G d'un autre opérateur ou satellite). Le dispositif est dimensionné en fonction de la criticité de votre diffusion, pas du tarif.</div></div>
 </div>
 <div class="faq-item">
-<button class="faq-question">
-          Combien de temps à l'avance faut-il réserver ?
-          <div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
+<button class="faq-question"> Combien de temps à l'avance faut-il réserver ?
+<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
 </button>
-<div class="faq-answer"><div class="faq-answer-inner">Idéalement <strong>2 à 4 semaines avant</strong> l'événement pour préparer sereinement la technique. Mais je peux intervenir très rapidement en urgence. <br/>Je suis opérationnel <strong>en moins de 24h</strong>.</div></div>
+<div class="faq-answer"><div class="faq-answer-inner">Idéalement<strong>2 à 4 semaines avant</strong> l'événement pour préparer sereinement la technique. Mais je peux intervenir très rapidement en urgence.<br/>Je suis opérationnel<strong>en moins de 24h</strong>.</div></div>
 </div>
 <div class="faq-item">
-<button class="faq-question">
-          Vous déplacez-vous partout en France et en Europe ?
-          <div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
+<button class="faq-question"> Vous déplacez-vous partout en France et en Europe ?
+<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
 </button>
-<div class="faq-answer"><div class="faq-answer-inner">Oui. J'interviens à <strong><a href="devis-live-streaming-paris.html" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);">Paris</a>, en France et partout en Europe</strong>. J'ai dirigé la technique de plusieurs événements en Angleterre, Espagne et Allemagne.</div></div>
+<div class="faq-answer"><div class="faq-answer-inner">Oui. J'interviens à<strong><a href="devis-live-streaming-paris.html" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);">Paris</a>, en France et partout en Europe</strong>. J'ai dirigé la technique de plusieurs événements en Angleterre, Espagne et Allemagne.</div></div>
 </div>
 
 
 
 <div class="faq-item">
-<button class="faq-question">
-          Quand est-ce que je reçois le fichier vidéo ?
-          <div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
+<button class="faq-question"> Quand est-ce que je reçois le fichier vidéo ?
+<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div>
 </button>
-<div class="faq-answer"><div class="faq-answer-inner">Le fichier vidéo intégral est remis <strong>dès la fin de l'événement</strong> via un <strong>lien de téléchargement sécurisé</strong>.</div></div>
+<div class="faq-answer"><div class="faq-answer-inner">Le fichier vidéo intégral est remis<strong>dès la fin de l'événement</strong> via un<strong>lien de téléchargement sécurisé</strong>.</div></div>
 </div>
 
 <div class="faq-item" data-lot18-seo="">
 <button class="faq-question">Quelle différence entre un webcast, un webinaire et un live streaming ?<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div></button>
-<div class="faq-answer"><div class="faq-answer-inner">Un <strong>webinaire</strong> est généralement un événement entièrement en ligne, avec une webcam laptop et un partage d'écran (type Zoom, Teams). Un <strong>webcast</strong> ou <strong>live streaming</strong> professionnel implique une vraie captation multi-caméra, une régie vidéo dédiée et une diffusion broadcast-quality. Nomacast intervient sur des webcasts premium : multi-cam 4K, son d'événement réel, mixage en direct, diffusion simultanée sur plusieurs plateformes.</div></div>
+<div class="faq-answer"><div class="faq-answer-inner">Un<strong>webinaire</strong> est généralement un événement entièrement en ligne, avec une webcam laptop et un partage d'écran (type Zoom, Teams). Un<strong>webcast</strong> ou<strong>live streaming</strong> professionnel implique une vraie captation multi-caméra, une régie vidéo dédiée et une diffusion broadcast-quality. Nomacast intervient sur des webcasts premium : multi-cam 4K, son d'événement réel, mixage en direct, diffusion simultanée sur plusieurs plateformes.</div></div>
 </div>
 
 <div class="faq-item" data-lot18-seo="">
 <button class="faq-question">Êtes-vous une agence audiovisuelle ?<div class="faq-icon"><svg fill="none" height="12" viewbox="0 0 12 12" width="12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path></svg></div></button>
-<div class="faq-answer"><div class="faq-answer-inner">Nomacast est une structure <strong>lean</strong> spécialisée dans le live streaming événementiel. Plutôt qu'une agence audiovisuelle généraliste, vous avez un <strong>directeur technique unique</strong> qui pilote l'ensemble de la prestation : tournage multi-cam, régie vidéo, mixage live, diffusion. Avantage : moins d'intermédiaires, devis plus compétitifs, interlocuteur unique du devis à la captation.</div></div>
+<div class="faq-answer"><div class="faq-answer-inner">Nomacast est une structure<strong>lean</strong> spécialisée dans le live streaming événementiel. Plutôt qu'une agence audiovisuelle généraliste, vous avez un<strong>directeur technique unique</strong> qui pilote l'ensemble de la prestation : tournage multi-cam, régie vidéo, mixage live, diffusion. Avantage : moins d'intermédiaires, devis plus compétitifs, interlocuteur unique du devis à la captation.</div></div>
 </div>
 <div style="margin-top:2px;background:var(--white);border-radius:0 0 12px 12px;padding:28px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;border-top:1px solid var(--border-light);">
 <p style="font-size:15px;font-weight:400;color:var(--ink-muted);line-height:1.5;margin:0;">Vous ne trouvez pas la réponse à votre question ?</p>
 <a aria-label="Appeler Nomacast" class="btn-primary" href="tel:+33660541732" style="flex-shrink:0;">
-<svg fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="15"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path></svg>
-        Appelez-moi maintenant
-      </a>
+<svg fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="15"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path></svg> Appelez-moi maintenant
+</a>
 </div>
 </div>
 </div></section>
@@ -2633,15 +2596,15 @@ body.menu-open .float-call{display:none!important}
 /* ─ Nav scroll ─ */
 const nav = document.getElementById('navbar');
 window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 50);
+ nav.classList.toggle('scrolled', window.scrollY > 50);
 }, { passive: true });
 
 /* ─ Reveal on scroll ─ */
 const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach((entry, i) => {
-    if (entry.isIntersecting) {
-      setTimeout(() => entry.target.classList.add('visible'), i * 55);
-      revealObserver.unobserve(entry.target);
+ entries.forEach((entry, i) => {
+ if (entry.isIntersecting) {
+ setTimeout(() => entry.target.classList.add('visible'), i * 55);
+ revealObserver.unobserve(entry.target);
     }
   });
 }, { threshold: 0.1 });
@@ -2649,7 +2612,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
 /* ════ DONNÉES EMBARQUÉES ════ */
 const SITE_DATA = {
-  clients: [
+ clients: [
     { nom: "Musée du Louvre", logo_url: "/images/logos/louvre.webp", alt: "Musée du Louvre", cas_url: "cas-client-louvre-lahorde.html" },
     { nom: "Comédie-Française", logo_url: "/images/logos/comedie-francaise.webp", alt: "Comédie-Française", cas_url: "cas-client-comedie-francaise.html" },
     { nom: "Figma", logo_url: "/images/logos/figma.webp", alt: "Figma", cas_url: "cas-client-figma-conference.html" },
@@ -2681,7 +2644,7 @@ const SITE_DATA = {
     { nom: "Prêt à Manger", logo_url: "/images/logos/pret-a-manger.webp", alt: "Prêt à Manger" },
     { nom: "Johnson &amp; Johnson", logo_url: "/images/logos/johnson-johnson.jpg", alt: "Johnson &amp; Johnson", cas_url: "cas-client-johnson-johnson.html" }
   ],
-  temoignages: [
+ temoignages: [
     { quote: "Nous avons travaillé avec Nomacast sur plusieurs de nos projets marketing. Leurs vidéos ajoutent de la valeur à nos initiatives. Une collaboration efficace que nous souhaitons renouveler.", nom: "Adrien Buisson", role: "Directeur Marketing Figma France &amp; Espagne", avatar: "images/references/dubuisson.webp" },
     { quote: "Un événement d'exception au Louvre ! Nomacast s'est affirmé comme un partenaire exemplaire pour la réalisation et la captation live streaming. Les retours, unanimement positifs, témoignent de la rigueur et de l'excellence des services fournis.", nom: "Nils Haagensen", role: "Producteur/Gérant, HVH", avatar: "images/references/haagensen.webp" },
     { quote: "Cela fait presque 10 ans que Nomacast contribue de manière significative à nos Activation Days. Leur engagement durable et leur expertise ont grandement enrichi chaque édition.", nom: "Marc Désenfant", role: "CSO, Actito", avatar: "images/references/desenfant.webp" },
@@ -2691,20 +2654,17 @@ const SITE_DATA = {
     { quote: "Nous faisons appel à Nomacast pour intégrer nos équipes lors de live streaming de manière très régulière sur la partie réalisation. La collaboration est toujours très efficace et donne entière satisfaction à nos équipes comme à nos clients.", nom: "Malik Goulamhoussen", role: "CEO &amp; Founder, Peech Studio", avatar: "images/references/goulamhoussen.webp" }
   ]
 };
-
-function loadConfig() {
+ function loadConfig() {
   // SITE_DATA est la source de vérité (inline ci-dessus), pas de fetch externe nécessaire
-  renderClients(SITE_DATA.clients);
-  renderTemoignages(SITE_DATA.temoignages);
+ renderClients(SITE_DATA.clients);
+ renderTemoignages(SITE_DATA.temoignages);
 }
-
-function renderTemoignages(temos) {
-  const grid = document.getElementById('temoignagesGrid');
-  if (!grid || !temos) return;
-
-  const logoMap = {};
+ function renderTemoignages(temos) {
+ const grid = document.getElementById('temoignagesGrid');
+ if (!grid || !temos) return;
+ const logoMap = {};
   (SITE_DATA.clients || []).forEach(c => { logoMap[c.nom] = c.logo_url; });
-  const temoLogoMap = {
+ const temoLogoMap = {
     'Nils Haagensen':      logoMap['HVH'],
     'Marc Désenfant':      logoMap['Actito'],
     'Charlotte Marchand':  logoMap['Morning'],
@@ -2713,84 +2673,80 @@ function renderTemoignages(temos) {
     'Jean-Michel Cabon':   '/images/logos/esri.webp',
     'Malik Goulamhoussen': '/images/logos/peech-studio.webp',
   };
-
-  grid.innerHTML = temos.map(t => {
-    const logo = temoLogoMap[t.nom];
-    const logoHtml = logo ? `<img class="temo-company-logo" src="${logo}" alt="${t.nom}" loading="lazy">` : '';
-    return `
-    <article class="temo-card reveal">
-      <p class="temo-quote">« ${t.quote} »</p>
-      <div class="temo-author">
-        <img class="temo-avatar" src="${t.avatar}" alt="${t.nom}" loading="lazy">
-        <div>
-          <p class="temo-name">${t.nom}</p>
-          <p class="temo-role">${t.role}</p>
-        </div>
+ grid.innerHTML = temos.map(t => {
+ const logo = temoLogoMap[t.nom];
+ const logoHtml = logo ? `<img class="temo-company-logo" src="${logo}" alt="${t.nom}" loading="lazy">` : '';
+ return `
+<article class="temo-card reveal">
+<p class="temo-quote">« ${t.quote} »</p>
+<div class="temo-author">
+<img class="temo-avatar" src="${t.avatar}" alt="${t.nom}" loading="lazy">
+<div>
+<p class="temo-name">${t.nom}</p>
+<p class="temo-role">${t.role}</p>
+</div>
         ${logoHtml}
-      </div>
-    </article>`;
+</div>
+</article>`;
   }).join('');
-  grid.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+ grid.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 }
-
-function renderClients(clients) {
-  const row = document.getElementById('clientsRow');
-  if (!row || !clients) return;
-  row.innerHTML = clients.map(c => {
-    const inner = (c.logo_url && !c.logo_url.includes('remplacez'))
+ function renderClients(clients) {
+ const row = document.getElementById('clientsRow');
+ if (!row || !clients) return;
+ row.innerHTML = clients.map(c => {
+ const inner = (c.logo_url && !c.logo_url.includes('remplacez'))
       ? `<img src="${c.logo_url}" alt="${c.alt}" loading="lazy">`
       : `<span class="client-logo-text">${c.nom}</span>`;
-    if (c.cas_url) {
-      return `<a href="${c.cas_url}" class="client-logo-wrap client-logo-link" aria-label="Voir le cas client ${c.alt}">${inner}</a>`;
+ if (c.cas_url) {
+ return `<a href="${c.cas_url}" class="client-logo-wrap client-logo-link" aria-label="Voir le cas client ${c.alt}">${inner}</a>`;
     }
-    return `<div class="client-logo-wrap">${inner}</div>`;
+ return `<div class="client-logo-wrap">${inner}</div>`;
   }).join('');
 }
-
-document.querySelectorAll('.faq-question').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const item = btn.closest('.faq-item');
-    const isOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
-    if (!isOpen) item.classList.add('open');
+ document.querySelectorAll('.faq-question').forEach(btn => {
+ btn.addEventListener('click', () => {
+ const item = btn.closest('.faq-item');
+ const isOpen = item.classList.contains('open');
+ document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+ if (!isOpen) item.classList.add('open');
   });
 });
-
-loadConfig();
+ loadConfig();
 </script>
 <script>
 (function(){
-  var btn=document.getElementById('burger-btn');
-  var overlay=document.getElementById('mobile-overlay');
-  if(!btn||!overlay)return;
-  function closeMenu(){document.body.classList.remove('menu-open');btn.setAttribute('aria-expanded','false')}
-  function openMenu(){document.body.classList.add('menu-open');btn.setAttribute('aria-expanded','true')}
-  btn.addEventListener('click',function(){document.body.classList.contains('menu-open')?closeMenu():openMenu()});
-  overlay.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeMenu)});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
+ var btn=document.getElementById('burger-btn');
+ var overlay=document.getElementById('mobile-overlay');
+ if(!btn||!overlay)return;
+ function closeMenu(){document.body.classList.remove('menu-open');btn.setAttribute('aria-expanded','false')}
+ function openMenu(){document.body.classList.add('menu-open');btn.setAttribute('aria-expanded','true')}
+ btn.addEventListener('click',function(){document.body.classList.contains('menu-open')?closeMenu():openMenu()});
+ overlay.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeMenu)});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
 })();
 </script>
 <script>
 /* IntersectionObserver: masque le bouton .float-call quand le footer est visible */
 (function(){
-  var btn = document.querySelector('.float-call');
-  var footer = document.querySelector('.site-footer') || document.querySelector('footer');
-  if (!btn || !footer || !('IntersectionObserver' in window)) return;
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      btn.style.transition = 'opacity .25s, transform .25s';
-      if (e.isIntersecting) {
-        btn.style.opacity = '0';
-        btn.style.transform = 'translateY(20px)';
-        btn.style.pointerEvents = 'none';
+ var btn = document.querySelector('.float-call');
+ var footer = document.querySelector('.site-footer') || document.querySelector('footer');
+ if (!btn || !footer || !('IntersectionObserver' in window)) return;
+ var io = new IntersectionObserver(function(entries){
+ entries.forEach(function(e){
+ btn.style.transition = 'opacity .25s, transform .25s';
+ if (e.isIntersecting) {
+ btn.style.opacity = '0';
+ btn.style.transform = 'translateY(20px)';
+ btn.style.pointerEvents = 'none';
       } else {
-        btn.style.opacity = '';
-        btn.style.transform = '';
-        btn.style.pointerEvents = '';
+ btn.style.opacity = '';
+ btn.style.transform = '';
+ btn.style.pointerEvents = '';
       }
     });
   }, {threshold: 0.01, rootMargin: '0px'});
-  io.observe(footer);
+ io.observe(footer);
 })();
 </script>
 </body>
