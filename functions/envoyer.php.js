@@ -94,9 +94,13 @@ export async function onRequestPost(context) {
   let formData;
   if (isHealthcheck) {
     formData = new FormData();
+    // NOTE : on concatène l'email pour éviter que Cloudflare Email Obfuscation
+    // ou les copier-coller transforment "[email protected]"
+    // en "[email protected]" (ce qui invalide isValidEmail → bug ?error=email)
+    const HC_EMAIL = 'healthcheck' + '@' + 'nomacast.fr';
     formData.append('nom', 'Healthcheck Bot');
     formData.append('societe', 'Healthcheck Automatique');
-    formData.append('email', 'evenement@nomacast.fr');
+    formData.append('email', HC_EMAIL);
     formData.append('telephone', '0000000000');
     formData.append('message', 'Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne.');
     formData.append('source', 'healthcheck-github');
@@ -247,23 +251,27 @@ export async function onRequestPost(context) {
     : [EMAIL_GENERAL, COPIE_ARCHIVAGE];
 
   // ── 9. CONSTRUCTION DU MAIL ───────────────────────────────────────────────
-  const tagHealth = isHealthcheck ? '[HEALTHCHECK] ' : '';
-  const tagLang   = isEn ? '[EN] ' : '';
-  const tagAgence = isAgence ? '[AGENCE] ' : '';
-  const tagSource = source ? `[${source}] ` : '';
-  const subject =
-    tagHealth +
-    tagLang +
-    `Demande de devis - ${tagAgence}${tagSource}` +
-    (societe || nom || 'Contact') +
-    ' [nomacast.fr]';
-
   const sep = '─'.repeat(50);
   const dateParis = new Date().toLocaleString('fr-FR', {
     timeZone: 'Europe/Paris',
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
+
+  let subject;
+  if (isHealthcheck) {
+    // Sujet dédié healthcheck : aucun risque de confusion avec un vrai prospect.
+    subject = `[HEALTHCHECK OK] Test pipeline quotidien — ${dateParis}`;
+  } else {
+    const tagLang   = isEn ? '[EN] ' : '';
+    const tagAgence = isAgence ? '[AGENCE] ' : '';
+    const tagSource = source ? `[${source}] ` : '';
+    subject =
+      tagLang +
+      `Demande de devis - ${tagAgence}${tagSource}` +
+      (societe || nom || 'Contact') +
+      ' [nomacast.fr]';
+  }
 
   let body = 'Nouvelle demande de devis reçue depuis nomacast.fr\n';
   if (isHealthcheck) body += 'TYPE       : HEALTHCHECK AUTOMATIQUE (GitHub Action)\n';
