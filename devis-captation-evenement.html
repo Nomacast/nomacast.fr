@@ -143,7 +143,7 @@ body {
 a { color: var(--cyan); text-decoration: none; }
 a:hover { color: var(--cyan-hover); }
 
-/* HEADER MINIMAL — pas de nav distrayante */
+/* HEADER MINIMAL, pas de nav distrayante */
 .header {
   position: sticky;
   top: 0;
@@ -207,7 +207,7 @@ a:hover { color: var(--cyan-hover); }
   .tel-link span:first-child { display: none; }
 }
 
-/* HERO — split layout avec VIDÉO en background : pitch à gauche + form à droite */
+/* HERO, split layout avec VIDÉO en background : pitch à gauche + form à droite */
 .hero {
   background: var(--navy);
   padding: 100px 0 80px;
@@ -411,7 +411,7 @@ a:hover { color: var(--cyan-hover); }
   line-height: 1.3;
 }
 
-/* HERO KPIS — pills inspirées de l'index */
+/* HERO KPIS, pills inspirées de l'index */
 .hero-kpis {
   display: flex;
   gap: 24px 32px;
@@ -447,7 +447,7 @@ a:hover { color: var(--cyan-hover); }
   .hero-kpi { font-size: 13px; }
 }
 
-/* FORM HERO — boîte sombre */
+/* FORM HERO, boîte sombre */
 .hero-form {
   background: var(--ink);
   border-radius: 20px;
@@ -532,7 +532,7 @@ a:hover { color: var(--cyan-hover); }
   object-fit: contain;
 }
 
-/* TESTIMONIALS — repris du style index */
+/* TESTIMONIALS, repris du style index */
 .testimonials-section {
   padding: clamp(60px, 10vw, 100px) var(--h-pad);
   background: var(--off-white);
@@ -1688,7 +1688,7 @@ document.querySelectorAll('a[data-conversion="phone"]').forEach(link => {
   });
 });
 
-// SOURCE TRACKING — capture URL params (gclid, utm_*, kw) et les injecte dans les forms
+// SOURCE TRACKING, capture URL params (gclid, utm_*, kw) et les injecte dans les forms
 (function() {
   const params = new URLSearchParams(window.location.search);
   const gclid = params.get('gclid') || '';
@@ -1730,7 +1730,7 @@ document.querySelectorAll('a[data-conversion="phone"]').forEach(link => {
   });
 })();
 
-// SMART TYPE PREFILL — pré-sélectionne le type d'événement selon le mot-clé (utm_term)
+// SMART TYPE PREFILL, pré-sélectionne le type d'événement selon le mot-clé (utm_term)
 (function() {
   const params = new URLSearchParams(window.location.search);
   const term = (params.get('utm_term') || '').toLowerCase();
@@ -1753,7 +1753,7 @@ document.querySelectorAll('a[data-conversion="phone"]').forEach(link => {
   }
 })();
 
-// FOCUS EMAIL — quand le visiteur clique sur un CTA #contact, focus le champ email après scroll
+// FOCUS EMAIL, quand le visiteur clique sur un CTA #contact, focus le champ email après scroll
 document.querySelectorAll('a[href="#contact"], a[href="#contact-hero"]').forEach(a => {
   a.addEventListener('click', () => {
     setTimeout(() => {
@@ -1763,7 +1763,7 @@ document.querySelectorAll('a[href="#contact"], a[href="#contact-hero"]').forEach
   });
 });
 
-// SUBMIT BUTTON STATE — feedback visuel pendant l'envoi (évite les double-clics)
+// SUBMIT BUTTON STATE, feedback visuel pendant l'envoi (évite les double-clics)
 document.querySelectorAll('form[name="contact"]').forEach(form => {
   form.addEventListener('submit', () => {
     const btn = form.querySelector('button[type="submit"]');
@@ -1780,5 +1780,17 @@ document.querySelectorAll('form[name="contact"]').forEach(form => {
 });
 </script>
 
+
+<script>
+/* FAQ toggle - lot34 */
+document.querySelectorAll('.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
+</script>
 </body>
 </html>
