@@ -1,0 +1,3 @@
+py script_PAGESPEED.py
+
+lighthouse https://www.nomacast.fr/?v=15 --form-factor=mobile --view
