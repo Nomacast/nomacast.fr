@@ -89,13 +89,26 @@ export async function onRequestPost(context) {
   }
 
   // Parse form-data (le browser POST en application/x-www-form-urlencoded ou multipart)
+  // En mode healthcheck : on injecte des valeurs fixes au lieu de parser le body.
+  // (Évite les problèmes de parsing request.formData() avec certains clients HTTP non-browser.)
   let formData;
-  try {
-    formData = await request.formData();
-  } catch (err) {
-    console.error('[Nomacast] formData parse error:', err);
-    // Fallback FR si on ne peut pas lire le formData (donc lang inconnu)
-    return redirect(PAGE_ERREUR_FR + '?error=invalid');
+  if (isHealthcheck) {
+    formData = new FormData();
+    formData.append('nom', 'Healthcheck Bot');
+    formData.append('societe', 'Healthcheck Automatique');
+    formData.append('email', '[email protected]');
+    formData.append('telephone', '0000000000');
+    formData.append('message', 'Test automatique GitHub Actions. Si vous lisez ce mail, le pipeline fonctionne.');
+    formData.append('source', 'healthcheck-github');
+    formData.append('lang', 'fr');
+  } else {
+    try {
+      formData = await request.formData();
+    } catch (err) {
+      console.error('[Nomacast] formData parse error:', err);
+      // Fallback FR si on ne peut pas lire le formData (donc lang inconnu)
+      return redirect(PAGE_ERREUR_FR + '?error=invalid');
+    }
   }
 
   // ── 0. DÉTECTION LANGUE ───────────────────────────────────────────────────
