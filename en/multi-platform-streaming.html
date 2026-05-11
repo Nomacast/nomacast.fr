@@ -63,7 +63,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .nav-links a:hover{color:var(--ink)}
 .nav-cta{background:var(--cyan)!important;color:var(--white)!important;padding:10px 22px!important;border-radius:6px!important;font-weight:600!important;font-size:14px!important;transition:background .2s,transform .15s!important}
 .nav-cta:hover{background:var(--cyan-hover)!important;transform:translateY(-1px)}
-/* nav-cta-fix-v1 — Fix bouton Devis sous 24h header (769-1024px wrap) */
+/* nav-cta-fix-v1, Fix bouton Devis sous 24h header (769-1024px wrap) */
 .nav-links a, .nav-cta { white-space: nowrap; }
 .nav-cta { flex-shrink: 0; }
 @media (max-width: 1024px) and (min-width: 769px) {
@@ -150,7 +150,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .h2-white{color:#fff}
 .h3{font-family:var(--font-head);font-size:19px;font-weight:600;color:var(--ink-mid);margin:32px 0 10px;letter-spacing:-.01em}
 
-/* PROSE — FIX double bullet */
+/* PROSE, FIX double bullet */
 .prose p{font-size:16px;font-weight:300;color:var(--ink-muted);line-height:1.8;margin-bottom:18px}
 .prose p strong{color:var(--ink);font-weight:600}
 .prose a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,.3);transition:border-color .2s}
@@ -261,7 +261,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .prest-arrow{color:var(--cyan);flex-shrink:0;opacity:.5;transition:opacity .2s,transform .2s}
 .prest-card:hover .prest-arrow{opacity:1;transform:translateX(3px)}
 
-/* FOOTER MAILLAGE — fond légèrement différent du formulaire navy */
+/* FOOTER MAILLAGE, fond légèrement différent du formulaire navy */
 .footer-links-section{padding:44px var(--h-pad);background:var(--navy-mid);border-top:2px solid rgba(90,152,214,.18)}
 .footer-links-inner{max-width:var(--max);margin:0 auto}
 .footer-links-header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
@@ -310,7 +310,8 @@ footer{padding:24px var(--h-pad);background:var(--navy);border-top:1px solid rgb
 }
 
 /* ═══════ SITE FOOTER ═══════ */
-.site-footer{display:block;background:#0b1929;color:rgba(255,255,255,.6);padding:72px clamp(24px,5vw,64px) 32px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;line-height:1.65}
+.site-footer{display:block;background:#050b14;color:rgba(255,255,255,.6);padding:96px clamp(24px,5vw,64px) 32px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;line-height:1.65;position:relative}
+.site-footer::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:2px;background:linear-gradient(to right,transparent,var(--cyan),transparent);border-radius:100px}
 .footer-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.08)}
 .footer-col-brand .footer-logo{font-family:'Outfit',system-ui,sans-serif;font-size:20px;font-weight:700;letter-spacing:-.03em;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:20px}
 .footer-logo-dot{width:7px;height:7px;background:#5A98D6;border-radius:50%;display:inline-block}
@@ -541,56 +542,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-<section class="section section-off">
-  <div class="wrap reveal">
-    <p class="eyebrow">Other services</p>
-    <h2 class="h2">Multi-platform broadcast included in all my services</h2>
-    <div class="prest-grid">
-      <a href="conference-seminar-filming.html" class="prest-card">
-  <div><p class="prest-cat">Service</p><p class="prest-name">Conference &amp; Seminar</p><p class="prest-desc">3 4K cameras, turnkey live streaming</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="corporate-live-show.html" class="prest-card">
-  <div><p class="prest-cat">Service</p><p class="prest-name">Corporate live show</p><p class="prest-desc">TV set with branded graphics</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="multi-site-live-streaming.html" class="prest-card">
-  <div><p class="prest-cat">Service</p><p class="prest-name">Multiplex &amp; Multi-site</p><p class="prest-desc">Multiple sites connected live via secure link</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="interview-roundtable-filming.html" class="prest-card">
-  <div><p class="prest-cat">Service</p><p class="prest-name">Interview &amp; Roundtable</p><p class="prest-desc">Dedicated angles, wireless mics, professional lighting</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-    </div>
-  </div>
-</section>
+
 
 <section class="section section-light">
   <div class="wrap">
     <div class="two-col reveal">
       <div class="prose">
-        <p class="eyebrow">Definition</p>
-        <h2 class="h2">Broadcast simultaneously<br>on all your platforms</h2>
-        <p><strong>Multi-platform streaming</strong> (multistreaming) means broadcasting a live video feed simultaneously to multiple destinations: YouTube, LinkedIn, X, TikTok, Instagram, Facebook, a private server, or any combination. Viewers access the live from the platform they're already using.</p>
-        <p>This approach maximises the reach of your <a href="event-live-streaming.html">live event</a> without multiplying technical teams. A single video gallery, a single operator, broadcast to as many destinations as you want.</p>
-
-        <h3 class="h3">How multistreaming works</h3>
-        <p>The video gallery sends the encoded feed to a redistribution service that duplicates it and forwards it simultaneously to each configured destination. Each platform receives an independent feed, optimised to its technical specifications.</p>
-
-        <h3 class="h3">The main platforms</h3>
-        <p><strong>YouTube Live</strong>: the reference for events open to the general public. Potentially unlimited audience, automatic replay, detailed analytics, chat integration. Supports up to 4K/60fps.</p>
-        <p><strong>LinkedIn Live</strong>: essential for B2B. The audience is professional by nature. Ideal for <a href="conference-seminar-filming.html">corporate conferences</a>, <a href="interview-roundtable-filming.html">expert roundtables</a>, executive talks. Organic reach often exceeds that of classic posts.</p>
-        <p><strong>Instagram Live</strong>: the <em>mobile-first</em> platform essential for B2C and community engagement. Native vertical format, strong direct interactivity with the audience (question box, reactions), and the option of multi-host lives (duplex). Perfect for event behind-the-scenes, Q&amp;As or influencer marketing.</p>
-        <p><strong>TikTok Live</strong>: the strategic choice to reach a younger audience and maximise virality. Highly immersive vertical format, strong push from the recommendation algorithm ("For You" page) and monetisation or "social commerce" features. Very effective for entertaining, creative events or product launches.</p>
-        <p><strong>X (formerly Twitter) Live</strong>: ideal for breaking news and reactivity. Lets you reach an engaged community directly in their feed. Perfect for real-time announcements, tech, press relations or events requiring immediate interaction.</p>
-        <p><strong>Private server / CDN</strong>: to embed the live directly into your website or intranet. Requires a CDN (Cloudflare Stream, AWS MediaLive) and technical integration, but offers full control over the experience.</p>
-
-        <h3 class="h3">Required bandwidth</h3>
-        <p>Multistreaming multiplies the bandwidth consumed: each destination requires its own upload bitrate. While third-party paid platforms can be used to optimise this by sending only one feed, you still need at minimum <strong>20 Mbps stable upload</strong> to guarantee quality. To eliminate any constraint, Nomacast always deploys its own <strong>dedicated 5G router</strong>. Your live doesn't depend solely on the venue's network.</p>
-
-        <h3 class="h3">Hybrid event and multistreaming</h3>
-        <p>For <a href="multi-site-live-streaming.html">multi-site events</a>, multistreaming integrates naturally: the master feed (mixed from the different sites) is broadcast simultaneously to all destinations. A single video gallery handles everything.</p>
+        <p class="eyebrow">My approach</p>
+        <h2 class="h2">All your channels,<br>served in parallel</h2>
+        <p>A multi-platform broadcast orchestrated from a single control room.</p>
+        <div style="margin:28px 0 0;display:flex;flex-direction:column;gap:28px;">
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Supported platforms</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">YouTube, LinkedIn Live, X (Twitter), Vimeo, Twitch, TikTok Live, Instagram Live, Zoom, Teams, or private server via RTMP, SRT or HLS.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Adaptive encoding</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Simultaneous multi-bitrate encoding via vMix Pro. Each platform receives the optimal stream for its audience, without degrading overall quality.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Platform-specific graphics</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Option to have differentiated graphics per channel (16:9 LinkedIn vs 9:16 TikTok), adapted titles, custom intros.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Multi-platform analytics</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Real-time viewer tracking on each channel, alerts for single-platform outages, unified production dashboard.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Q&amp;A and remote participants</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Slido or Mentimeter integration, unified moderation of multi-platform questions, remote speakers picture-in-picture.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Paris, France, Europe</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Multi-platform broadcast available on all my services. 2 to 3 weeks notice for specific configurations.</p>
+          </div>
+        </div>
       </div>
       <aside style="padding-top:8px;">
         <div style="position:sticky;top:100px;">
@@ -604,15 +590,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
   <div class="incl-card">
     <p class="incl-title">Always included</p>
-    <p class="incl-subtitle">in every booking</p>
-    <ul class="incl-list"><li class="incl-item"><span class="incl-dot"></span>Onboard video gallery</li><li class="incl-item"><span class="incl-dot"></span>Live editing</li><li class="incl-item"><span class="incl-dot"></span>3 Canon CR-N500 4K cameras</li><li class="incl-item"><span class="incl-dot"></span>Full HD file delivered same day</li></ul>
+    <p class="incl-subtitle">on every project</p>
+    <ul class="incl-list"><li class="incl-item"><span class="incl-dot"></span>3 4K cameras</li><li class="incl-item"><span class="incl-dot"></span>Professional lighting</li><li class="incl-item"><span class="incl-dot"></span>Video control room</li><li class="incl-item"><span class="incl-dot"></span>Audio feed from venue's console</li><li class="incl-item"><span class="incl-dot"></span>Final video delivered as soon as the event ends</li><li class="incl-item"><span class="incl-dot"></span>Paris: free travel · Province and international per quote</li></ul>
     <div class="incl-sep"></div>
     <p class="incl-option-label">On request</p>
-    <ul class="incl-list"><li class="incl-item"><span class="incl-dot-option"></span>Multi-platform broadcast (price may vary depending on the number of platforms)</li><li class="incl-item"><span class="incl-dot-option"></span>Dedicated 5G network if venue not covered</li><li class="incl-item"><span class="incl-dot-option"></span>Individual wireless mics</li><li class="incl-item"><span class="incl-dot-option"></span>Raw 4K files from each camera delivered separately</li></ul>
+    <ul class="incl-list"><li class="incl-item"><span class="incl-dot-option"></span>Multi-platform live broadcast</li><li class="incl-item"><span class="incl-dot-option"></span>Dedicated 5G router if needed</li><li class="incl-item"><span class="incl-dot-option"></span>Differentiated graphics per platform (16:9 and 9:16)</li><li class="incl-item"><span class="incl-dot-option"></span>Live community moderation</li><li class="incl-item"><span class="incl-dot-option"></span>Real-time subtitles (auto or human)</li><li class="incl-item"><span class="incl-dot-option"></span>Automatic post-event replay on each platform</li></ul>
   </div>
 </div>
         </div>
       </aside>
+    </div>
+  </div>
+</section>
+
+<section class="section section-off">
+  <div class="wrap reveal">
+    <p class="eyebrow">The process</p>
+    <h2 class="h2">From booking to file delivery</h2>
+    <div class="features">
+      <div class="feature reveal"><div class="feature-num">01</div><div class="feature-title">Brief &amp; channel recce</div><div class="feature-body">Discussion on your target platforms, audience per channel, RTMP/SRT API keys, brand identity.</div></div>
+      <div class="feature reveal"><div class="feature-num">02</div><div class="feature-title">D-1 stream configuration</div><div class="feature-body">Multi-bitrate setup in vMix, tests on each platform, validation of platform-specific graphics.</div></div>
+      <div class="feature reveal"><div class="feature-num">03</div><div class="feature-title">Unified live broadcast</div><div class="feature-body">Direction piloted from the control room. Real-time monitoring of each platform, unified Q&amp;A management.</div></div>
+      <div class="feature reveal"><div class="feature-num">04</div><div class="feature-title">File &amp; analytics</div><div class="feature-body">Master file delivered the same day + multi-platform analytics report (viewers, audience peaks, per-channel engagement).</div></div>
     </div>
   </div>
 </section>
@@ -627,24 +626,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="faq-list">
         <div class="faq-item"><button class="faq-question">How much does video filming cost?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button><div class="faq-answer"><div class="faq-answer-inner">My services start at <strong>€1,500 (excl. VAT)</strong> for a 3-camera 4K half-day shoot. The final price depends on duration and options (live streaming, sound, day-before setup, etc.). <a href="pricing.html" style="color:var(--cyan);font-weight:500;">Get a 30-second estimate →</a></div></div></div>
         <div class="faq-item"><button class="faq-question">Can you broadcast on YouTube and LinkedIn at the same time?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button><div class="faq-answer"><div class="faq-answer-inner">Yes, that's exactly the principle of multistreaming. Nomacast handles simultaneous broadcast from the video gallery to as many destinations as you want: YouTube, LinkedIn, X, TikTok, Instagram, private server. The number of platforms isn't limited.</div></div></div>
-        <div class="faq-item"><button class="faq-question">Is there a delay between the different platforms?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button><div class="faq-answer"><div class="faq-answer-inner">Each platform introduces its own buffering latency (5 to 30 seconds depending on the CDN). Viewers on YouTube and LinkedIn will see the live with a slightly different delay — that's normal and unavoidable. For events requiring real-time interaction, plan a separate Zoom room.</div></div></div>
+        <div class="faq-item"><button class="faq-question">Is there a delay between the different platforms?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button><div class="faq-answer"><div class="faq-answer-inner">Each platform introduces its own buffering latency (5 to 30 seconds depending on the CDN). Viewers on YouTube and LinkedIn will see the live with a slightly different delay, that's normal and unavoidable. For events requiring real-time interaction, plan a separate Zoom room.</div></div></div>
         <div class="faq-item"><button class="faq-question">How do you set up broadcast rights on LinkedIn Live?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button><div class="faq-answer"><div class="faq-answer-inner">LinkedIn Live requires a prior access request via LinkedIn for company pages. Access is generally granted within 24-48h. Nomacast supports you in this process and configures the stream key from the video gallery on D-day.</div></div></div>
         <div class="faq-item"><button class="faq-question">Can you record simultaneously during multi-platform live?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button><div class="faq-answer"><div class="faq-answer-inner">Yes. Local recording on the video gallery is independent of broadcast. It works regardless of network quality and produces a higher-quality file than what's broadcast in stream. Both happen simultaneously.</div></div></div>
         <div class="faq-item"><button class="faq-question">Which platform do you recommend for a B2B event?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button><div class="faq-answer"><div class="faq-answer-inner">LinkedIn Live is the first choice for a professional audience: organic reach is often 3 to 5 times higher than YouTube on B2B topics. For a wider audience or an event open to the general public, YouTube remains the reference. Both simultaneously remains the optimal solution.</div></div></div>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="tarifs-bridge" style="padding:72px var(--h-pad);background:var(--off-white);border-top:1px solid var(--border);text-align:center;">
-  <div style="max-width:680px;margin:0 auto;">
-    <p style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--cyan);background:var(--cyan-light);padding:6px 14px;border-radius:100px;margin-bottom:18px;">How much does it cost?</p>
-    <h2 style="font-family:var(--font-head);font-size:clamp(26px,3.2vw,36px);font-weight:600;line-height:1.15;letter-spacing:-0.02em;color:var(--ink);margin-bottom:14px;">Configure your setup and get an instant estimate.</h2>
-    <p style="font-size:15px;color:var(--ink-muted);margin-bottom:28px;line-height:1.6;">Rig, duration, options: build your bespoke quote and receive the details within 24 hours.</p>
-    <a href="pricing.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;transition:background .2s,transform .15s;box-shadow:0 4px 20px rgba(14,165,233,.25);">
-      Calculate my quote in 30 seconds
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </a>
   </div>
 </section>
 
@@ -654,7 +641,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="reveal">
       <p class="contact-eyebrow">Your project</p>
       <h2 class="contact-title">Let's talk about<br>your event.</h2>
-      <p class="contact-pitch">Free, tailored quote within 24h. Tell me about your project and I'll get back to you fast.</p>
+      <p class="contact-pitch">Free, custom quote within 24h. Describe your project and I'll call you back quickly. <a href="pricing.html" style="color:var(--cyan);text-decoration:underline;text-underline-offset:3px;">Need a ballpark now? Estimate in 30 seconds →</a></p>
     </div>
     <form class="contact-form reveal" name="contact" action="../envoyer.php" method="POST">
       <input type="hidden" name="lang" value="en">
@@ -697,30 +684,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </form>
   </div>
 </section>
-<div class="footer-links-section">
-  <div class="footer-links-inner">
-    <div class="footer-links-header"><span class="footer-links-title">Go further</span></div>
-    <div class="footer-links-grid"><a href="conference-seminar-filming.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Conference &amp; Seminar</p></div>
-</a><a href="interview-roundtable-filming.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Interview &amp; Roundtable</p></div>
-</a><a href="multi-site-live-streaming.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Multiplex &amp; Multi-site</p></div>
-</a><a href="corporate-live-show.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Corporate live show</p></div>
-</a><a href="event-live-streaming.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Event live streaming</p></div>
-</a><a href="event-video-production.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Event video production</p></div>
-</a><a href="4k-video-recording.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">4K filming</p></div>
-</a><a href="quote-live-streaming-paris.html" class="footer-link">
-  <div><p class="footer-link-cat">ads</p><p class="footer-link-name">Paris provider</p></div>
-</a><a href="b2b-event-filming-provider.html" class="footer-link">
-  <div><p class="footer-link-cat">ads</p><p class="footer-link-name">France &amp; Europe provider</p></div>
-</a></div>
+<section class="section section-off">
+  <div class="wrap reveal">
+    <p class="eyebrow">And also</p>
+    <h2 class="h2">Beyond multi-platform</h2>
+    <p class="lead" style="max-width:680px;margin-bottom:32px;">Multi-platform is an option for all my services. Here are the other event formats I cover. Always as a single point of contact.</p>
+    <div class="prest-grid">
+      <a href="conference-seminar-filming.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Conference &amp; Seminar</p><p class="prest-desc">3-camera 4K setup for conferences</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="corporate-live-show.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Corporate live show</p><p class="prest-desc">TV-style set with advanced graphic branding</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="interview-roundtable-filming.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Interview &amp; Roundtable</p><p class="prest-desc">Dedicated angles, HF audio, 3-point lighting</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="multi-site-live-streaming.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Multi-site live streaming</p><p class="prest-desc">Multiple sites live, single control room</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="4k-video-recording.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">4K filming</p><p class="prest-desc">Broadcast-grade 4K, when and why</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="partner-agencies.html" class="prest-card">
+  <div><p class="prest-cat">For agencies</p><p class="prest-name">White-label</p><p class="prest-desc">Technical provider for event agencies</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+    </div>
   </div>
-</div>
+</section>
+
 <footer class="site-footer">
   <div class="footer-grid">
     <div class="footer-col footer-col-brand">
@@ -741,8 +738,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <li><a href="interview-roundtable-filming.html">Interview &amp; roundtable</a></li>
         <li><a href="4k-video-recording.html">4K filming</a></li>
         <li><a href="multi-platform-streaming.html">Multi-platform</a></li>
-        <li><a href="event-live-streaming.html">Live streaming guide</a></li>
-      </ul>
+        </ul>
     </div>
 
     <div class="footer-col">
