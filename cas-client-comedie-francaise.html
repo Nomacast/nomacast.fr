@@ -309,6 +309,10 @@ body.menu-open .mobile-overlay-links li:nth-child(5){transition-delay:.3s}
 .lang-switch a:hover{color:var(--cyan);background:rgba(90,152,214,.08);text-decoration:none}
 .lang-switch a.active{color:var(--cyan);pointer-events:none}
 .lang-switch .lang-sep{color:var(--ink-faint);font-weight:400;user-select:none}
+/* nomacast-floatcall-fix-v1 : fix zone blanche mobile (float-call sans position:fixed laisse un SVG inline ~390px en bas de page) */
+.float-call{display:none;position:fixed;bottom:24px;right:20px;z-index:99;background:var(--cyan);color:#fff;border-radius:100px;padding:14px 20px;font-family:var(--font-body);font-size:15px;font-weight:600;text-decoration:none;box-shadow:0 4px 24px rgba(14,165,233,.45);align-items:center;gap:8px;transition:transform .2s}
+.float-call svg{width:18px;height:18px;flex-shrink:0}
+@media(max-width:768px){.float-call{display:flex}}
 body.menu-open .float-call{display:none!important}
 
 
