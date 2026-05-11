@@ -63,7 +63,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .nav-links a:hover{color:var(--ink)}
 .nav-cta{background:var(--cyan)!important;color:var(--white)!important;padding:10px 22px!important;border-radius:6px!important;font-weight:600!important;font-size:14px!important;transition:background .2s,transform .15s!important}
 .nav-cta:hover{background:var(--cyan-hover)!important;transform:translateY(-1px)}
-/* nav-cta-fix-v1 — Fix bouton Devis sous 24h header (769-1024px wrap) */
+/* nav-cta-fix-v1, Fix bouton Devis sous 24h header (769-1024px wrap) */
 .nav-links a, .nav-cta { white-space: nowrap; }
 .nav-cta { flex-shrink: 0; }
 @media (max-width: 1024px) and (min-width: 769px) {
@@ -150,7 +150,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .h2-white{color:#fff}
 .h3{font-family:var(--font-head);font-size:19px;font-weight:600;color:var(--ink-mid);margin:32px 0 10px;letter-spacing:-.01em}
 
-/* PROSE — FIX double bullet */
+/* PROSE, FIX double bullet */
 .prose p{font-size:16px;font-weight:300;color:var(--ink-muted);line-height:1.8;margin-bottom:18px}
 .prose p strong{color:var(--ink);font-weight:600}
 .prose a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(90,152,214,.3);transition:border-color .2s}
@@ -261,7 +261,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .prest-arrow{color:var(--cyan);flex-shrink:0;opacity:.5;transition:opacity .2s,transform .2s}
 .prest-card:hover .prest-arrow{opacity:1;transform:translateX(3px)}
 
-/* FOOTER MAILLAGE — fond légèrement différent du formulaire navy */
+/* FOOTER MAILLAGE, fond légèrement différent du formulaire navy */
 .footer-links-section{padding:44px var(--h-pad);background:var(--navy-mid);border-top:2px solid rgba(90,152,214,.18)}
 .footer-links-inner{max-width:var(--max);margin:0 auto}
 .footer-links-header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
@@ -310,7 +310,8 @@ footer{padding:24px var(--h-pad);background:var(--navy);border-top:1px solid rgb
 }
 
 /* ═══════ SITE FOOTER ═══════ */
-.site-footer{display:block;background:#0b1929;color:rgba(255,255,255,.6);padding:72px clamp(24px,5vw,64px) 32px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;line-height:1.65}
+.site-footer{display:block;background:#050b14;color:rgba(255,255,255,.6);padding:96px clamp(24px,5vw,64px) 32px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;line-height:1.65;position:relative}
+.site-footer::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:2px;background:linear-gradient(to right,transparent,var(--cyan),transparent);border-radius:100px}
 .footer-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.08)}
 .footer-col-brand .footer-logo{font-family:'Outfit',system-ui,sans-serif;font-size:20px;font-weight:700;letter-spacing:-.03em;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:20px}
 .footer-logo-dot{width:7px;height:7px;background:#5A98D6;border-radius:50%;display:inline-block}
@@ -541,58 +542,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-<section class="section section-off">
-  <div class="wrap reveal">
-    <p class="eyebrow">Other services</p>
-    <h2 class="h2">4K filming available across all my services</h2>
-    <div class="prest-grid">
-      <a href="conference-seminar-filming.html" class="prest-card">
-  <div><p class="prest-cat">Service</p><p class="prest-name">Conference &amp; Seminar</p><p class="prest-desc">Turnkey 3-camera 4K rig</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="interview-roundtable-filming.html" class="prest-card">
-  <div><p class="prest-cat">Service</p><p class="prest-name">Interview &amp; Roundtable</p><p class="prest-desc">Dedicated angles, wireless mics, professional lighting</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="event-video-production.html" class="prest-card">
-  <div><p class="prest-cat">Guide</p><p class="prest-name">Event video production</p><p class="prest-desc">Definition and filming techniques</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-      <a href="event-live-streaming.html" class="prest-card">
-  <div><p class="prest-cat">Guide</p><p class="prest-name">Event live streaming</p><p class="prest-desc">Everything about live broadcast</p></div>
-  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-</a>
-    </div>
-  </div>
-</section>
+
 
 <section class="section section-light">
   <div class="wrap">
     <div class="two-col reveal">
       <div class="prose">
-        <p class="eyebrow">Definition</p>
-        <h2 class="h2">4K filming: when,<br>why, and how</h2>
-        <p><strong>4K Ultra HD</strong> (3840 × 2160 pixels) offers four times the resolution of Full HD 1080p. Applied to <a href="event-video-production.html">event filming</a>, it produces an image of unmatched precision. But its value varies greatly depending on the intended use.</p>
-        <p>Nomacast films in 4K with <strong>Canon CR-N500</strong> cameras, professional units designed for production. Motorised and controllable from the gallery, they combine 4K quality with operational discretion.</p>
-
-        <h3 class="h3">1080p vs 4K in practice</h3>
-        <p>For <strong><a href="event-live-streaming.html">live broadcast</a></strong>, Full HD 1080p remains the universal standard. Almost all platforms and viewers consume live in 1080p. Broadcasting in 4K doesn't improve the viewer experience in most cases and consumes 4 times the bandwidth.</p>
-        <p>The value of 4K is in <strong>recorded filming</strong>: the 4K file is exceptional raw material for post-production. Lossless reframing, stabilisation, export in multiple formats, projection on big screen or LED wall. 4K offers a flexibility you can't recreate later.</p>
-
-        <h3 class="h3">The Canon CR-N500 cameras</h3>
-        <ul>
-          <li><strong>4K/30p (and Full HD/60p)</strong> with professional autofocus, the image stays sharp even when speakers move</li>
-          <li><strong>Extended dynamic range</strong> handles tricky contrasts well (bright background, dark scene)</li>
-          <li><strong>Professional colorimetry</strong> natural and faithful rendering, compatible with post-production workflows</li>
-          <li><strong>Remote control</strong> from the video gallery, no operator at each camera's foot</li>
-          <li><strong>HDMI and IP output</strong> network-compatible for advanced workflows</li>
-        </ul>
-
-        <h3 class="h3">Technical constraints of 4K</h3>
-        <p><strong>Storage</strong>: a 4K file at professional quality is 3 to 5 times larger than a 1080p file. For an 8-hour day, expect 400 to 600 GB. <strong>Real-time encoding</strong>: the video gallery must be powerful enough to encode 3 simultaneous 4K feeds without latency. <strong>Bandwidth</strong>: if you want to broadcast in 4K live, 25 to 40 Mbps of stable upload is required.</p>
-
-        <h3 class="h3">When to choose 4K</h3>
-        <p>4K is recommended for <a href="conference-seminar-filming.html">premium event filming</a> intended for post-production, projection on big screen or LED wall, long-term institutional archiving, and high-end <a href="corporate-live-show.html">corporate live shows</a>. For pure live broadcast without later use, professional Full HD remains the optimal solution.</p>
+        <p class="eyebrow">My approach</p>
+        <h2 class="h2">4K, when it actually<br>makes a difference</h2>
+        <p>Broadcast-grade quality serving your image, not for technical folklore.</p>
+        <div style="margin:28px 0 0;display:flex;flex-direction:column;gap:28px;">
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Native 4K cameras</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Canon CR-N500 PTZ, 1/2.5" UHD 60fps sensors. True native broadcast images, no upscaling from Full HD.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">4K ATEM switcher</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">ATEM 1 M/E Constellation 4K for real-time switching. Broadcast-grade switcher used in television.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Encoding and storage</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">H.265/HEVC encoding for distribution, ProRes or DNxHR for archiving. High-speed SSD drives to handle 4K bitrates.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">When 4K is worth it</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">Corporate films with high stakes, durable archiving, post-production reframing, XL or IMAX screen projection. Not essential for an internal webinar.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Optimized workflow</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">From shooting to delivery: end-to-end 4K workflow without successive transcodings or quality loss.</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 6px;letter-spacing:-0.005em;">Paris, France, Europe</h4>
+            <p style="margin:0;font-size:15px;color:var(--ink-muted);line-height:1.7;">4K filming available on all my services. No hardware surcharge, ~20% additional cost for storage and workflow.</p>
+          </div>
+        </div>
       </div>
       <aside style="padding-top:8px;">
         <div style="position:sticky;top:100px;">
@@ -606,15 +590,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
   <div class="incl-card">
     <p class="incl-title">Always included</p>
-    <p class="incl-subtitle">in every booking</p>
-    <ul class="incl-list"><li class="incl-item"><span class="incl-dot"></span>Canon CR-N500 4K UHD up to 30p</li><li class="incl-item"><span class="incl-dot"></span>Onboard video gallery</li><li class="incl-item"><span class="incl-dot"></span>Full HD included as standard</li><li class="incl-item"><span class="incl-dot"></span>File delivered same day</li></ul>
+    <p class="incl-subtitle">on every project</p>
+    <ul class="incl-list"><li class="incl-item"><span class="incl-dot"></span>3 4K cameras</li><li class="incl-item"><span class="incl-dot"></span>Professional lighting</li><li class="incl-item"><span class="incl-dot"></span>Video control room</li><li class="incl-item"><span class="incl-dot"></span>Audio feed from venue's console</li><li class="incl-item"><span class="incl-dot"></span>Final video delivered as soon as the event ends</li><li class="incl-item"><span class="incl-dot"></span>Paris: free travel · Province and international per quote</li></ul>
     <div class="incl-sep"></div>
     <p class="incl-option-label">On request</p>
-    <ul class="incl-list"><li class="incl-item"><span class="incl-dot-option"></span>4K Ultra HD on request</li><li class="incl-item"><span class="incl-dot-option"></span>Live broadcast (YouTube, LinkedIn, X, TikTok, Instagram…)</li><li class="incl-item"><span class="incl-dot-option"></span>Dedicated 5G network if venue not covered</li><li class="incl-item"><span class="incl-dot-option"></span>Individual wireless mics (extra)</li></ul>
+    <ul class="incl-list"><li class="incl-item"><span class="incl-dot-option"></span>Multi-platform live broadcast</li><li class="incl-item"><span class="incl-dot-option"></span>Dedicated 5G router if needed</li><li class="incl-item"><span class="incl-dot-option"></span>4K raw rushes delivery per camera</li><li class="incl-item"><span class="incl-dot-option"></span>ProRes/DNxHR master for archiving</li><li class="incl-item"><span class="incl-dot-option"></span>H.265 encoding for web delivery</li><li class="incl-item"><span class="incl-dot-option"></span>Auto-generated SRT subtitles</li></ul>
   </div>
 </div>
         </div>
       </aside>
+    </div>
+  </div>
+</section>
+
+<section class="section section-off">
+  <div class="wrap reveal">
+    <p class="eyebrow">The process</p>
+    <h2 class="h2">From booking to file delivery</h2>
+    <div class="features">
+      <div class="feature reveal"><div class="feature-num">01</div><div class="feature-title">Brief &amp; recce</div><div class="feature-body">Discussion on planned use cases (broadcast, archiving, post-prod), brand identity, technical constraints. Recce if possible.</div></div>
+      <div class="feature reveal"><div class="feature-num">02</div><div class="feature-title">Setup in 2h</div><div class="feature-body">Set operational before the start: calibrated 4K cameras, 4K ATEM control room, lighting suited to UHD precision.</div></div>
+      <div class="feature reveal"><div class="feature-num">03</div><div class="feature-title">4K UHD capture</div><div class="feature-body">Broadcast direction live from the control room. Camera switching, 4K slide integration, broadcast sound management.</div></div>
+      <div class="feature reveal"><div class="feature-num">04</div><div class="feature-title">4K file delivered the same day</div><div class="feature-body">4K master + optimized web version. Secure link available as soon as the event ends, ready to archive or edit.</div></div>
     </div>
   </div>
 </section>
@@ -639,25 +636,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-<section class="tarifs-bridge" style="padding:72px var(--h-pad);background:var(--off-white);border-top:1px solid var(--border);text-align:center;">
-  <div style="max-width:680px;margin:0 auto;">
-    <p style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--cyan);background:var(--cyan-light);padding:6px 14px;border-radius:100px;margin-bottom:18px;">How much does it cost?</p>
-    <h2 style="font-family:var(--font-head);font-size:clamp(26px,3.2vw,36px);font-weight:600;line-height:1.15;letter-spacing:-0.02em;color:var(--ink);margin-bottom:14px;">Configure your setup and get an instant estimate.</h2>
-    <p style="font-size:15px;color:var(--ink-muted);margin-bottom:28px;line-height:1.6;">Rig, duration, options: build your bespoke quote and receive the details within 24 hours.</p>
-    <a href="pricing.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;transition:background .2s,transform .15s;box-shadow:0 4px 20px rgba(14,165,233,.25);">
-      See pricing &amp; configure
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </a>
-  </div>
-</section>
-
 <section id="contact" class="contact-section">
   <div class="contact-glow" aria-hidden="true"></div>
   <div class="contact-wrap">
     <div class="reveal">
       <p class="contact-eyebrow">Your project</p>
       <h2 class="contact-title">Let's talk about<br>your event.</h2>
-      <p class="contact-pitch">Free, tailored quote within 24h. Tell me about your project and I'll get back to you fast.</p>
+      <p class="contact-pitch">Free, custom quote within 24h. Describe your project and I'll call you back quickly. <a href="pricing.html" style="color:var(--cyan);text-decoration:underline;text-underline-offset:3px;">Need a ballpark now? Estimate in 30 seconds →</a></p>
     </div>
     <form class="contact-form reveal" name="contact" action="../envoyer.php" method="POST">
       <input type="hidden" name="lang" value="en">
@@ -700,30 +685,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </form>
   </div>
 </section>
-<div class="footer-links-section">
-  <div class="footer-links-inner">
-    <div class="footer-links-header"><span class="footer-links-title">Go further</span></div>
-    <div class="footer-links-grid"><a href="conference-seminar-filming.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Conference &amp; Seminar</p></div>
-</a><a href="interview-roundtable-filming.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Interview &amp; Roundtable</p></div>
-</a><a href="multi-site-live-streaming.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Multiplex &amp; Multi-site</p></div>
-</a><a href="corporate-live-show.html" class="footer-link">
-  <div><p class="footer-link-cat">service</p><p class="footer-link-name">Corporate live show</p></div>
-</a><a href="event-live-streaming.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Event live streaming</p></div>
-</a><a href="event-video-production.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Event video production</p></div>
-</a><a href="multi-platform-streaming.html" class="footer-link">
-  <div><p class="footer-link-cat">guide</p><p class="footer-link-name">Multi-platform streaming</p></div>
-</a><a href="quote-live-streaming-paris.html" class="footer-link">
-  <div><p class="footer-link-cat">ads</p><p class="footer-link-name">Paris provider</p></div>
-</a><a href="b2b-event-filming-provider.html" class="footer-link">
-  <div><p class="footer-link-cat">ads</p><p class="footer-link-name">France &amp; Europe provider</p></div>
-</a></div>
+<section class="section section-off">
+  <div class="wrap reveal">
+    <p class="eyebrow">And also</p>
+    <h2 class="h2">Beyond 4K filming</h2>
+    <p class="lead" style="max-width:680px;margin-bottom:32px;">4K is available on all my services. To understand which setup fits your event, here are the other formats I cover. Always as a single point of contact.</p>
+    <div class="prest-grid">
+      <a href="conference-seminar-filming.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Conference &amp; Seminar</p><p class="prest-desc">Standard 3-camera 4K setup</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="corporate-live-show.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Corporate live show</p><p class="prest-desc">TV-style set with advanced graphic branding</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="interview-roundtable-filming.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Interview &amp; Roundtable</p><p class="prest-desc">Dedicated angles, HF audio, 3-point lighting</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="multi-site-live-streaming.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Multi-site live streaming</p><p class="prest-desc">Multiple sites live, single control room</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="multi-platform-streaming.html" class="prest-card">
+  <div><p class="prest-cat">Service</p><p class="prest-name">Multi-platform streaming</p><p class="prest-desc">Simultaneous multi-channel broadcast</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+      <a href="partner-agencies.html" class="prest-card">
+  <div><p class="prest-cat">For agencies</p><p class="prest-name">White-label</p><p class="prest-desc">Technical provider for event agencies</p></div>
+  <span class="prest-arrow"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</a>
+    </div>
   </div>
-</div>
+</section>
+
 <footer class="site-footer">
   <div class="footer-grid">
     <div class="footer-col footer-col-brand">
@@ -744,8 +739,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <li><a href="interview-roundtable-filming.html">Interview &amp; roundtable</a></li>
         <li><a href="4k-video-recording.html">4K filming</a></li>
         <li><a href="multi-platform-streaming.html">Multi-platform</a></li>
-        <li><a href="event-live-streaming.html">Live streaming guide</a></li>
-      </ul>
+        </ul>
     </div>
 
     <div class="footer-col">
