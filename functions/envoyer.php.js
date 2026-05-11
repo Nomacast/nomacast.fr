@@ -11,10 +11,6 @@
 const ALLOWED_ORIGINS = ['https://www.nomacast.fr', 'https://nomacast.fr'];
 const DOMAINE         = 'nomacast.fr';
 
-// IMPORTANT : Resend est configuré sur le sous-domaine send.nomacast.fr (SPF/DKIM amazonses).
-// Le FROM doit utiliser ce sous-domaine sinon les mails sont rejetés pour SPF fail.
-const EMAIL_FROM      = 'Formulaire Nomacast <noreply@send.nomacast.fr>';
-
 // Pages de redirection FR (par défaut)
 const PAGE_MERCI_FR   = 'https://nomacast.fr/merci.html';
 const PAGE_ERREUR_FR  = 'https://nomacast.fr/index.html#contact';
@@ -286,7 +282,7 @@ export async function onRequestPost(context) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: EMAIL_FROM,
+        from: `Formulaire Nomacast <noreply@${DOMAINE}>`,
         to: destinataires,
         reply_to: email,
         subject: subject,
