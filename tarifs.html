@@ -300,7 +300,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .option.active .option-check svg { opacity: 1; }
 .option-label { flex: 1; font-size: 14px; font-weight: 500; color: var(--ink); }
 .option-desc { display: block; font-size: 12px; color: var(--ink-faint); font-weight: 400; margin-top: 2px; }
-/* Bloc "Matériel inclus" affiché sous une option cochée — visible uniquement quand la Vue technique est activée */
+/* Bloc "Matériel inclus" affiché sous une option cochée, visible uniquement quand la Vue technique est activée */
 .option-material { display: none; margin-top: 10px; padding: 10px 12px; background: rgba(14,165,233,.05); border: 1px solid rgba(14,165,233,.15); border-radius: 8px; font-weight: 400; }
 .tech-mode .option.active .option-material,
 .tech-mode .option.is-free .option-material { display: block; }
@@ -333,7 +333,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .tech-base-list li::before { content: "•"; position: absolute; left: 0; color: var(--cyan); font-weight: 700; }
 .option-price { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--ink-muted); white-space: nowrap; text-align: right; flex-shrink: 0; }
 
-/* ═══ Step 04 — Contenus post-événement (Best-of, Interviews) ═══ */
+/* ═══ Step 04, Contenus post-événement (Best-of, Interviews) ═══ */
 .addon-intro { font-size: 13.5px; color: var(--ink-muted); margin: -6px 0 18px; line-height: 1.55; font-weight: 300; }
 .addons-grid { display: flex; flex-direction: column; gap: 12px; }
 .addon-card { display: flex; align-items: center; gap: 14px; padding: 18px 18px; background: var(--white); border: 1.5px solid var(--border-light); border-radius: 14px; cursor: pointer; transition: all .2s ease; user-select: none; -webkit-tap-highlight-color: transparent; position: relative; }
@@ -558,7 +558,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .nav-links a:hover { color: var(--ink); }
 .nav-links a.nav-cta { background: var(--cyan); color: var(--white); padding: 10px 18px; border-radius: 100px; font-weight: 600; }
 .nav-links a.nav-cta:hover { background: var(--cyan-hover); color: var(--white); transform: translateY(-1px); }
-/* nav-cta-fix-v1 — sécurise le bouton CTA sur petits écrans (additif uniquement) */
+/* nav-cta-fix-v1, sécurise le bouton CTA sur petits écrans (additif uniquement) */
 .nav-links a.nav-cta { white-space: nowrap; flex-shrink: 0; }
 .nav-phone { display: none; font-size: 13px; color: var(--ink); text-decoration: none; font-weight: 600; }
 .burger-btn { display: none; background: none; border: none; cursor: pointer; padding: 8px; flex-direction: column; gap: 4px; }
@@ -578,7 +578,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 /* ═══ Footer (Nomacast) ═══ */
 .site-footer { background: var(--navy); color: rgba(255,255,255,.7); padding: 64px var(--h-pad) 40px; }
 
-/* ═══ SECTION FAQ TARIFS — pattern aligné sur le reste du site ═══ */
+/* ═══ SECTION FAQ TARIFS, pattern aligné sur le reste du site ═══ */
 .section { padding: clamp(60px, 8vw, 100px) var(--h-pad); }
 .section-off { background: var(--off-white); }
 .wrap { max-width: var(--max); margin: 0 auto; }
@@ -702,7 +702,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <span class="nav-logo-dot"></span>Nomacast
   </a>
   <ul class="nav-links" id="nav-links">
-    <li><a href="index.html#offre">Prestations</a></li>
+    <li><a href="index.html#prestations">Prestations</a></li>
     <li><a href="index.html#cas-clients">Cas clients</a></li>
     <li><a href="agences-partenaires.html">Agences</a></li>
     <li><a href="tarifs.html" aria-current="page">Tarifs</a></li>
@@ -846,7 +846,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         </div>
 
-        <!-- 04 — Contenus post-événement : Best-of et Interviews -->
+        <!-- 04, Contenus post-événement : Best-of et Interviews -->
         <div class="step">
           <div class="step-header"><span class="step-num">04</span><h3 class="step-title">Contenus post-événement</h3></div>
           <p class="addon-intro">Pour aller au-delà du dispositif principal.</p>
@@ -1041,7 +1041,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
-<!-- ═══ SECTION FAQ TARIFS — pattern du site ═══
+<!-- ═══ SECTION FAQ TARIFS, pattern du site ═══
      Contenu pré-rendu pour les crawlers Google et LLM (ChatGPT, Perplexity, Claude).
      6 questions essentielles, 2 colonnes desktop, 1 colonne mobile.
      Aucune ouverte par défaut. -->
@@ -1100,7 +1100,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <li><a href="emission-live-corporate.html">Émission live corporate</a></li>
         <li><a href="streaming-multiplex-multi-sites.html">Multiplex multi-sites</a></li>
         <li><a href="captation-interview-table-ronde.html">Interview & table ronde</a></li>
-        <li><a href="captation-4k.html">Captation 4K</a></li>
         <li><a href="streaming-multi-plateformes.html">Multi-plateformes</a></li>
       </ul>
     </div>
@@ -1214,7 +1213,7 @@ const PRICE_5G_BY_DUR       = { half: 350, full: 350, "2days": 500, "3days": 650
 // Cadreur HF : 850 €/jour linéaire pur (pas de dégressivité, le cadreur freelance facture sa journée).
 const PRICE_CADREUR_HF_BY_DUR = { half: 850, full: 850, "2days": 1700, "3days": 2550 };
 
-// ═══ Contenus post-événement — Step 04 ═══
+// ═══ Contenus post-événement, Step 04 ═══
 // Hors mécanique partenaire : tarif fixe, ajouté tel quel au total.
 // Best-of varie selon la durée de l'événement (montage proportionnel à la matière tournée).
 const ADDON_PRICES = {
@@ -1940,9 +1939,9 @@ function computeWithEnvelope(s, cache) {
 
   // Calcul des bornes via les sous-paniers :
   //   - maxSubRemise : non-décroissance large de la remise (règle priorité 6)
-  //   - upperBoundDeltaTotal : RÈGLE 3 (priorité absolue) — total(P) ≥ total(P\O)
+  //   - upperBoundDeltaTotal : RÈGLE 3 (priorité absolue), total(P) ≥ total(P\O)
   //     pour tout sub. Borne sup remise(P) ≤ remise(P\O) + prix(O).
-  //   - upperBoundCap50PerOpt : RÈGLE 5 (priorité 5) — delta_remise par option ≤ 50 %
+  //   - upperBoundCap50PerOpt : RÈGLE 5 (priorité 5), delta_remise par option ≤ 50 %
   //     du prix de l'option ajoutée. Borne sup remise(P) ≤ remise(P\O) + 0.5 × prix(O).
   //     Sauf palier psy.
   //   - minTotalRequired : delta total ≥ 50 € minimum (règle priorité 14, secondaire)
@@ -2335,7 +2334,7 @@ function buildAddons() {
     const card = document.querySelector('.addon-card[data-addon="' + addonId + '"]');
     if (!card) return;
     const checkbox = card.querySelector('input[type="checkbox"]');
-    // Ajoute le bloc Vue technique (matériel) — visible uniquement quand l'add-on est coché ET vue technique active
+    // Ajoute le bloc Vue technique (matériel), visible uniquement quand l'add-on est coché ET vue technique active
     const matBlock = document.createElement("div");
     matBlock.className = "addon-material";
     matBlock.innerHTML = '<div class="addon-material-title">Détail prestation</div>' +
@@ -2642,7 +2641,7 @@ document.getElementById("quote-form").addEventListener("submit", e => {
   });
   // Debug : on log pour pouvoir vérifier en dev tools que la soumission part bien
   try { console.log("[Configurateur] Submit en cours vers", e.target.action); } catch(_) {}
-  // Feedback visuel pendant l'envoi — différé d'un tick pour ne pas interférer avec la soumission native
+  // Feedback visuel pendant l'envoi, différé d'un tick pour ne pas interférer avec la soumission native
   // (sur certains navigateurs, désactiver le bouton synchroniquement dans le submit handler peut bloquer la soumission)
   setTimeout(() => {
     const btn = document.getElementById("form-submit");
