@@ -470,9 +470,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </div>
 
-<a href="tel:+33660541732" class="float-call" aria-label="Call Nomacast">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-  +33 6 60 54 17 32
+<!-- nomacast-cta-bubble-v2 : floating CTA bubble mobile → #contact -->
+<a aria-label="Get a quote within 24 hours" class="float-call" href="#contact">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><path d="M22 6l-10 7L2 6"></path></svg>
+  Quote in 24h
 </a>
 <section class="page-hero">
   <div class="hero-video-bg" aria-hidden="true">
@@ -817,26 +818,33 @@ document.querySelectorAll('.faq-question').forEach(btn => {
 </script>
 
 <script>
-/* IntersectionObserver: masque le bouton .float-call quand le footer est visible */
+/* nomacast-cta-bubble-v2 : masque .float-call quand #contact OU footer est visible */
 (function(){
   var btn = document.querySelector('.float-call');
-  var footer = document.querySelector('.site-footer') || document.querySelector('footer');
-  if (!btn || !footer || !('IntersectionObserver' in window)) return;
+  if (!btn || !('IntersectionObserver' in window)) return;
+  var targets = [
+    document.querySelector('#contact'),
+    document.querySelector('.site-footer') || document.querySelector('footer')
+  ].filter(Boolean);
+  if (!targets.length) return;
+  var visible = new WeakSet();
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(e){
-      btn.style.transition = 'opacity .25s, transform .25s';
-      if (e.isIntersecting) {
-        btn.style.opacity = '0';
-        btn.style.transform = 'translateY(20px)';
-        btn.style.pointerEvents = 'none';
-      } else {
-        btn.style.opacity = '';
-        btn.style.transform = '';
-        btn.style.pointerEvents = '';
-      }
+      if (e.isIntersecting) visible.add(e.target); else visible.delete(e.target);
     });
+    var anyVisible = targets.some(function(t){ return visible.has(t); });
+    btn.style.transition = 'opacity .25s, transform .25s';
+    if (anyVisible) {
+      btn.style.opacity = '0';
+      btn.style.transform = 'translateY(20px)';
+      btn.style.pointerEvents = 'none';
+    } else {
+      btn.style.opacity = '';
+      btn.style.transform = '';
+      btn.style.pointerEvents = '';
+    }
   }, {threshold: 0.01, rootMargin: '0px'});
-  io.observe(footer);
+  targets.forEach(function(t){ io.observe(t); });
 })();
 </script>
 
