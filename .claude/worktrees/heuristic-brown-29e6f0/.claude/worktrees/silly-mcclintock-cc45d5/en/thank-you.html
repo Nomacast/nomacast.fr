@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<!-- Last update: 2026-05-07 23:30 -->
+<html lang="en-GB">
+<head>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-M99NLF45');</script>
+<script>
+  // Detects the form type submitted via ?type=devis or ?type=agence
+  // IMPORTANT: only fire conversion if the 'type' parameter is present
+  // (parameter added by envoyer.php after server validation; protects against ghost conversions)
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var formType = params.get('type');
+    if (!formType) return; // direct visit without valid submission → no conversion
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      'event': 'form_submit',
+      'form_type': formType
+    });
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<title>Request sent | Nomacast</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://www.nomacast.fr/en/thank-you.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- lot8-perf : chargement async des Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+
+<style>
+html{overflow-x:hidden}body{overflow-x:hidden;max-width:100vw}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #0b1929;
+  --cyan: #0ea5e9;
+  --cyan-light: #e0f2fe;
+  --off-white: #f3f6fa;
+  --border: #dae4f0;
+  --font-head: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+body {
+  font-family: var(--font-body);
+  background: var(--off-white);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  -webkit-font-smoothing: antialiased;
+}
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 64px 56px;
+  max-width: 540px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 4px 40px rgba(11,25,41,0.06);
+}
+.icon {
+  width: 72px; height: 72px;
+  background: var(--cyan-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 28px;
+}
+.icon svg { width: 32px; height: 32px; color: var(--cyan); }
+h1 {
+  font-family: var(--font-head);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+p {
+  font-size: 16px;
+  font-weight: 300;
+  color: #4d6b8a;
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+p strong { color: var(--ink); font-weight: 600; }
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 32px 0;
+}
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.meta-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink);
+}
+.meta-item svg { width: 16px; height: 16px; color: var(--cyan); flex-shrink: 0; }
+.btn-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cyan);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+  box-shadow: 0 4px 16px rgba(14,165,233,0.25);
+}
+.btn-home:hover { background: #0284c7; }
+.logo {
+  margin-top: 40px;
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: #a3bcd4;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.logo-dot { width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; opacity: 0.5; }
+
+</style>
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://www.nomacast.fr/og-image.webp">
+</head>
+<body>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M99NLF45"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<div class="card">
+  <div class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  </div>
+
+  <h1 id="merci-title">Request received!</h1>
+  <p id="merci-subtitle">Thank you for your message. We'll get back to you <strong>within 24 hours</strong> to discuss your project.</p>
+
+  <div class="divider"></div>
+
+  <div class="meta">
+    <div class="meta-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      +33 6 60 54 17 32
+    </div>
+    <div class="meta-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <span id="contact-email">evenement@nomacast.fr</span>
+    </div>
+  </div>
+
+  <a href="index.html" class="btn-home">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M7 1l-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back to website
+  </a>
+</div>
+
+<div class="logo">
+  <span class="logo-dot"></span>
+  Nomacast
+</div>
+
+<script>
+  // Adapts the content based on the form type submitted
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var formType = params.get('type');
+    if (formType === 'agence') {
+      document.getElementById('contact-email').textContent = 'agences@nomacast.fr';
+      document.getElementById('merci-title').textContent = 'Agency request received!';
+      document.getElementById('merci-subtitle').innerHTML = 'Thank you for your partnership enquiry. I\'ll get back to you <strong>within 24 hours</strong> to discuss the details.';
+    }
+  })();
+</script>
+
+</body>
+</html>
