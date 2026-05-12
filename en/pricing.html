@@ -444,8 +444,13 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .partner-pill { display: none; align-items: center; gap: 4px; font-family: var(--font-body); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); background: rgba(22,163,74,.12); border: 1px solid rgba(22,163,74,.30); border-radius: 100px; padding: 2px 8px; line-height: 1.4; }
 .partner-pill.show { display: inline-flex; }
 .partner-pill svg { width: 9px; height: 9px; stroke: var(--green); stroke-width: 3; fill: none; flex-shrink: 0; }
-.mobile-bar-total .partner-pill { margin-top: 3px; padding: 1px 7px; font-size: 9px; justify-content: center; box-sizing: border-box; align-self: stretch; }
+.mobile-bar-total .partner-pill { padding: 1px 7px; font-size: 9px; justify-content: center; box-sizing: border-box; position: absolute; left: 0; right: 0; top: 100%; margin-top: 3px; white-space: nowrap; }
 .mobile-bar-total .partner-pill.show { display: flex; }
+/* Inline-block wrapper around <small>: takes the intrinsic width of "Estimate (excl. VAT)".
+   The absolute-positioned pill (left:0 right:0) then inherits EXACTLY that width.
+   padding-bottom (via :has) reserves space so it doesn't overlap the amount below. */
+.mobile-label-wrap { position: relative; display: inline-block; align-self: flex-start; }
+.mobile-label-wrap:has(.partner-pill.show) { padding-bottom: 18px; }
 .breakdown-section.no-border { border-bottom: none; }
 /* Ligne "Remise tarif partenaire" dans le récap : verte, mise en évidence */
 .partner-discount-line { color: #4ade80 !important; font-weight: 500; }
@@ -1143,12 +1148,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div class="mobile-bar">
 <div class="mobile-bar-total">
+<span class="mobile-label-wrap">
 <small id="mobile-label">Estimate (excl. VAT)</small>
-<strong><span id="mobile-total">€1,500</span></strong>
-<div class="partner-pill" id="partner-pill-mobile">
+<span class="partner-pill" id="partner-pill-mobile">
 <svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>
 <span>Partner</span>
-</div>
+</span>
+</span>
+<strong><span id="mobile-total">€1,500</span></strong>
 </div>
 <button class="mobile-bar-cta" type="button" onclick="(function(){var f=document.getElementById('quote-form'),e=document.getElementById('f-email'),t=document.getElementById('f-tel');if(!e.value.trim()||!t.value.trim()){f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){if(!e.value.trim())e.focus();else if(!t.value.trim())t.focus();},600);return}f.requestSubmit?f.requestSubmit():f.submit();})();">Send my request</button>
 </div>
