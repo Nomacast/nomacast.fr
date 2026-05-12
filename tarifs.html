@@ -720,6 +720,32 @@ body.menu-open .float-call{display:none!important}
 .devis-lang-switch, .landing-lang-switch { position: relative; list-style: none; padding: 0; margin: 0; }
 .devis-lang-switch .lang-globe, .landing-lang-switch .lang-globe { padding: 6px 10px; }
 .devis-lang-switch .lang-dropdown, .landing-lang-switch .lang-dropdown { right: 0; }
+
+/* nomacast-footer-sync-v1 — CSS footer aligné sur index.html */
+.site-footer{display:block;background:#0b1929;color:rgba(255,255,255,.6);padding:72px clamp(24px,5vw,64px) 32px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;line-height:1.65}
+.footer-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.08)}
+.footer-col-brand .footer-logo{font-family:'Outfit',system-ui,sans-serif;font-size:20px;font-weight:700;letter-spacing:-.03em;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:20px}
+.footer-logo-dot{width:7px;height:7px;background:#5A98D6;border-radius:50%;display:inline-block}
+.footer-tagline{font-size:13px;color:rgba(255,255,255,.55);line-height:1.6;margin:0 0 20px;font-weight:300}
+.footer-contact{font-size:13px;color:rgba(255,255,255,.7);margin:0}
+.footer-contact a{color:rgba(255,255,255,.7);text-decoration:none;transition:color .2s}
+.footer-contact a:hover{color:#5A98D6}
+.footer-col-title{font-family:'Outfit',system-ui,sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin:0 0 16px}
+.footer-links{list-style:none;padding:0;margin:0}
+.footer-links li{margin-bottom:8px}
+.footer-links a{color:rgba(255,255,255,.55);text-decoration:none;font-size:13px;transition:color .2s}
+.footer-links a:hover{color:#5A98D6}
+.footer-zone{font-size:13px;color:rgba(255,255,255,.55);line-height:1.6;margin:0;font-weight:300}
+.footer-bottom{max-width:1180px;margin:0 auto;padding-top:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-credits{font-size:12px;color:rgba(255,255,255,.35)}
+.footer-bottom-links{display:flex;flex-wrap:wrap;gap:12px 20px}
+.footer-bottom-links a{font-size:12px;color:rgba(255,255,255,.35);text-decoration:none;transition:color .2s}
+.footer-bottom-links a:hover{color:#5A98D6}
+@media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr;gap:32px}}
+@media(max-width:600px){.footer-grid{grid-template-columns:1fr;gap:32px;padding-bottom:32px}.footer-bottom{flex-direction:column;align-items:flex-start}}
+.footer-lang-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,.35);text-decoration:none;transition:color .2s}
+.footer-lang-link:hover{color:#5A98D6}
+.footer-lang-link svg{width:12px;height:12px;opacity:.65}
 </style>
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
@@ -1140,55 +1166,61 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- ═══ FOOTER NOMACAST ═══ -->
 <footer class="site-footer">
-<div class="footer-inner">
-<div class="footer-brand">
-<div class="footer-brand-name"><span class="nav-logo-dot"></span>Nomacast</div>
-<p class="footer-tagline">La qualité agence. Sans la structure agence. Captation 4K & live streaming pour vos événements corporate, partout en France et en Europe.</p>
-<div class="footer-contact">
-<a href="tel:+33660541732">06 60 54 17 32</a>
+<div class="footer-grid">
+<div class="footer-col footer-col-brand">
+<div class="footer-logo"><span class="footer-logo-dot"></span>Nomacast</div>
+<p class="footer-tagline">Qualité agence.<br/>Un seul interlocuteur.</p>
+<p class="footer-contact">
+<a href="tel:+33660541732">06 60 54 17 32</a><br/>
 <a href="mailto:evenement@nomacast.fr">evenement@nomacast.fr</a>
-</div>
+</p>
 </div>
 <div class="footer-col">
-<h4>Prestations</h4>
-<ul>
-<li><a href="captation-conference-seminaire.html">Conférence & séminaire</a></li>
+<h3 class="footer-col-title">Prestations</h3>
+<ul class="footer-links">
+<li><a href="captation-conference-seminaire.html">Conférence &amp; séminaire</a></li>
 <li><a href="emission-live-corporate.html">Émission live corporate</a></li>
 <li><a href="streaming-multiplex-multi-sites.html">Multiplex multi-sites</a></li>
-<li><a href="captation-interview-table-ronde.html">Interview & table ronde</a></li>
+<li><a href="captation-interview-table-ronde.html">Interview &amp; table ronde</a></li>
 <li><a href="streaming-multi-plateformes.html">Multi-plateformes</a></li>
 <li><a href="prestations.html"><strong>Voir toutes les prestations →</strong></a></li>
 </ul>
 </div>
 <div class="footer-col">
-<h4>Cas clients</h4>
-<ul>
+<h3 class="footer-col-title">Cas clients</h3>
+<ul class="footer-links">
 <li><a href="cas-client-louvre-lahorde.html">(LA)HORDE × Louvre</a></li>
+<li><a href="cas-client-digital-benchmark-berlin.html">EBG Digital Benchmark</a></li>
 <li><a href="cas-client-comedie-francaise.html">Comédie-Française</a></li>
-<li><a href="cas-client-figma-conference.html">Figma</a></li>
-<li><a href="cas-client-johnson-johnson.html">Johnson & Johnson</a></li>
-<li><a href="cas-client-gl-events.html">GL Events</a></li>
-<li><a href="cas-clients.html">Tous les cas clients →</a></li>
+<li><a href="cas-client-gl-events.html">GL Events Global Industrie</a></li>
+<li><a href="cas-client-johnson-johnson.html">Johnson &amp; Johnson</a></li>
+<li><a href="cas-client-morning.html">Morning Coworking</a></li>
+<li><a href="cas-client-figma-conference.html">Soirées Customer Figma</a></li>
+<li><a href="cas-clients.html"><strong>Voir tous les cas clients →</strong></a></li>
 </ul>
 </div>
 <div class="footer-col">
-<h4>Nomacast</h4>
-<ul>
-<li><a href="tarifs.html">Tarifs</a></li>
-<li><a href="agences-partenaires.html">Agences partenaires</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="blog.html">Blog</a></li>
-<li><a href="index.html#contact">Contact</a></li>
+<h3 class="footer-col-title">Agences</h3>
+<ul class="footer-links">
+<li><a href="agences-partenaires.html">Marque blanche</a></li>
+<li><a href="agences-partenaires.html#contact-agences">Devenir partenaire</a></li>
+<li><a href="mailto:agences@nomacast.fr">agences@nomacast.fr</a></li>
 </ul>
+<h3 class="footer-col-title" style="margin-top:28px;">Zone d'intervention</h3>
+<p class="footer-zone">Paris · France · Europe<br/>Déplacements inclus au devis</p>
 </div>
 </div>
 <div class="footer-bottom">
-<div>© 2026 Nomacast · Paris · France · Europe</div>
+<span class="footer-credits">© 2026 Nomacast. Tous droits réservés</span>
 <div class="footer-bottom-links">
+<a href="blog.html">Blog</a>
+<a href="faq.html">FAQ</a>
+<a href="tarifs.html">Tarifs</a>
 <a href="mentions-legales.html">Mentions légales</a>
 <a href="politique-de-confidentialite.html">Confidentialité</a>
 <a href="plan-du-site.html">Plan du site</a>
-<span class="footer-lang" data-marker="nomacast-lang-footer-v1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><a href="" class="active" lang="fr">FR</a><span class="footer-lang-sep">·</span><a href="https://www.nomacast.fr/en/pricing.html" hreflang="en" lang="en">EN</a></span></div>
+<a href="index.html#contact">Demander un devis</a>
+<a href="/en/pricing.html" hreflang="en" lang="en" class="footer-lang-link" data-marker="nomacast-lang-footer-v2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>English</a></div>
 </div>
 </footer>
 
