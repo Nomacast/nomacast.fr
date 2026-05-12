@@ -438,6 +438,14 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .breakdown-line { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; color: rgba(255,255,255,.85); }
 .breakdown-line .val { font-family: var(--font-head); font-weight: 500; white-space: nowrap; color: var(--white); flex-shrink: 0; }
 .partner-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--green); background: rgba(22,163,74,.12); border: 1px solid rgba(22,163,74,.25); border-radius: 100px; padding: 3px 10px; margin-bottom: 10px; }
+/* nomacast-partner-pill-v1 : pastille "✓ Partenaire" à côté du total (récap + mobile-bar)
+   pour signaler discrètement qu'un code partenaire est appliqué, sur mobile notamment
+   où #partner-active-display est replié sous .summary-collapsible */
+.partner-pill { display: none; align-items: center; gap: 4px; font-family: var(--font-body); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); background: rgba(22,163,74,.12); border: 1px solid rgba(22,163,74,.30); border-radius: 100px; padding: 2px 8px; line-height: 1.4; }
+.partner-pill.show { display: inline-flex; }
+.partner-pill svg { width: 9px; height: 9px; stroke: var(--green); stroke-width: 3; fill: none; flex-shrink: 0; }
+.partner-pill-recap { margin-bottom: 10px; }
+.mobile-bar-total .partner-pill { margin-top: 3px; padding: 1px 7px; font-size: 9px; }
 .breakdown-section.no-border { border-bottom: none; }
 /* Ligne "Remise tarif partenaire" dans le récap : verte, mise en évidence */
 .partner-discount-line { color: #4ade80 !important; font-weight: 500; }
@@ -917,6 +925,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </div>
 
 <div class="total-block">
+<div class="partner-pill partner-pill-recap" id="partner-pill-recap">
+<svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>
+<span>Partenaire</span>
+</div>
 <div class="tva-row">
 <div class="total-label" id="total-label">Estimation totale HT</div>
 <label class="tva-toggle" id="tva-toggle-label">
@@ -1018,7 +1030,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
 <button type="submit" class="summary-cta" id="form-submit"> Envoyer ma demande
-<svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="margin-left:8px;vertical-align:-2px;"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>
 <a class="phone-cta-btn" href="tel:+33660541732" onclick="try{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'configurator_phone_click'});}catch(_){}">
 <span class="phone-cta-intent">Besoin d'en parler en direct ?</span>
@@ -1135,8 +1146,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="mobile-bar-total">
 <small id="mobile-label">Estimation HT</small>
 <strong><span id="mobile-total">1 500</span> €</strong>
+<div class="partner-pill" id="partner-pill-mobile">
+<svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>
+<span>Partenaire</span>
 </div>
-<button class="mobile-bar-cta" type="button" onclick="(function(){var f=document.getElementById('quote-form'),e=document.getElementById('f-email'),t=document.getElementById('f-tel');if(!e.value.trim()||!t.value.trim()){f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){if(!e.value.trim())e.focus();else if(!t.value.trim())t.focus();},600);return}f.requestSubmit?f.requestSubmit():f.submit();})();">Envoyer ma demande →</button>
+</div>
+<button class="mobile-bar-cta" type="button" onclick="(function(){var f=document.getElementById('quote-form'),e=document.getElementById('f-email'),t=document.getElementById('f-tel');if(!e.value.trim()||!t.value.trim()){f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){if(!e.value.trim())e.focus();else if(!t.value.trim())t.focus();},600);return}f.requestSubmit?f.requestSubmit():f.submit();})();">Envoyer ma demande</button>
 </div>
 
 <script> const TVA = 1.20;
@@ -2141,6 +2156,17 @@ function compute() {
     } else {
  savingsBanner.classList.remove("show");
     }
+  }
+  // nomacast-partner-pill-v1 : pastille "✓ Partenaire" visible dès qu'un code est appliqué
+  // (indépendant du savings-banner qui requiert savings > 0)
+ const pillRecap = document.getElementById("partner-pill-recap");
+ const pillMobile = document.getElementById("partner-pill-mobile");
+ if (state.partnerCode) {
+ if (pillRecap) pillRecap.classList.add("show");
+ if (pillMobile) pillMobile.classList.add("show");
+  } else {
+ if (pillRecap) pillRecap.classList.remove("show");
+ if (pillMobile) pillMobile.classList.remove("show");
   }
 
   // Total
