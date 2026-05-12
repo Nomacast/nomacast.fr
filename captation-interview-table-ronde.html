@@ -436,6 +436,30 @@ body.menu-open .float-call{display:none!important}
 .devis-lang-switch, .landing-lang-switch { position: relative; list-style: none; padding: 0; margin: 0; }
 .devis-lang-switch .lang-globe, .landing-lang-switch .lang-globe { padding: 6px 10px; }
 .devis-lang-switch .lang-dropdown, .landing-lang-switch .lang-dropdown { right: 0; }
+
+/* nomacast-globe-polish-v1 — ajustements visuels globe header/footer/mobile */
+.lang-globe { padding: 4px 8px !important; font-size: 14px !important; }
+.lang-globe:not([aria-expanded="true"]) { border-color: transparent !important; background: transparent !important; }
+.lang-globe > svg:first-of-type { width: 13px !important; height: 13px !important; opacity: .7; }
+.lang-globe .lang-chevron { width: 10px !important; height: 10px !important; }
+@media (max-width: 768px) {
+  .nav-lang-mobile { margin-right: 0 !important; }
+  .burger-btn { margin-left: 4px !important; }
+}
+.footer-lang-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: rgba(255,255,255,.35); text-decoration: none; transition: color .2s; }
+.footer-lang-link:hover { color: #5A98D6; }
+.footer-lang-link svg { width: 12px; height: 12px; opacity: .65; }
+
+/* nomacast-footer-mobile-v2 — alignement gauche partout sur mobile + globe header aligné */
+@media (max-width: 600px) {
+  .site-footer { padding-bottom: 90px; }
+  .footer-grid > * { text-align: left !important; }
+  .footer-col-brand .footer-logo { justify-content: flex-start !important; }
+  .footer-col-brand { text-align: left !important; }
+  .footer-tagline, .footer-contact, .footer-zone, .footer-links a, .footer-col-title { text-align: left !important; }
+}
+.lang-switch .lang-globe { padding: 4px 0 !important; font-weight: 400 !important; }
+.lang-switch .lang-globe > svg:first-of-type { margin-right: 2px; }
 </style>
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
@@ -570,8 +594,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <li><a href="tarifs.html">Tarifs</a></li>
     <li><a href="agences-partenaires.html">Agences</a></li>
     <li><a href="faq.html">FAQ</a></li>
-    <li><a href="index.html#contact" class="nav-cta">Devis sous 24h</a></li>
-      <li class="lang-switch" aria-label="Choisir la langue" data-marker="nomacast-lang-globe-v1"><button type="button" class="lang-globe" aria-haspopup="listbox" aria-expanded="false" aria-label="Choisir la langue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="lang-current">FR</span><svg class="lang-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button><ul class="lang-dropdown" role="listbox" hidden><li role="option"><a href="" class="active" aria-current="page">FR — Français</a></li><li role="option"><a href="https://www.nomacast.fr/en/interview-roundtable-filming.html" hreflang="en" lang="en">EN — English</a></li></ul></li>
+    <li class="lang-switch" aria-label="Choisir la langue" data-marker="nomacast-lang-globe-v1"><button type="button" class="lang-globe" aria-haspopup="listbox" aria-expanded="false" aria-label="Choisir la langue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="lang-current">FR</span><svg class="lang-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button><ul class="lang-dropdown" role="listbox" hidden><li role="option"><a href="" class="active" aria-current="page">FR — Français</a></li><li role="option"><a href="https://www.nomacast.fr/en/interview-roundtable-filming.html" hreflang="en" lang="en">EN — English</a></li></ul></li><li><a href="index.html#contact" class="nav-cta">Devis sous 24h</a></li>
+      
   </ul>
   <a href="tel:+33660541732" class="nav-tel-mobile" aria-label="Appeler">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14.91a16 16 0 006.37 6.37l.81-.81a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
@@ -912,7 +936,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a href="politique-de-confidentialite.html">Confidentialité</a>
       <a href="plan-du-site.html">Plan du site</a>
       <a href="index.html#contact">Demander un devis</a>
-    <span class="footer-lang" data-marker="nomacast-lang-footer-v1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><a href="" class="active" lang="fr">FR</a><span class="footer-lang-sep">·</span><a href="https://www.nomacast.fr/en/interview-roundtable-filming.html" hreflang="en" lang="en">EN</a></span></div>
+    <span class="footer-lang" data-marker="nomacast-lang-footer-v1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><a href="" class="active" lang="fr">FR</a><span class="footer-lang-sep">·</span><a href="https://www.nomacast.fr/en/interview-roundtable-filming.html" hreflang="en" lang="en">EN</a></span><a href="https://www.nomacast.fr/en/interview-roundtable-filming.html" hreflang="en" lang="en" class="footer-lang-link" data-marker="nomacast-lang-footer-v2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>English</a></div>
   </div>
 </footer>
 <script>
