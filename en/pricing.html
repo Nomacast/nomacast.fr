@@ -444,8 +444,8 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--off-w
 .partner-pill { display: none; align-items: center; gap: 4px; font-family: var(--font-body); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); background: rgba(22,163,74,.12); border: 1px solid rgba(22,163,74,.30); border-radius: 100px; padding: 2px 8px; line-height: 1.4; }
 .partner-pill.show { display: inline-flex; }
 .partner-pill svg { width: 9px; height: 9px; stroke: var(--green); stroke-width: 3; fill: none; flex-shrink: 0; }
-.partner-pill-recap { margin-bottom: 10px; }
-.mobile-bar-total .partner-pill { margin-top: 3px; padding: 1px 7px; font-size: 9px; }
+.mobile-bar-total .partner-pill { margin-top: 3px; padding: 1px 7px; font-size: 9px; justify-content: center; box-sizing: border-box; align-self: stretch; }
+.mobile-bar-total .partner-pill.show { display: flex; }
 .breakdown-section.no-border { border-bottom: none; }
 /* Ligne "Remise tarif partenaire" dans le récap : verte, mise en évidence */
 .partner-discount-line { color: #4ade80 !important; font-weight: 500; }
@@ -927,10 +927,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </div>
 
 <div class="total-block">
-<div class="partner-pill partner-pill-recap" id="partner-pill-recap">
-<svg viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4"></polyline></svg>
-<span>Partner</span>
-</div>
 <div class="tva-row">
 <div class="total-label" id="total-label">Total estimate (excl. VAT)</div>
 <label class="tva-toggle" id="tva-toggle-label">
@@ -2163,13 +2159,10 @@ function compute() {
   }
   // nomacast-partner-pill-v1: "✓ Partner" pill, visible as soon as a code is applied
   // (independent of savings-banner which requires savings > 0)
- const pillRecap = document.getElementById("partner-pill-recap");
  const pillMobile = document.getElementById("partner-pill-mobile");
  if (state.partnerCode) {
- if (pillRecap) pillRecap.classList.add("show");
  if (pillMobile) pillMobile.classList.add("show");
   } else {
- if (pillRecap) pillRecap.classList.remove("show");
  if (pillMobile) pillMobile.classList.remove("show");
   }
 
