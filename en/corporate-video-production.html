@@ -207,6 +207,66 @@ footer{padding:24px var(--h-pad);background:var(--navy);border-top:1px solid rgb
 @media(max-width:768px){.lang-switch{margin-left:0;margin-top:8px}}
 
 body.menu-open .float-call{display:none!important}
+
+/* ════════════════════════════════════════════════════════════
+   nomacast-modernize-v1 — Sélecteur globe, bandeau, footer, ombres CTA
+   ════════════════════════════════════════════════════════════ */
+
+/* nomacast-cta-shadows-v1 : harmonisation des CTA */
+.nav-cta { border-radius: 8px !important; box-shadow: 0 2px 6px rgba(14,165,233,0.35) !important; transition: background 0.2s, transform 0.15s, box-shadow 0.2s !important; }
+.nav-cta:hover { box-shadow: 0 6px 16px rgba(14,165,233,0.55) !important; }
+.btn-primary, .price-cta, .form-submit { box-shadow: 0 2px 6px rgba(14,165,233,0.35) !important; transition: background 0.2s, transform 0.15s, box-shadow 0.2s !important; }
+.btn-primary:hover, .price-cta:hover, .form-submit:hover { box-shadow: 0 6px 16px rgba(14,165,233,0.55) !important; }
+.btn-ghost { box-shadow: 0 1px 3px rgba(11,25,41,0.10) !important; transition: background 0.2s, transform 0.15s, box-shadow 0.2s, border-color 0.2s !important; }
+.btn-ghost:hover { box-shadow: 0 4px 12px rgba(11,25,41,0.15) !important; }
+.cases-cta { box-shadow: 0 4px 12px rgba(11,25,41,0.25) !important; transition: background 0.3s, transform 0.3s, box-shadow 0.3s !important; }
+.cases-cta:hover { box-shadow: 0 8px 20px rgba(11,25,41,0.35) !important; }
+
+/* nomacast-lang-globe-v1 : sélecteur globe + dropdown */
+.lang-switch { position: relative; padding: 0 !important; margin-left: 8px; }
+.lang-globe { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid transparent; color: var(--ink-muted, #4d6b8a); cursor: pointer; padding: 6px 10px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; transition: background .15s, color .15s, border-color .15s; }
+.lang-globe:hover { background: rgba(90,152,214,.08); color: var(--cyan, #5A98D6); }
+.lang-globe[aria-expanded="true"] { background: rgba(90,152,214,.12); color: var(--cyan, #5A98D6); border-color: rgba(90,152,214,.18); }
+.lang-globe svg { width: 15px; height: 15px; flex-shrink: 0; }
+.lang-globe .lang-chevron { width: 11px; height: 11px; opacity: .7; transition: transform .2s; }
+.lang-globe[aria-expanded="true"] .lang-chevron { transform: rotate(180deg); }
+.lang-dropdown { position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px; background: #fff; border: 1px solid var(--border, #dae4f0); border-radius: 10px; box-shadow: 0 8px 24px rgba(11,25,41,0.12); padding: 6px; margin: 0; list-style: none; z-index: 100; }
+.lang-dropdown[hidden] { display: none; }
+.lang-dropdown li { list-style: none; }
+.lang-dropdown a { display: block; padding: 9px 14px; color: var(--ink, #0b1929); font-size: 13px; font-weight: 500; text-decoration: none; border-radius: 6px; transition: background .15s, color .15s; }
+.lang-dropdown a:hover { background: rgba(90,152,214,.10); color: var(--cyan, #5A98D6); }
+.lang-dropdown a.active { background: rgba(90,152,214,.12); color: var(--cyan, #5A98D6); font-weight: 600; cursor: default; }
+@media (max-width: 768px) { .lang-switch { display: none !important; } }
+.nav-lang-mobile { display: none; }
+@media (max-width: 768px) {
+ .nav-lang-mobile { display: inline-flex; align-items: center; margin-left: auto; margin-right: 12px; position: relative; }
+ .nav-lang-mobile .lang-globe { padding: 6px 8px; }
+ .nav-lang-mobile .lang-dropdown { right: -8px; }
+}
+
+/* nomacast-lang-banner-v1 : bandeau de suggestion */
+.lang-suggest { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: #0b1929; color: #fff; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 14px; font-family: var(--font-body, inherit); box-shadow: 0 2px 8px rgba(0,0,0,0.15); animation: lang-suggest-slide-in .35s ease-out; }
+.lang-suggest[hidden] { display: none; }
+.lang-suggest-text { opacity: .85; }
+.lang-suggest-link { color: #5A98D6; font-weight: 600; text-decoration: none; }
+.lang-suggest-link:hover { text-decoration: underline; }
+.lang-suggest-close { background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 0 4px; opacity: .55; line-height: 1; transition: opacity .15s; }
+.lang-suggest-close:hover { opacity: 1; }
+@keyframes lang-suggest-slide-in { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@media (max-width: 600px) { .lang-suggest { flex-wrap: wrap; padding: 8px 14px; font-size: 13px; gap: 6px; text-align: center; justify-content: center; } }
+
+/* nomacast-lang-footer-v1 : sélecteur dans le footer */
+.footer-lang { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,.5); }
+.footer-lang svg { width: 12px; height: 12px; opacity: .65; }
+.footer-lang a { color: rgba(255,255,255,.5); text-decoration: none; transition: color .2s; }
+.footer-lang a:hover { color: #5A98D6; }
+.footer-lang a.active { color: #fff; font-weight: 600; }
+.footer-lang .footer-lang-sep { opacity: .35; }
+
+/* Page 'devis-*' / 'quote-*' et landings produits : adapter le dropdown aux headers allégés */
+.devis-lang-switch, .landing-lang-switch { position: relative; list-style: none; padding: 0; margin: 0; }
+.devis-lang-switch .lang-globe, .landing-lang-switch .lang-globe { padding: 6px 10px; }
+.devis-lang-switch .lang-dropdown, .landing-lang-switch .lang-dropdown { right: 0; }
 </style>
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
@@ -320,6 +380,9 @@ body.menu-open .float-call{display:none!important}
 
 </head>
 <body>
+<!-- nomacast-lang-banner-v1 -->
+<div id="lang-suggest" class="lang-suggest" hidden role="region" aria-label="Language suggestion"><span class="lang-suggest-text"></span><a class="lang-suggest-link" href="#"></a><button type="button" class="lang-suggest-close" aria-label="Close">&times;</button></div>
+
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M99NLF45"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <nav id="navbar">
@@ -658,5 +721,74 @@ document.querySelectorAll('.faq-question').forEach(btn => {
 })();
 </script>
 
+
+<!-- nomacast-modernize-v1 : JS sélecteur globe + bandeau suggestion langue -->
+<script>
+(function(){
+  // ─── 1. Dropdown langue globe ───────────────────────────────
+  function initLangGlobe(){
+    var globes = document.querySelectorAll('.lang-globe');
+    if (!globes.length) return;
+    function closeAll(except){
+      globes.forEach(function(b){
+        if (b === except) return;
+        b.setAttribute('aria-expanded','false');
+        var dd = b.nextElementSibling;
+        if (dd && dd.classList.contains('lang-dropdown')) dd.hidden = true;
+      });
+    }
+    globes.forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var dd = btn.nextElementSibling;
+        if (!dd || !dd.classList.contains('lang-dropdown')) return;
+        var isOpen = btn.getAttribute('aria-expanded') === 'true';
+        closeAll(isOpen ? null : btn);
+        btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        dd.hidden = isOpen;
+      });
+      btn.addEventListener('keydown', function(e){
+        if (e.key === 'Escape'){
+          btn.setAttribute('aria-expanded','false');
+          var dd = btn.nextElementSibling;
+          if (dd && dd.classList.contains('lang-dropdown')) dd.hidden = true;
+        }
+      });
+    });
+    document.addEventListener('click', function(){ closeAll(null); });
+  }
+
+  // ─── 2. Bandeau suggestion langue ───────────────────────────
+  function initLangBanner(){
+    var SK = 'nmc-lang-suggest-dismissed';
+    try { if (sessionStorage.getItem(SK)) return; } catch(e){}
+    var pageLang = (document.documentElement.lang || 'fr').toLowerCase().slice(0,2);
+    var navLang = ((navigator.language || navigator.userLanguage || 'en')).toLowerCase().slice(0,2);
+    if (pageLang === navLang) return;
+    if (navLang !== 'fr' && navLang !== 'en') return;
+    var alt = document.querySelector('link[rel="alternate"][hreflang="' + navLang + '"]');
+    if (!alt || !alt.href) return;
+    var el = document.getElementById('lang-suggest');
+    if (!el) return;
+    var msg = (navLang === 'en')
+      ? { text: 'This site is also available in English.', link: 'View English version →' }
+      : { text: 'Ce site est aussi disponible en français.', link: 'Voir la version française →' };
+    var t = el.querySelector('.lang-suggest-text');
+    var l = el.querySelector('.lang-suggest-link');
+    var c = el.querySelector('.lang-suggest-close');
+    if (t) t.textContent = msg.text;
+    if (l){ l.textContent = msg.link; l.href = alt.href; l.setAttribute('hreflang', navLang); l.setAttribute('lang', navLang); }
+    el.hidden = false;
+    if (c) c.addEventListener('click', function(){
+      el.hidden = true;
+      try { sessionStorage.setItem(SK, '1'); } catch(e){}
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ initLangGlobe(); initLangBanner(); });
+  } else { initLangGlobe(); initLangBanner(); }
+})();
+</script>
 </body>
 </html>
