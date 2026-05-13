@@ -13,7 +13,7 @@ export const onRequestPost = async ({ params, env }) => {
   if (!env.RESEND_API_KEY) return jsonResponse({ error: 'RESEND_API_KEY non configurée' }, 500);
 
   const event = await env.DB.prepare(`
-    SELECT id, slug, title, client_name, scheduled_at,
+    SELECT id, slug, title, client_name, scheduled_at, duration_minutes,
            primary_color, logo_url, white_label, access_mode
       FROM events WHERE id = ?
   `).bind(params.id).first();
@@ -117,15 +117,67 @@ function buildInvitationEmail(event, invitee) {
   const firstName = extractFirstName(invitee.full_name);
   const greeting = firstName ? `Bonjour ${firstName},` : 'Bonjour,';
   const chatPath = `/chat/${event.slug}`;
-  const link = event.access_mode === 'private'
-    ? `${SITE_URL}${chatPath}?t=${invitee.magic_token}`
-    : `${SITE_URL}${chatPath}`;
+  const tokenQuery = event.access_mode === 'private' ? `?t=${invitee.magic_token}` : '';
+  const link = `${SITE_URL}${chatPath}${tokenQuery}`;
   const dateLabel = formatFrenchDateTime(event.scheduled_at);
   const orgLine = event.client_name ? `organisé par ${event.client_name}` : '';
   const subject = `Invitation : ${event.title}`;
-  const text = buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel: event.white_label });
-  const html = buildHtml({ greeting, event, link, dateLabel, orgLine, color: event.primary_color || '#5A98D6', whiteLabel: event.white_label });
+  const agendaUrls = buildAgendaUrls(event, link, tokenQuery);
+  const text = buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel: event.white_label, agendaUrls });
+  const html = buildHtml({ greeting, event, link, dateLabel, orgLine, color: event.primary_color || '#5A98D6', whiteLabel: event.white_label, agendaUrls });
   return { from: FROM, to: [invitee.email], reply_to: REPLY_TO, subject, html, text };
+}
+
+// ============================================================
+// Helpers Agenda
+// ============================================================
+function buildAgendaUrls(event, chatLink, tokenQuery) {
+  const start = event.scheduled_at ? toCalDate(event.scheduled_at) : '';
+  const end = event.scheduled_at ? toCalDate(addMinutes(event.scheduled_at, event.duration_minutes || 90)) : '';
+  const details = `Chat live de l'événement « ${event.title} »` +
+    (event.client_name ? `, organisé par ${event.client_name}.` : '.') +
+    `\n\nPour rejoindre : ${chatLink}\n\nPropulsé par Nomacast — https://nomacast.fr`;
+
+  // Google Calendar TEMPLATE
+  const googleParams = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    details: details,
+    location: chatLink,
+    sf: 'true',
+    output: 'xml'
+  });
+  if (start && end) googleParams.set('dates', `${start}/${end}`);
+  const google = 'https://calendar.google.com/calendar/render?' + googleParams.toString();
+
+  // Outlook Live deeplink
+  const outlookParams = new URLSearchParams({
+    path: '/calendar/action/compose',
+    rru: 'addevent',
+    subject: event.title,
+    body: details,
+    location: chatLink
+  });
+  if (event.scheduled_at) {
+    outlookParams.set('startdt', event.scheduled_at);
+    outlookParams.set('enddt', addMinutes(event.scheduled_at, event.duration_minutes || 90));
+  }
+  const outlook = 'https://outlook.live.com/calendar/0/deeplink/compose?' + outlookParams.toString();
+
+  // .ics (Apple Calendar, Outlook desktop, Thunderbird, etc.)
+  const ics = `${SITE_URL}/chat/${event.slug}/calendar.ics${tokenQuery}`;
+
+  return { google, outlook, ics };
+}
+
+function toCalDate(iso) {
+  return new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+function addMinutes(iso, mins) {
+  const d = new Date(iso);
+  d.setMinutes(d.getMinutes() + (mins || 0));
+  return d.toISOString();
 }
 
 function extractFirstName(fullName) {
@@ -149,13 +201,13 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel }) {
+function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel, agendaUrls }) {
   const lines = [
     greeting,
     '',
     `Vous êtes invité(e) à participer au chat live de l'événement « ${event.title} »` + (orgLine ? `, ${orgLine}` : '') + '.',
     '',
-    '— DÉTAILS DE L\'ÉVÉNEMENT —',
+    'DÉTAILS DE L\'ÉVÉNEMENT',
     dateLabel ? `Date    : ${dateLabel}` : '',
     event.access_mode === 'private'
       ? 'Accès   : Lien personnel (ne pas partager)'
@@ -164,23 +216,22 @@ function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel }) {
     'Pour rejoindre le chat live :',
     link,
     '',
-    'Vous pouvez sauvegarder ce lien dans votre agenda dès maintenant.',
-    'Le chat ouvrira automatiquement le jour J.',
+    'AJOUTER À MON AGENDA',
+    `Google  : ${agendaUrls.google}`,
+    `Outlook : ${agendaUrls.outlook}`,
+    `Apple / autre : ${agendaUrls.ics}`,
     '',
-    whiteLabel
-      ? ''
-      : '---',
-    whiteLabel
-      ? ''
-      : 'Propulsé par Nomacast — live streaming corporate',
-    whiteLabel
-      ? ''
-      : 'https://nomacast.fr'
+    'Le chat ouvrira automatiquement le jour J.',
+    ''
   ];
+  if (!whiteLabel) {
+    lines.push('Nomacast — La qualité agence. Un seul interlocuteur.');
+    lines.push('https://www.nomacast.fr · evenement@nomacast.fr');
+  }
   return lines.filter(line => line !== null && line !== undefined).join('\n');
 }
 
-function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabel }) {
+function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabel, agendaUrls }) {
   const safeTitle = escapeHtml(event.title);
   const safeOrg = orgLine ? escapeHtml(orgLine) : '';
   const safeGreeting = escapeHtml(greeting);
@@ -190,37 +241,71 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
     ? 'Lien personnel'
     : 'Lien public';
 
-  // ===== Logique de branding =====
+  // ===== HEADER BAR (logo) =====
   const hasEventLogo = !!event.logo_url;
-  let heroLogoHtml;
+  let headerBarHtml;
   if (hasEventLogo) {
-    heroLogoHtml = `<img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;margin-bottom:20px;">`;
+    headerBarHtml = `<tr><td style="padding:22px 36px;background:#ffffff;border-bottom:1px solid #eef2f6;">
+      <img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" height="36" style="display:block;max-height:40px;width:auto;border:0;outline:none;">
+    </td></tr>`;
   } else if (!whiteLabel) {
-    heroLogoHtml = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:22px;">
-      <tr><td style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.22em;text-transform:uppercase;line-height:1;">Nomacast</td></tr>
-      <tr><td style="padding-top:6px;font-size:0;line-height:0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="28" height="2" style="background:#ffffff;opacity:0.55;font-size:0;line-height:0;">&nbsp;</td></tr></table>
-      </td></tr>
-    </table>`;
+    headerBarHtml = `<tr><td style="padding:22px 36px;background:#ffffff;border-bottom:1px solid #eef2f6;">
+      <a href="https://www.nomacast.fr/" target="_blank" style="text-decoration:none;display:inline-block;">
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;line-height:1;white-space:nowrap;">
+          <span style="color:#5D9CEC;">&bull;</span><span style="color:#0f172a;">&nbsp;Nomacast</span>
+        </div>
+      </a>
+    </td></tr>`;
   } else {
-    heroLogoHtml = '';
+    headerBarHtml = '';
   }
 
+  // ===== FOOTER =====
   const footerHtml = whiteLabel
     ? ''
-    : `<tr><td style="padding:22px 36px 26px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#94a3b8;border-top:1px solid #eef2f6;background:#fafbfc;">
-         <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
-           <td style="vertical-align:middle;">
-             <div style="margin-bottom:3px;color:#475569;font-size:13px;">
-               ${hasEventLogo ? 'Propulsé par ' : ''}<strong style="color:#0f172a;font-size:14px;letter-spacing:0.02em;">Nomacast</strong>
-               <span style="color:#94a3b8;">&middot; live streaming corporate</span>
-             </div>
-             <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:none;">nomacast.fr</a>
-             <span style="color:#cbd5e1;">&middot;</span>
-             <a href="mailto:${REPLY_TO}" style="color:#94a3b8;text-decoration:none;">${REPLY_TO}</a>
-           </td>
-         </tr></table>
+    : `<tr><td style="padding:28px 36px 30px;background:#fafbfc;border-top:1px solid #eef2f6;font-family:Arial,Helvetica,sans-serif;">
+         <a href="https://www.nomacast.fr/" target="_blank" style="text-decoration:none;display:inline-block;">
+           <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:17px;font-weight:800;letter-spacing:-0.4px;line-height:1;white-space:nowrap;">
+             <span style="color:#5D9CEC;">&bull;</span><span style="color:#0f172a;">&nbsp;Nomacast</span>
+           </div>
+         </a>
+         <div style="margin:8px 0 14px;color:#475569;font-size:13px;font-style:italic;">
+           La qualité agence. Un seul interlocuteur.
+         </div>
+         <div style="color:#94a3b8;font-size:12px;line-height:1.6;">
+           <a href="https://www.nomacast.fr" target="_blank" style="color:#64748b;text-decoration:none;">www.nomacast.fr</a>
+           <span style="color:#cbd5e1;">&nbsp;·&nbsp;</span>
+           <a href="mailto:${REPLY_TO}" style="color:#64748b;text-decoration:none;">${REPLY_TO}</a>
+         </div>
        </td></tr>`;
+
+  // ===== AGENDA BUTTONS =====
+  const agendaBlock = `<tr>
+    <td style="padding:0 36px 24px;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:12px;">
+        Ajouter à mon agenda
+      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+        <tr>
+          <td style="padding:0 4px;">
+            <a href="${escapeHtml(agendaUrls.google)}" target="_blank" style="display:inline-block;padding:9px 14px;font-size:12px;font-weight:600;color:#0f172a;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:7px;text-decoration:none;">
+              Google Agenda
+            </a>
+          </td>
+          <td style="padding:0 4px;">
+            <a href="${escapeHtml(agendaUrls.outlook)}" target="_blank" style="display:inline-block;padding:9px 14px;font-size:12px;font-weight:600;color:#0f172a;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:7px;text-decoration:none;">
+              Outlook
+            </a>
+          </td>
+          <td style="padding:0 4px;">
+            <a href="${escapeHtml(agendaUrls.ics)}" style="display:inline-block;padding:9px 14px;font-size:12px;font-weight:600;color:#0f172a;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:7px;text-decoration:none;">
+              Apple / iCal
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
 
   return `<!doctype html>
 <html lang="fr">
@@ -230,6 +315,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
 <title>${safeTitle}</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif;">
+<!-- Préheader (texte d'aperçu masqué) -->
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
   Vous êtes invité(e) au chat live ${safeTitle}.${safeDate ? ' ' + safeDate : ''}
 </div>
@@ -239,9 +325,11 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
 
     <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(15,23,42,0.08);">
 
+      ${headerBarHtml}
+
+      <!-- HERO -->
       <tr>
-        <td style="background:${color};padding:34px 36px 28px;font-family:Arial,Helvetica,sans-serif;">
-          ${heroLogoHtml}
+        <td style="background:${color};padding:32px 36px 28px;font-family:Arial,Helvetica,sans-serif;">
           <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#ffffff;opacity:0.85;margin-bottom:10px;">
             Invitation chat live
           </div>
@@ -252,6 +340,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
+      <!-- GREETING + INTRO -->
       <tr>
         <td style="padding:32px 36px 8px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-size:15px;line-height:1.65;">
           <p style="margin:0 0 14px;font-size:16px;">${safeGreeting}</p>
@@ -262,6 +351,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
+      <!-- DETAILS BOX -->
       <tr>
         <td style="padding:18px 36px 8px;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f7f9fc;border:1px solid #e6ecf3;border-radius:10px;">
@@ -279,6 +369,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
+      <!-- CTA -->
       <tr>
         <td align="center" style="padding:24px 36px 8px;">
           <table role="presentation" cellpadding="0" cellspacing="0">
@@ -291,6 +382,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
+      <!-- FALLBACK LINK -->
       <tr>
         <td style="padding:14px 36px 22px;font-family:Arial,Helvetica,sans-serif;color:#64748b;font-size:12px;line-height:1.6;text-align:center;">
           Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
@@ -298,12 +390,13 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
+      ${agendaBlock}
+
+      <!-- AGENDA TIP -->
       <tr>
-        <td style="padding:0 36px 28px;">
+        <td style="padding:0 36px 30px;">
           <div style="border-top:1px dashed #e6ecf3;padding-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;line-height:1.6;">
-            <strong style="color:#0f172a;">Astuce&nbsp;:</strong>
-            sauvegardez ce lien dans votre agenda dès maintenant. Le chat ouvrira automatiquement le jour J.
-            ${event.access_mode === 'private' ? '<br><span style="color:#94a3b8;">Ce lien est personnel — merci de ne pas le partager.</span>' : ''}
+            Le chat ouvrira automatiquement le jour J.${event.access_mode === 'private' ? '<br><span style="color:#94a3b8;">Ce lien est personnel — merci de ne pas le partager.</span>' : ''}
           </div>
         </td>
       </tr>
