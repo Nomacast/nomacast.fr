@@ -311,6 +311,21 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   border-bottom: 1px solid var(--border-light);
 }
 .wizard-step:last-of-type { border-bottom: none; }
+
+/* Variante compacte pour Durée et Audience (sections courtes) · chat-preview-v7 */
+.wizard-step.wizard-step-compact { padding: 24px 32px; }
+.wizard-step.wizard-step-compact .wizard-step-header { margin-bottom: 6px; }
+.wizard-step.wizard-step-compact .wizard-step-num { font-size: 26px; }
+.wizard-step.wizard-step-compact .wizard-step-title { font-size: 18px; }
+.wizard-step.wizard-step-compact .wizard-step-desc {
+  font-size: 13px;
+  margin-bottom: 14px;
+  margin-left: 46px;
+}
+.wizard-step.wizard-step-compact .wizard-numeric-hint {
+  margin-top: 8px;
+  font-size: 12px;
+}
 .wizard-step-header {
   display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px;
 }
@@ -665,10 +680,12 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   background: var(--off-white);
 }
 .preview-chat-logo {
-  width: 32px; height: 32px; object-fit: contain;
-  border-radius: 4px; background: #fff;
-  border: 1px solid var(--border-light); padding: 3px;
+  width: 44px; height: 44px; object-fit: contain;
+  border-radius: 6px;
   flex-shrink: 0;
+  /* Pas de fond ni de border : on garde le fond naturel du chat-head.
+     Si un logo a un fond blanc inclus, il se fondra avec le contexte
+     (chat-head est déjà clair). Si fond transparent, ressort sur le contexte. */
 }
 .preview-chat-head-info { flex: 1; min-width: 0; }
 .preview-chat-event {
@@ -1247,7 +1264,7 @@ body.menu-open .float-call{display:none!important}
     <div class="wizard-main">
 
     <!-- ÉTAPE 01 · Durée -->
-    <div class="wizard-step" data-step="1">
+    <div class="wizard-step wizard-step-compact" data-step="1">
       <div class="wizard-step-header">
         <span class="wizard-step-num">01</span>
         <h3 class="wizard-step-title">Durée prévue</h3>
@@ -1261,7 +1278,7 @@ body.menu-open .float-call{display:none!important}
     </div>
 
     <!-- ÉTAPE 02 · Audience -->
-    <div class="wizard-step" data-step="2">
+    <div class="wizard-step wizard-step-compact" data-step="2">
       <div class="wizard-step-header">
         <span class="wizard-step-num">02</span>
         <h3 class="wizard-step-title">Audience attendue</h3>
