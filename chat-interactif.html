@@ -138,51 +138,173 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .review-banner strong { color: #3a3100; }
 
 /* Wizard mode toggle (Option C · hybride) */
-.wizard-mode-bar {
-  max-width: 800px; margin: 0 auto 24px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; flex-wrap: wrap;
-}
-.wizard-mode-toggle {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--white); border: 1.5px solid var(--border);
-  color: var(--ink-muted); cursor: pointer;
-  padding: 10px 16px; border-radius: 8px;
-  font-family: var(--font-body); font-size: 14px; font-weight: 600;
-  transition: border-color .2s, color .2s, background .2s;
-}
-.wizard-mode-toggle:hover {
-  border-color: var(--cyan); color: var(--cyan); background: var(--cyan-light);
-}
-.wizard-mode-toggle svg { flex-shrink: 0; }
-.wizard-step-indicator {
-  font-size: 12px; color: var(--ink-faint); font-weight: 500;
-  letter-spacing: 0.06em; text-transform: uppercase;
-  flex-shrink: 0;
-}
-@media (max-width: 700px) {
-  .wizard-mode-bar { flex-direction: column; align-items: center; gap: 12px; }
-  .wizard-step-indicator { text-align: center; }
+.wizard {
+  max-width: 1180px; margin: 0 auto;
+  background: transparent;
+  border: none; border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
 }
 
-.wizard {
-  max-width: 800px; margin: 0 auto;
+/* Layout 2-cols : formulaire à gauche + récap sticky à droite · chat-interactif-v2 */
+.wizard-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+.wizard-main {
   background: var(--white);
   border: 1px solid var(--border); border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(11, 25, 41, 0.04);
+  min-width: 0;
 }
-.wizard-progress {
-  display: flex; gap: 8px;
-  padding: 24px 32px; border-bottom: 1px solid var(--border-light);
-  background: var(--white);
+
+/* Récap sticky à droite · chat-interactif-v2 */
+.wizard-summary {
+  position: sticky;
+  top: 92px;
+  max-height: calc(100vh - 108px);
+  overflow-y: auto;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 16px;
+  padding: 28px 26px;
+  box-shadow: 0 20px 60px -20px rgba(11,25,41,.45);
 }
-.wizard-progress-step {
-  flex: 1; height: 4px; background: var(--border-light); border-radius: 2px;
-  position: relative;
+.wizard-summary::-webkit-scrollbar { width: 6px; }
+.wizard-summary::-webkit-scrollbar-track { background: transparent; }
+.wizard-summary::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
+.wizard-summary::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.22); }
+
+.summary-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--cyan);
+  margin-bottom: 6px;
 }
-.wizard-progress-step.active { background: var(--cyan); }
-.wizard-progress-step.completed { background: var(--cyan); opacity: 0.6; }
+.summary-title {
+  font-family: var(--font-head); font-size: 18px; font-weight: 600;
+  margin: 0 0 22px; color: #fff;
+}
+.summary-total {
+  background: rgba(90,152,214,.1);
+  border: 1px solid rgba(90,152,214,.3);
+  border-radius: 12px;
+  padding: 18px 16px;
+  text-align: center;
+  margin-bottom: 22px;
+}
+.summary-total-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--cyan);
+  margin-bottom: 6px;
+}
+.summary-total-price {
+  font-family: var(--font-head); font-size: 26px; font-weight: 700;
+  color: #fff; letter-spacing: -0.01em; line-height: 1.1;
+}
+.summary-breakdown {
+  display: flex; flex-direction: column;
+  padding-bottom: 18px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.summary-line {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 14px;
+  padding: 8px 0;
+  font-size: 13px;
+}
+.summary-line-label {
+  color: rgba(255,255,255,.55);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.summary-line-val {
+  color: #fff; font-weight: 500;
+  text-align: right; line-height: 1.4;
+  word-break: break-word;
+}
+.summary-line-option .summary-line-val {
+  font-size: 12px;
+}
+.summary-note {
+  font-size: 12px; color: rgba(255,255,255,.5);
+  line-height: 1.55; font-weight: 300;
+}
+
+/* Formulaire intégré dans l'aside · chat-interactif-v2 */
+.summary-form {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.summary-form-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--cyan);
+  margin-bottom: 14px;
+}
+.summary-form-fields {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 14px;
+}
+.summary-form-fields input {
+  width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-family: var(--font-body); font-size: 14px;
+  color: #fff;
+  transition: border-color .2s, background .2s;
+}
+.summary-form-fields input::placeholder { color: rgba(255,255,255,.42); }
+.summary-form-fields input:focus {
+  outline: none; border-color: var(--cyan);
+  background: rgba(255,255,255,.10);
+}
+.summary-form-fields input[type="date"] { color-scheme: dark; }
+
+.summary-security {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: rgba(255,255,255,.55);
+  padding: 8px 0;
+}
+
+.summary-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; box-sizing: border-box;
+  background: var(--cyan); color: #fff;
+  padding: 14px 18px;
+  border: none; border-radius: 10px;
+  font-family: var(--font-body); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(14,165,233,.35);
+  transition: box-shadow .2s, transform .1s, opacity .2s;
+}
+.summary-cta:hover { box-shadow: 0 6px 18px rgba(14,165,233,.55); }
+.summary-cta:active { transform: translateY(1px); }
+.summary-cta:disabled {
+  opacity: 0.7; cursor: default;
+  box-shadow: none; transform: none;
+}
+
+.summary-form-note {
+  font-size: 11px; color: rgba(255,255,255,.45);
+  text-align: center; margin: 10px 0 0; font-weight: 300;
+}
+
+/* Mobile : récap passe sous le formulaire en static */
+@media (max-width: 960px) {
+  .wizard-layout { grid-template-columns: 1fr; gap: 24px; }
+  .wizard-summary {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
 
 .wizard-step {
   padding: 40px 32px;
@@ -407,90 +529,6 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   }
 }
 
-/* Variante récap : pleine largeur, centrée */
-.wizard-recap .security-strip {
-  display: flex; width: 100%; margin-top: 20px; justify-content: center;
-  text-align: center; flex-wrap: wrap;
-}
-
-.wizard-nav {
-  display: flex; justify-content: space-between; gap: 12px;
-  padding: 24px 32px; background: var(--off-white);
-  border-top: 1px solid var(--border-light);
-}
-.wizard-btn-prev, .wizard-btn-next {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 12px 24px; border-radius: 8px;
-  font-size: 14px; font-weight: 600; cursor: pointer;
-  border: none; font-family: var(--font-body);
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-}
-.wizard-btn-prev { background: transparent; color: var(--ink-muted); }
-.wizard-btn-prev:hover { color: var(--ink); }
-.wizard-btn-next {
-  background: var(--cyan); color: #fff;
-  box-shadow: 0 2px 6px rgba(14,165,233,.35);
-}
-.wizard-btn-next:hover {
-  background: var(--cyan-hover);
-  box-shadow: 0 6px 16px rgba(14,165,233,.55); transform: translateY(-1px);
-}
-
-/* Récap final */
-.wizard-recap {
-  padding: 40px 32px; background: var(--navy); color: #fff;
-}
-.wizard-recap-title {
-  font-family: var(--font-head); font-size: 22px; font-weight: 700;
-  margin-bottom: 8px;
-}
-.wizard-recap-subtitle {
-  font-size: 14px; color: rgba(255,255,255,.6);
-  margin-bottom: 24px; font-weight: 300;
-}
-.wizard-recap-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-  margin-bottom: 28px;
-}
-.wizard-recap-item {
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px; padding: 14px 16px;
-}
-.wizard-recap-label {
-  font-size: 11px; font-weight: 600; letter-spacing: .08em;
-  text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 4px;
-}
-.wizard-recap-value { font-size: 14px; font-weight: 500; color: #fff; }
-.wizard-estim {
-  background: rgba(90,152,214,.1); border: 1px solid rgba(90,152,214,.3);
-  border-radius: 12px; padding: 24px; text-align: center;
-  margin-bottom: 28px;
-}
-.wizard-estim-label {
-  font-size: 11px; font-weight: 600; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--cyan); margin-bottom: 8px;
-}
-.wizard-estim-price {
-  font-family: var(--font-head); font-size: 36px; font-weight: 700;
-  color: #fff; letter-spacing: -0.02em; margin-bottom: 6px;
-}
-.wizard-estim-note {
-  font-size: 13px; color: rgba(255,255,255,.6); font-weight: 300;
-}
-.wizard-submit-area { margin-top: 24px; text-align: center; }
-.wizard-submit {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--cyan); color: #fff; padding: 16px 32px;
-  border-radius: 8px; font-family: var(--font-body); font-size: 15px;
-  font-weight: 600; border: none; cursor: pointer;
-  box-shadow: 0 2px 6px rgba(14,165,233,.35);
-  transition: background .2s, transform .15s, box-shadow .2s;
-}
-.wizard-submit:hover {
-  background: var(--cyan-hover);
-  box-shadow: 0 6px 16px rgba(14,165,233,.55); transform: translateY(-1px);
-}
-
 /* ═══════ PRICING GRID ═══════ */
 .pricing-grid-wrap {
   max-width: 720px; margin: 48px auto 0; overflow-x: auto;
@@ -685,11 +723,7 @@ body.menu-open .float-call{display:none!important}
   .nav-links { display: none; }
   .wizard-step { padding: 28px 20px; }
   .wizard-step-desc { margin-left: 0; }
-  .wizard-progress { padding: 18px 20px; }
-  .wizard-nav { padding: 20px; }
   .wizard-row { grid-template-columns: 1fr; }
-  .wizard-recap { padding: 28px 20px; }
-  .wizard-recap-grid { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -813,24 +847,10 @@ body.menu-open .float-call{display:none!important}
     </p>
   </div>
 
-  <div class="wizard-mode-bar">
-    <button type="button" class="wizard-mode-toggle" aria-label="Bascule entre vue séquentielle et vue complète">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      <span class="wizard-mode-toggle-label">Voir toutes les étapes</span>
-    </button>
-    <span class="wizard-step-indicator">Étape 01 sur 05</span>
-  </div>
-
   <div class="wizard" id="wizard-form">
 
-    <!-- Progress bar (5 étapes) -->
-    <div class="wizard-progress" aria-label="Progression du configurateur">
-      <div class="wizard-progress-step active" data-step="1"></div>
-      <div class="wizard-progress-step" data-step="2"></div>
-      <div class="wizard-progress-step" data-step="3"></div>
-      <div class="wizard-progress-step" data-step="4"></div>
-      <div class="wizard-progress-step" data-step="5"></div>
-    </div>
+    <div class="wizard-layout">
+    <div class="wizard-main">
 
     <!-- ÉTAPE 01 · Durée -->
     <div class="wizard-step" data-step="1">
@@ -973,120 +993,73 @@ body.menu-open .float-call{display:none!important}
       </label>
     </div>
 
-    <!-- ÉTAPE 05 · Coordonnées -->
-    <div class="wizard-step" data-step="5">
-      <div class="wizard-step-header">
-        <span class="wizard-step-num">05</span>
-        <h3 class="wizard-step-title">Vos coordonnées</h3>
-      </div>
-      <p class="wizard-step-desc">Seul l'email est obligatoire, il sert à vous envoyer le devis et l'identifiant unique de votre configuration. Le reste est facultatif et nous aide à vous rappeler plus efficacement.</p>
+    </div><!-- /.wizard-main -->
 
-      <div class="wizard-field">
-        <label>Email professionnel</label>
-        <input type="email" name="email" required>
+    <aside class="wizard-summary" aria-label="Récapitulatif de votre configuration">
+      <div class="summary-eyebrow">Récapitulatif</div>
+      <h3 class="summary-title">Votre configuration</h3>
+
+      <div class="summary-total">
+        <div class="summary-total-label">Sous-total estimé</div>
+        <div class="summary-total-price" data-recap="price">À partir de 290 € HT</div>
       </div>
 
-      <div class="wizard-row">
-        <div class="wizard-field">
-          <label>Prénom <span class="optional">Facultatif</span></label>
-          <input type="text" name="firstname">
+      <div class="summary-breakdown">
+        <div class="summary-line">
+          <span class="summary-line-label">Durée</span>
+          <span class="summary-line-val" data-recap="duration">À saisir</span>
         </div>
-        <div class="wizard-field">
-          <label>Nom <span class="optional">Facultatif</span></label>
-          <input type="text" name="lastname">
+        <div class="summary-line">
+          <span class="summary-line-label">Audience</span>
+          <span class="summary-line-val" data-recap="audience">À saisir</span>
         </div>
-      </div>
-
-      <div class="wizard-row">
-        <div class="wizard-field">
-          <label>Société <span class="optional">Facultatif</span></label>
-          <input type="text" name="company">
+        <div class="summary-line">
+          <span class="summary-line-label">Modes d'interaction</span>
+          <span class="summary-line-val" data-recap="modes">—</span>
         </div>
-        <div class="wizard-field">
-          <label>Téléphone <span class="optional">Facultatif</span></label>
-          <input type="tel" name="phone">
+        <div class="summary-line">
+          <span class="summary-line-label">Mode d'accès</span>
+          <span class="summary-line-val" data-recap="access-mode">Liens nominatifs</span>
         </div>
-      </div>
-
-      <div class="wizard-field">
-        <label>Date prévisionnelle de l'événement <span class="optional">Facultatif</span></label>
-        <input type="date" name="event-date">
-      </div>
-
-      <div class="wizard-field">
-        <label>Contexte additionnel <span class="optional">Facultatif</span></label>
-        <textarea name="notes" placeholder="Précisez ici tout élément qui vous semble utile : nom de l'événement, format précis, lieu, contraintes techniques, etc."></textarea>
-      </div>
-    </div>
-
-    <!-- RÉCAP + ESTIMATION -->
-    <div class="wizard-recap">
-      <h3 class="wizard-recap-title">Récapitulatif de votre configuration</h3>
-      <p class="wizard-recap-subtitle">Ces informations seront jointes à votre demande de devis.</p>
-
-      <div class="wizard-estim">
-        <div class="wizard-estim-label">Sous-total estimé</div>
-        <div class="wizard-estim-price" data-recap="price">À partir de 290 € HT</div>
-        <div class="wizard-estim-note">Tarif plancher en complément de votre prestation de captation Nomacast. Le devis final, envoyé sous 24 heures, est ajusté selon la durée et le format exacts de votre événement.</div>
-      </div>
-
-      <div class="wizard-recap-grid">
-        <div class="wizard-recap-item">
-          <div class="wizard-recap-label">Durée</div>
-          <div class="wizard-recap-value" data-recap="duration">À saisir en étape 01</div>
-        </div>
-        <div class="wizard-recap-item">
-          <div class="wizard-recap-label">Audience attendue</div>
-          <div class="wizard-recap-value" data-recap="audience">À saisir en étape 02</div>
-        </div>
-        <div class="wizard-recap-item">
-          <div class="wizard-recap-label">Modes d'interaction</div>
-          <div class="wizard-recap-value" data-recap="modes">À sélectionner en étape 03</div>
-        </div>
-        <div class="wizard-recap-item">
-          <div class="wizard-recap-label">Mode d'accès</div>
-          <div class="wizard-recap-value" data-recap="access-mode">Liens d'accès nominatifs</div>
-        </div>
-        <div class="wizard-recap-item">
-          <div class="wizard-recap-label">Couleur principale</div>
-          <div class="wizard-recap-value" data-recap="color">À choisir en étape 04</div>
-        </div>
-        <div class="wizard-recap-item">
-          <div class="wizard-recap-label">Marque blanche</div>
-          <div class="wizard-recap-value" data-recap="white-label">Logo Nomacast conservé</div>
+        <div class="summary-line summary-line-option">
+          <span class="summary-line-label">Marque blanche</span>
+          <span class="summary-line-val" data-recap="white-label">Logo Nomacast conservé</span>
         </div>
       </div>
 
-      <div class="security-strip" role="note" aria-label="Engagement sécurité">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <span><strong>Accès sécurisé et chiffré</strong><span class="sep">·</span>TLS 1.3<span class="sep">·</span>Hébergement Europe Cloudflare<span class="sep">·</span>Logs purgés à 90 jours<span class="sep">·</span>Conforme RGPD</span>
-      </div>
+      <p class="summary-note">Tarif plancher en complément de votre prestation de captation Nomacast. Devis final ajusté sous 24h.</p>
 
-      <div style="margin-top:24px;text-align:center;">
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAAAxxxxxxx" data-theme="dark"></div>
-      </div>
+      <!-- FORMULAIRE INTÉGRÉ · pattern tarifs.html -->
+      <div class="summary-form">
+        <div class="summary-form-label">Vos coordonnées</div>
 
-      <div class="wizard-submit-area">
-        <button type="button" class="wizard-submit">
+        <div class="summary-form-fields">
+          <input type="email" name="email" placeholder="Email professionnel *" required autocomplete="email">
+          <input type="tel" name="phone" placeholder="Téléphone" autocomplete="tel">
+          <input type="text" name="company" placeholder="Société" autocomplete="organization">
+          <input type="date" name="event-date" placeholder="Date prévisionnelle">
+        </div>
+
+        <div class="summary-security">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>TLS 1.3 · Hébergement Europe · RGPD</span>
+        </div>
+
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAAxxxxxxx" data-theme="dark" style="margin: 8px 0;"></div>
+
+        <button type="button" class="summary-cta">
           Recevoir mon devis personnalisé sous 24h
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="margin-left:6px;vertical-align:-2px;"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-      </div>
-    </div>
 
-    <div class="wizard-nav">
-      <button type="button" class="wizard-btn-prev" disabled style="opacity:0.4;cursor:not-allowed;">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M7 13L1 7l6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Précédent
-      </button>
-      <button type="button" class="wizard-btn-next">
-        Suivant
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-    </div>
+        <p class="summary-form-note">Réponse sous 24h ouvrées · Sans engagement</p>
+      </div>
+    </aside>
+
+    </div><!-- /.wizard-layout -->
 
   </div>
 </section>
