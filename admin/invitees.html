@@ -117,6 +117,7 @@
   </div>
 
   <div id="message-zone"></div>
+  <div id="public-link-zone"></div>
 
   <div class="admin-card" id="content-card">
     <div class="admin-card-body admin-text-muted">
@@ -223,6 +224,11 @@
 
       pageTitle.textContent = 'Invités · ' + state.event.title;
       pageSub.textContent = A.formatDateTime(state.event.scheduled_at);
+
+      // Lien public vers la page participant (cliquable + copier)
+      var publicLinkZone = document.getElementById('public-link-zone');
+      A.clearNode(publicLinkZone);
+      publicLinkZone.appendChild(A.renderPublicLink(state.event.slug, state.event.access_mode));
 
       var inviteesData = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/invitees');
       state.invitees = inviteesData.invitees || [];
