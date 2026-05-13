@@ -101,6 +101,10 @@
     // Card "Page participant" avec URL publique cliquable + boutons Copier/Ouvrir
     A.clearNode(publicLinkZone);
     publicLinkZone.appendChild(A.renderPublicLink(ev));
+    // Card "Lien admin client" (le client peut gérer ses invités sans login Nomacast)
+    if (ev.client_admin_token) {
+      publicLinkZone.appendChild(A.renderClientAdminLink(ev));
+    }
 
     var body = A.el('div', { className: 'admin-card-body' });
 
@@ -505,6 +509,9 @@
       // Re-render la card "Page participant" (pour refléter changement public↔privé)
       A.clearNode(publicLinkZone);
       publicLinkZone.appendChild(A.renderPublicLink(result.event));
+      if (result.event.client_admin_token) {
+        publicLinkZone.appendChild(A.renderClientAdminLink(result.event));
+      }
     } catch (err) {
       A.showMessage(messageZone, 'error', 'Enregistrement échoué : ' + err.message);
     } finally {
