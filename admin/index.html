@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Events · Admin Nomacast</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+
+<header class="admin-header">
+  <div class="admin-header-brand">
+    <span class="admin-header-brand-dot"></span>
+    Nomacast
+  </div>
+  <div class="admin-header-title">Admin Chat interactif</div>
+  <div class="admin-header-actions">
+    <a class="admin-header-link" href="/" target="_blank" rel="noopener">Site public ↗</a>
+  </div>
+</header>
+
+<main class="admin-main">
+
+  <div class="admin-page-head">
+    <div>
+      <h1>Events</h1>
+      <div class="admin-page-head-sub" id="events-summary">Chargement…</div>
+    </div>
+    <a class="admin-btn admin-btn-primary" href="/admin/new.html">+ Nouvel event</a>
+  </div>
+
+  <div id="message-zone"></div>
+
+  <div class="admin-card" id="events-container">
+    <div class="admin-card-body admin-text-muted" id="events-loader">
+      <span class="admin-loader"></span> Chargement des events…
+    </div>
+  </div>
+
+</main>
+
+<script src="/admin/admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.NomacastAdmin;
+  var container = document.getElementById('events-container');
+  var summary = document.getElementById('events-summary');
+  var messageZone = document.getElementById('message-zone');
+
+  async function load() {
+    try {
+      var data = await A.apiFetch('/api/admin/events');
+      render(data.events || []);
+    } catch (err) {
+      A.clearNode(container);
+      container.appendChild(A.el('div', {
+        className: 'admin-card-body admin-msg admin-msg-error',
+        text: 'Erreur de chargement : ' + err.message
+      }));
+      summary.textContent = '';
+    }
+  }
+
+  function render(events) {
+    A.clearNode(container);
+
+    // Résumé
+    var draft = events.filter(function (e) { return e.status === 'draft'; }).length;
+    var live = events.filter(function (e) { return e.status === 'live'; }).length;
+    var ended = events.filter(function (e) { return e.status === 'ended'; }).length;
+    summary.textContent =
+      events.length + ' event' + (events.length > 1 ? 's' : '')
+      + ' · ' + draft + ' brouillon' + (draft > 1 ? 's' : '')
+      + ' · ' + live + ' en direct'
+      + ' · ' + ended + ' terminé' + (ended > 1 ? 's' : '');
+
+    if (events.length === 0) {
+      var empty = A.el('div', {
+        className: 'admin-card-empty',
+        children: [
+          A.el('h3', { text: 'Aucun event pour l\'instant' }),
+          A.el('p', { text: 'Crée ton premier event pour commencer à inviter des participants.' }),
+          A.el('a', {
+            className: 'admin-btn admin-btn-primary',
+            attrs: { href: '/admin/new.html' },
+            text: '+ Créer un event'
+          })
+        ]
+      });
+      container.appendChild(empty);
+      return;
+    }
+
+    // Table
+    var thead = A.el('thead', {
+      children: [A.el('tr', {
+        children: [
+          A.el('th', { text: 'Titre' }),
+          A.el('th', { text: 'Client' }),
+          A.el('th', { text: 'Date' }),
+          A.el('th', { text: 'Durée' }),
+          A.el('th', { text: 'Audience' }),
+          A.el('th', { text: 'Statut' }),
+          A.el('th', { text: '', style: { textAlign: 'right' } })
+        ]
+      })]
+    });
+
+    var tbody = A.el('tbody');
+    events.forEach(function (ev) {
+      tbody.appendChild(renderRow(ev));
+    });
+
+    var table = A.el('table', { className: 'admin-table', children: [thead, tbody] });
+    container.appendChild(table);
+  }
+
+  function renderRow(ev) {
+    var titleCell = A.el('td', {
+      children: [
+        A.el('div', { className: 'admin-table-title', text: ev.title }),
+        A.el('div', { className: 'admin-table-sub admin-mono', text: ev.slug })
+      ]
+    });
+
+    var clientCell = A.el('td', {
+      text: ev.client_name || '—',
+      className: ev.client_name ? '' : 'admin-text-muted'
+    });
+
+    var dateCell = A.el('td', { text: A.formatDateTime(ev.scheduled_at) });
+    var durationCell = A.el('td', { text: A.formatDuration(ev.duration_minutes) });
+    var audienceCell = A.el('td', {
+      text: ev.audience_estimate ? ev.audience_estimate + ' pers.' : '—'
+    });
+
+    var statusCell = A.el('td', {
+      children: [A.el('span', {
+        className: 'admin-badge admin-badge-' + ev.status,
+        text: A.statusLabel(ev.status)
+      })]
+    });
+
+    var editBtn = A.el('a', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { href: '/admin/edit.html?id=' + encodeURIComponent(ev.id) },
+      text: 'Éditer'
+    });
+
+    var deleteBtn = A.el('button', {
+      className: 'admin-btn admin-btn-danger admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Suppr.',
+      on: { click: function () { onDelete(ev); } }
+    });
+
+    var actionsCell = A.el('td', {
+      children: [A.el('div', {
+        className: 'admin-table-actions',
+        children: [editBtn, deleteBtn]
+      })]
+    });
+
+    return A.el('tr', {
+      children: [titleCell, clientCell, dateCell, durationCell, audienceCell, statusCell, actionsCell]
+    });
+  }
+
+  async function onDelete(ev) {
+    if (!A.confirmAction(
+      'Supprimer définitivement « ' + ev.title + ' » ?\n'
+      + 'Cette action est irréversible et supprime aussi les invités liés.'
+    )) return;
+
+    try {
+      await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), { method: 'DELETE' });
+      A.showMessage(messageZone, 'success', 'Event « ' + ev.title + ' » supprimé.');
+      load();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Suppression impossible : ' + err.message);
+    }
+  }
+
+  load();
+})();
+</script>
+
+</body>
+</html>
