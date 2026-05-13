@@ -94,8 +94,10 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
   // ============================================================
   var state = {
     firstInteractionFired: false,
-    youMessages: [],         // messages tapés par le visiteur dans le preview · chat-preview-v2
-    previewMessageSent: false // GTM : signal d'engagement, fire une seule fois
+    youMessages: [],          // messages tapés par le visiteur dans le preview · chat-preview-v2
+    previewMessageSent: false, // GTM : signal d'engagement, fire une seule fois
+    carouselSlides: [],        // slides actuels du carrousel · chat-preview-v5
+    carouselIndex: 0           // index courant du carrousel · chat-preview-v5
   };
 
   // ============================================================
@@ -551,7 +553,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       previewAudienceCountEl.textContent = (a > 0) ? a : 234;
     }
 
-    // 4. Compose les messages selon les modes cochés
+    // 4. Compose les slides selon les modes cochés
     var hasQA = wizard.querySelector('input[name="mode-qa"]');
     var hasLibre = wizard.querySelector('input[name="mode-libre"]');
     var hasSondages = wizard.querySelector('input[name="mode-sondages"]');
@@ -561,30 +563,45 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     var hasLectureSeule = wizard.querySelector('input[name="mode-lecture"]');
     var hasSubtitles = subtitlesCheckbox && subtitlesCheckbox.checked;
 
-    var nodes = [];
-    if (hasQA && hasQA.checked) PREVIEW_TEMPLATES.qa.forEach(function (m) { nodes.push(renderQA(m)); });
-    if (hasSondages && hasSondages.checked) nodes.push(renderSondage(PREVIEW_TEMPLATES.sondage));
-    if (hasReactions && hasReactions.checked) nodes.push(renderReactions(PREVIEW_TEMPLATES.reactions));
-    if (hasNuage && hasNuage.checked) nodes.push(renderCloud(PREVIEW_TEMPLATES.cloud));
-    if (hasQuiz && hasQuiz.checked) nodes.push(renderQuiz(PREVIEW_TEMPLATES.quiz));
-    if (hasLibre && hasLibre.checked) PREVIEW_TEMPLATES.libre.forEach(function (m) { nodes.push(renderLibre(m)); });
+    // Construction des slides (1 slide par mode actif)
+    var slides = [];
 
-    // Vider et remplir via DOM API (zéro innerHTML)
-    $clear(previewMessagesEl);
-    if (nodes.length === 0) {
-      previewMessagesEl.appendChild(renderEmpty());
-    } else {
-      for (var i = 0; i < nodes.length; i++) previewMessagesEl.appendChild(nodes[i]);
+    if (hasQA && hasQA.checked) {
+      var qaContainer = $el('div', { className: 'preview-slide preview-slide-qa' });
+      PREVIEW_TEMPLATES.qa.forEach(function (m) { qaContainer.appendChild(renderQA(m)); });
+      slides.push({ label: 'Q&A modéré', node: qaContainer });
     }
-
-    // Réinjecter les messages "Vous" envoyés par le visiteur
+    if (hasLibre && hasLibre.checked) {
+      var libreContainer = $el('div', { className: 'preview-slide preview-slide-libre' });
+      PREVIEW_TEMPLATES.libre.forEach(function (m) { libreContainer.appendChild(renderLibre(m)); });
+      slides.push({ label: 'Chat libre', node: libreContainer });
+    }
+    if (hasSondages && hasSondages.checked) {
+      slides.push({ label: 'Sondage live', node: renderSondage(PREVIEW_TEMPLATES.sondage) });
+    }
+    if (hasQuiz && hasQuiz.checked) {
+      slides.push({ label: 'Quiz interactif', node: renderQuiz(PREVIEW_TEMPLATES.quiz) });
+    }
+    if (hasNuage && hasNuage.checked) {
+      slides.push({ label: 'Nuage de mots-clés', node: renderCloud(PREVIEW_TEMPLATES.cloud) });
+    }
+    if (hasReactions && hasReactions.checked) {
+      slides.push({ label: 'Réactions rapides', node: renderReactions(PREVIEW_TEMPLATES.reactions) });
+    }
+    // Messages "Vous" : slide bonus si l'utilisateur en a envoyé
     if (state.youMessages && state.youMessages.length) {
-      var emptyEl = previewMessagesEl.querySelector('.preview-empty');
-      if (emptyEl) emptyEl.parentNode.removeChild(emptyEl);
-      state.youMessages.forEach(function (text) {
-        previewMessagesEl.appendChild(buildYouMessage(text));
-      });
+      var youContainer = $el('div', { className: 'preview-slide preview-slide-you' });
+      state.youMessages.forEach(function (text) { youContainer.appendChild(buildYouMessage(text)); });
+      slides.push({ label: 'Vos messages', node: youContainer });
     }
+
+    // Stocker dans le state, normaliser l'index courant
+    state.carouselSlides = slides;
+    if (state.carouselIndex >= slides.length) state.carouselIndex = 0;
+    if (state.carouselIndex < 0) state.carouselIndex = 0;
+
+    renderCarousel();
+    pulsePreviewLink();
 
     // 5. Lecture seule → masquer l'input
     if (previewInputEl) {
@@ -600,6 +617,71 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     if (previewSubtitleEl) {
       previewSubtitleEl.hidden = !hasSubtitles;
     }
+  }
+
+  // -------------------- CARROUSEL · chat-preview-v5 --------------------
+  var carouselNavEl = document.getElementById('preview-carousel-nav');
+  var carouselLabelEl = document.getElementById('preview-carousel-label');
+  var carouselCountEl = document.getElementById('preview-carousel-count');
+  var carouselPrevBtn = document.getElementById('preview-carousel-prev');
+  var carouselNextBtn = document.getElementById('preview-carousel-next');
+  var previewLinkEl = document.querySelector('.summary-preview-link');
+
+  function renderCarousel() {
+    $clear(previewMessagesEl);
+    var slides = state.carouselSlides || [];
+
+    if (slides.length === 0) {
+      previewMessagesEl.appendChild(renderEmpty());
+      if (carouselNavEl) carouselNavEl.classList.remove('active');
+      return;
+    }
+
+    // Afficher le slide courant
+    var idx = state.carouselIndex;
+    previewMessagesEl.appendChild(slides[idx].node);
+
+    // Nav : visible si plus d'un slide
+    if (carouselNavEl) {
+      if (slides.length > 1) {
+        carouselNavEl.classList.add('active');
+        if (carouselLabelEl) carouselLabelEl.textContent = slides[idx].label;
+        if (carouselCountEl) carouselCountEl.textContent = (idx + 1) + ' / ' + slides.length;
+      } else {
+        carouselNavEl.classList.remove('active');
+      }
+    }
+  }
+
+  function carouselNext() {
+    var slides = state.carouselSlides || [];
+    if (slides.length <= 1) return;
+    state.carouselIndex = (state.carouselIndex + 1) % slides.length;
+    renderCarousel();
+  }
+
+  function carouselPrev() {
+    var slides = state.carouselSlides || [];
+    if (slides.length <= 1) return;
+    state.carouselIndex = (state.carouselIndex - 1 + slides.length) % slides.length;
+    renderCarousel();
+  }
+
+  if (carouselPrevBtn) carouselPrevBtn.addEventListener('click', carouselPrev);
+  if (carouselNextBtn) carouselNextBtn.addEventListener('click', carouselNext);
+
+  // Animation pulse du bouton "Voir l'aperçu" pour attirer l'œil quand ça change
+  var pulseTimeout = null;
+  function pulsePreviewLink() {
+    if (!previewLinkEl) return;
+    // Reset l'animation si elle est déjà en cours
+    previewLinkEl.classList.remove('pulse');
+    void previewLinkEl.offsetWidth; // force reflow pour relancer l'animation
+    previewLinkEl.classList.add('pulse');
+    if (pulseTimeout) clearTimeout(pulseTimeout);
+    pulseTimeout = setTimeout(function () {
+      if (previewLinkEl) previewLinkEl.classList.remove('pulse');
+    }, 1600);
   }
 
   // Timer de la vidéo : incrémente en continu pour donner vie au preview
@@ -634,15 +716,20 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       // Mémoriser dans le state pour ne pas perdre au re-render
       state.youMessages.push(text);
 
-      // Supprimer l'empty state s'il est encore là
-      var emptyEl = previewMessagesEl.querySelector('.preview-empty');
-      if (emptyEl) emptyEl.parentNode.removeChild(emptyEl);
-
-      // Construire le message "Vous" via DOM API (zéro innerHTML)
-      previewMessagesEl.appendChild(buildYouMessage(text));
-
-      // Reset + focus + scroll vers le bas
+      // Reset + focus
       inputEl.value = '';
+
+      // Regénérer les slides via updatePreview, puis sauter au slide "Vos messages" · chat-preview-v5
+      updatePreview();
+      var slides = state.carouselSlides || [];
+      for (var i = 0; i < slides.length; i++) {
+        if (slides[i].label === 'Vos messages') {
+          state.carouselIndex = i;
+          renderCarousel();
+          break;
+        }
+      }
+
       previewMessagesEl.scrollTop = previewMessagesEl.scrollHeight;
       inputEl.focus();
 
