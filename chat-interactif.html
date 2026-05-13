@@ -669,6 +669,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   border-top: 3px solid var(--preview-accent, var(--cyan));
   display: flex; flex-direction: column;
   min-height: 360px; max-height: 520px;
+  min-width: 0;     /* chat-preview-v8 : permet au grid de rétrécir le panel sans le pousser sur la vidéo */
   overflow: hidden;
   transition: border-top-color 0.2s ease;
 }
@@ -677,15 +678,14 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   display: flex; align-items: center; gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border-light);
-  background: var(--off-white);
+  background: #fff;  /* chat-preview-v8 : pur blanc pour que le fond blanc du logo client ne crée pas un rectangle visible */
 }
 .preview-chat-logo {
-  width: 44px; height: 44px; object-fit: contain;
+  width: 48px; height: 48px; object-fit: contain;
   border-radius: 6px;
   flex-shrink: 0;
-  /* Pas de fond ni de border : on garde le fond naturel du chat-head.
-     Si un logo a un fond blanc inclus, il se fondra avec le contexte
-     (chat-head est déjà clair). Si fond transparent, ressort sur le contexte. */
+  /* Pas de fond, pas de border : le chat-head est blanc, le fond blanc du
+     logo client s'y fond naturellement. */
 }
 .preview-chat-head-info { flex: 1; min-width: 0; }
 .preview-chat-event {
@@ -910,6 +910,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 
 .preview-carousel-info {
   flex: 1;
+  min-width: 0;          /* chat-preview-v8 : autorise le label à se réduire */
   text-align: center;
   font-size: 12px;
   color: var(--ink);
@@ -918,6 +919,9 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .preview-carousel-info-label {
   font-weight: 700;
   display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;  /* chat-preview-v8 */
 }
 .preview-carousel-info-count {
   font-size: 10px;
