@@ -708,10 +708,27 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   padding: 14px 16px;
   display: flex; flex-direction: column; gap: 12px;
   background: #fff;
+  min-width: 0;          /* chat-preview-v9 : pas de poussée vers le grid */
+  min-height: 0;
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.15) transparent;
 }
 .preview-chat-body::-webkit-scrollbar { width: 5px; }
 .preview-chat-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 3px; }
+
+/* Slides du carrousel + widgets : tous contraints en largeur · chat-preview-v9 */
+.preview-slide,
+.pm,
+.pm-poll,
+.pm-quiz,
+.pm-cloud {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.pm-text, .pm-quiz-q, .pm-poll-q, .pm-cloud-q {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 .preview-empty {
   margin: auto; text-align: center; color: var(--ink-faint);
