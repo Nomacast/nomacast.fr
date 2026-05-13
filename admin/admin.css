@@ -120,6 +120,10 @@ a:hover { color: var(--cyan-hover); text-decoration: underline; }
   color: var(--cyan); text-decoration: none; word-break: break-all;
 }
 .admin-public-link-url:hover { text-decoration: underline; }
+.admin-public-link-hint {
+  flex: 1; min-width: 200px;
+  font-size: 13px; color: var(--ink-muted); font-style: italic;
+}
 .admin-public-link-actions { display: flex; gap: 6px; }
 
 /* ========== Logo preview (form edit event) ========== */
