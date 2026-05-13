@@ -606,7 +606,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 
 .preview-stage {
   display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px;
-  align-items: stretch;
+  align-items: start;        /* chat-preview-v10 : pas de stretch, sinon la stretch verticale combinée à aspect-ratio 16/9 sur .preview-video déforme la cellule et fait déborder la vidéo dans la colonne chat (visible quand le quiz allonge le panneau chat) */
   background: rgba(255,255,255,.03);
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 18px;
@@ -623,7 +623,12 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   background: #0b1929; border-radius: 12px;
   overflow: hidden;
   aspect-ratio: 16/9;
-  min-height: 280px;
+  /* chat-preview-v10 : min-height: 280px déplacé dans le media query mobile.
+     En 2 colonnes, min-height force une largeur minimale (280 × 16/9 ≈ 498 px)
+     via l'aspect-ratio qui dépasse la cellule de grille à viewport étroit. */
+}
+@media (max-width: 880px) {
+  .preview-video { min-height: 280px; }
 }
 .preview-video-svg { display: block; width: 100%; height: 100%; }
 
