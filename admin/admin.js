@@ -234,6 +234,35 @@
   }
 
   // ============================================================
+  // Version / build info
+  // ============================================================
+  async function loadVersion(targetEl) {
+    if (!targetEl) return;
+    try {
+      var resp = await fetch('/api/admin/version', { cache: 'no-store' });
+      var data = await resp.json();
+      targetEl.textContent = 'build ' + (data.commit_short || '???');
+      var tooltip = 'Commit : ' + (data.commit || '?') + '\nBranche : ' + (data.branch || '?');
+      targetEl.title = tooltip;
+      // Si déploiement local (pas Cloudflare Pages)
+      if (data.commit === 'local') targetEl.textContent = 'build local';
+    } catch (e) {
+      targetEl.textContent = 'build ?';
+    }
+  }
+
+  // Auto-load au DOM ready (cherche #admin-version)
+  function autoLoadVersion() {
+    var target = document.getElementById('admin-version');
+    if (target) loadVersion(target);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoLoadVersion);
+  } else {
+    autoLoadVersion();
+  }
+
+  // ============================================================
   // Export global
   // ============================================================
   window.NomacastAdmin = {
@@ -242,6 +271,7 @@
     el, clearNode,
     showMessage, confirmAction,
     isoToLocalInput, localInputToIso,
-    renderPublicLink
+    renderPublicLink,
+    loadVersion
   };
 })();
