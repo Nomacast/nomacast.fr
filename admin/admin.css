@@ -103,6 +103,25 @@ a:hover { color: var(--cyan-hover); text-decoration: underline; }
   font-size: 13px; color: var(--ink-muted); margin-top: 4px;
 }
 
+/* ========== Public link card (URL de la page participant) ========== */
+.admin-public-link {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 14px 18px; margin-bottom: 24px;
+  background: var(--off-white); border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.admin-public-link-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-muted);
+}
+.admin-public-link-url {
+  flex: 1; min-width: 200px;
+  font-family: var(--font-mono); font-size: 13px;
+  color: var(--cyan); text-decoration: none; word-break: break-all;
+}
+.admin-public-link-url:hover { text-decoration: underline; }
+.admin-public-link-actions { display: flex; gap: 6px; }
+
 /* ========== Card ========== */
 .admin-card {
   background: var(--white); border-radius: var(--radius-lg);
