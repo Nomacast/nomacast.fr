@@ -1,77 +1,132 @@
-// functions/api/admin/events/[id]/invitees/[invitee_id]/resend.js
-// POST /api/admin/events/:id/invitees/:invitee_id/resend
-// Renvoie l'email d'invitation à un invité spécifique via Resend.
+// functions/api/event-admin/[token]/send-invitations.js
+// POST /api/event-admin/:token/send-invitations
+// Envoie l'email d'invitation — version CLIENT (auth par HMAC token).
 //
-// NOTE : helper buildInvitationEmail() dupliqué ici (pas d'import croisé)
-// car Cloudflare Pages Functions résout mal les imports relatifs traversant
-// des dossiers avec brackets (`[id]`, `[invitee_id]`).
-// Source de référence : /functions/api/admin/_invitation-email.js
+// NOTE : helper buildInvitationEmail() dupliqué (pas d'import croisé) car
+// Cloudflare Pages Functions résout mal les imports traversant des brackets.
+
+const BATCH_SIZE = 100;
 
 export const onRequestPost = async ({ params, env }) => {
   if (!env.DB) return jsonResponse({ error: 'D1 binding DB manquant' }, 500);
   if (!env.RESEND_API_KEY) return jsonResponse({ error: 'RESEND_API_KEY non configurée' }, 500);
+  if (!env.ADMIN_PASSWORD) return jsonResponse({ error: 'ADMIN_PASSWORD non configuré' }, 500);
 
-  const row = await env.DB.prepare(`
-    SELECT
-      e.id AS e_id, e.slug, e.title, e.client_name, e.scheduled_at, e.duration_minutes,
-      e.primary_color, e.logo_url, e.white_label, e.access_mode,
-      i.id AS i_id, i.email, i.full_name, i.company, i.magic_token, i.invited_at
-    FROM invitees i
-    JOIN events e ON i.event_id = e.id
-    WHERE i.id = ? AND e.id = ?
-  `).bind(params.invitee_id, params.id).first();
+  // Résolution token → event_id via HMAC
+  const event_id = await resolveEventIdByToken(params.token, env);
+  if (!event_id) return jsonResponse({ error: 'Token invalide' }, 403);
 
-  if (!row) return jsonResponse({ error: 'Invité introuvable pour cet event' }, 404);
+  const event = await env.DB.prepare(`
+    SELECT id, slug, title, client_name, scheduled_at, duration_minutes,
+           primary_color, logo_url, white_label, access_mode
+      FROM events WHERE id = ?
+  `).bind(event_id).first();
 
-  const event = {
-    id: row.e_id, slug: row.slug, title: row.title, client_name: row.client_name,
-    scheduled_at: row.scheduled_at, duration_minutes: row.duration_minutes,
-    primary_color: row.primary_color, logo_url: row.logo_url,
-    white_label: row.white_label === 1, access_mode: row.access_mode
-  };
-  const invitee = {
-    id: row.i_id, email: row.email, full_name: row.full_name,
-    company: row.company, magic_token: row.magic_token
-  };
+  if (!event) return jsonResponse({ error: 'Event introuvable' }, 404);
+  event.white_label = event.white_label === 1;
 
-  const payload = buildInvitationEmail(event, invitee);
+  const { results: invitees } = await env.DB.prepare(`
+    SELECT id, email, full_name, company, magic_token
+      FROM invitees
+     WHERE event_id = ? AND invited_at IS NULL
+  `).bind(event_id).all();
 
-  let sendResult;
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
+  if (!invitees || invitees.length === 0) {
+    return jsonResponse({
+      success: true,
+      sent_count: 0,
+      message: 'Aucun invité en attente d\'envoi.'
     });
-    sendResult = await r.json();
-    if (!r.ok) {
-      console.error('[resend] Resend API error', r.status, sendResult);
-      return jsonResponse({
-        error: 'Resend a rejeté l\'envoi : ' + (sendResult.message || r.status)
-      }, 502);
-    }
-  } catch (err) {
-    console.error('[resend] fetch error', err);
-    return jsonResponse({ error: 'Erreur réseau Resend : ' + err.message }, 502);
   }
 
-  try {
-    await env.DB.prepare(
-      'UPDATE invitees SET invited_at = ? WHERE id = ?'
-    ).bind(new Date().toISOString(), params.invitee_id).run();
-  } catch (err) {
-    console.error('[resend] DB update', err);
+  const payloads = invitees.map(inv => ({
+    invitee: inv,
+    email: buildInvitationEmail(event, inv)
+  }));
+
+  let totalSent = 0;
+  let totalFailed = 0;
+  const failed = [];
+
+  for (let i = 0; i < payloads.length; i += BATCH_SIZE) {
+    const chunk = payloads.slice(i, i + BATCH_SIZE);
+    const emails = chunk.map(p => p.email);
+
+    try {
+      const r = await fetch('https://api.resend.com/emails/batch', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(emails)
+      });
+      const result = await r.json();
+
+      if (!r.ok) {
+        console.error('[send-invitations] Resend batch error', r.status, result);
+        chunk.forEach(p => {
+          failed.push({ email: p.invitee.email, reason: result.message || `HTTP ${r.status}` });
+        });
+        totalFailed += chunk.length;
+        continue;
+      }
+
+      const now = new Date().toISOString();
+      for (const p of chunk) {
+        try {
+          await env.DB.prepare(
+            'UPDATE invitees SET invited_at = ? WHERE id = ?'
+          ).bind(now, p.invitee.id).run();
+          totalSent++;
+        } catch (dbErr) {
+          console.error('[send-invitations] DB update', dbErr);
+          failed.push({ email: p.invitee.email, reason: 'Email envoyé mais BDD pas mise à jour' });
+        }
+      }
+    } catch (err) {
+      console.error('[send-invitations] fetch error', err);
+      chunk.forEach(p => {
+        failed.push({ email: p.invitee.email, reason: err.message });
+      });
+      totalFailed += chunk.length;
+    }
   }
 
   return jsonResponse({
-    success: true,
-    invitee_id: params.invitee_id,
-    resend_id: sendResult.id
+    success: totalSent > 0,
+    sent_count: totalSent,
+    failed_count: totalFailed,
+    total: invitees.length,
+    failed
   });
 };
+
+// ============================================================
+// Auth : résolution event_id via HMAC token
+// ============================================================
+async function resolveEventIdByToken(token, env) {
+  if (!env.DB || !env.ADMIN_PASSWORD) return null;
+  const events = await env.DB.prepare('SELECT id, slug FROM events').all();
+  for (const ev of (events.results || [])) {
+    const expected = await computeClientToken(ev.slug, env.ADMIN_PASSWORD);
+    if (token === expected) return ev.id;
+  }
+  return null;
+}
+
+async function computeClientToken(slug, secret) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug + ':client'));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    .slice(0, 24);
+}
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -113,7 +168,6 @@ function buildAgendaUrls(event, chatLink, token) {
     (event.client_name ? `, organisé par ${event.client_name}.` : '.') +
     `\n\nPour rejoindre : ${chatLink}\n\nPropulsé par Nomacast — https://nomacast.fr`;
 
-  // Google Calendar TEMPLATE
   const googleParams = new URLSearchParams({
     action: 'TEMPLATE',
     text: event.title,
@@ -125,7 +179,6 @@ function buildAgendaUrls(event, chatLink, token) {
   if (start && end) googleParams.set('dates', `${start}/${end}`);
   const google = 'https://calendar.google.com/calendar/render?' + googleParams.toString();
 
-  // Outlook Live deeplink
   const outlookParams = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
@@ -139,7 +192,6 @@ function buildAgendaUrls(event, chatLink, token) {
   }
   const outlook = 'https://outlook.live.com/calendar/0/deeplink/compose?' + outlookParams.toString();
 
-  // .ics opaque (via token, plus de slug exposé)
   const ics = `${SITE_URL}/i/${token}/calendar.ics`;
 
   return { google, outlook, ics };

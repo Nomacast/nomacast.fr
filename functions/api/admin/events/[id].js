@@ -21,6 +21,7 @@ export const onRequestGet = async ({ params, env }) => {
     if (!row) return jsonResponse({ error: 'Event introuvable' }, 404);
     const event = deserializeEvent(row);
     event.admin_preview_token = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
+    event.client_admin_token = await computeClientToken(event.slug, env.ADMIN_PASSWORD);
     return jsonResponse({ event });
   } catch (err) {
     console.error('[admin/events/:id GET]', err);
@@ -131,6 +132,7 @@ export const onRequestPatch = async ({ request, params, env }) => {
 
     const event = deserializeEvent(updated);
     event.admin_preview_token = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
+    event.client_admin_token = await computeClientToken(event.slug, env.ADMIN_PASSWORD);
     return jsonResponse({ event });
   } catch (err) {
     console.error('[admin/events/:id PATCH]', err);
@@ -198,6 +200,27 @@ async function computePreviewToken(slug, secret) {
   );
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug));
   // base64url encoded, ~24 chars
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    .slice(0, 24);
+}
+
+/**
+ * Calcule un token HMAC-SHA-256 du (slug + ':client') avec ADMIN_PASSWORD.
+ * Différent du computePreviewToken pour avoir 2 secrets distincts par event :
+ *  - admin_preview_token : pour que l'admin Nomacast voie l'event privé
+ *  - client_admin_token  : pour que le client gère ses propres invités
+ * Si ADMIN_PASSWORD change, tous les liens client sont invalidés.
+ */
+async function computeClientToken(slug, secret) {
+  if (!secret) return null;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug + ':client'));
   return btoa(String.fromCharCode(...new Uint8Array(sig)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     .slice(0, 24);

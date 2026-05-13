@@ -234,6 +234,55 @@
   }
 
   // ============================================================
+  // Client admin link card
+  // ============================================================
+  function renderClientAdminLink(event) {
+    var card = el('div', { className: 'admin-public-link' });
+    var url = window.location.origin + '/event-admin/' + (event.client_admin_token || '');
+
+    card.appendChild(el('span', {
+      className: 'admin-public-link-label',
+      text: 'Lien admin client'
+    }));
+
+    card.appendChild(el('a', {
+      className: 'admin-public-link-url',
+      attrs: { href: url, target: '_blank', rel: 'noopener' },
+      text: url
+    }));
+
+    var actions = el('div', { className: 'admin-public-link-actions' });
+    actions.appendChild(el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Copier',
+      on: { click: function () {
+        var btn = this;
+        navigator.clipboard.writeText(url).then(
+          function () {
+            btn.textContent = 'Copié ✓';
+            setTimeout(function () { btn.textContent = 'Copier'; }, 1500);
+          },
+          function () { window.prompt('Copie cette URL :', url); }
+        );
+      }}
+    }));
+    actions.appendChild(el('a', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { href: url, target: '_blank', rel: 'noopener' },
+      text: 'Ouvrir ↗'
+    }));
+    card.appendChild(actions);
+
+    card.appendChild(el('div', {
+      className: 'admin-public-link-warn admin-public-link-info',
+      text: 'À transmettre au client pour qu\'il gère ses propres invités sans login Nomacast. Si tu changes ADMIN_PASSWORD, ce lien sera invalidé automatiquement.'
+    }));
+
+    return card;
+  }
+
+  // ============================================================
   // Version / build info
   // ============================================================
   async function loadVersion(targetEl) {
@@ -241,14 +290,63 @@
     try {
       var resp = await fetch('/api/admin/version', { cache: 'no-store' });
       var data = await resp.json();
-      targetEl.textContent = 'build ' + (data.commit_short || '???');
-      var tooltip = 'Commit : ' + (data.commit || '?') + '\nBranche : ' + (data.branch || '?');
-      targetEl.title = tooltip;
-      // Si déploiement local (pas Cloudflare Pages)
-      if (data.commit === 'local') targetEl.textContent = 'build local';
+
+      // Build local (pas Cloudflare Pages)
+      if (data.commit === 'local') {
+        targetEl.textContent = 'build local';
+        return;
+      }
+
+      // Label principal : date relative si commit_date disponible
+      var label;
+      if (data.commit_date) {
+        label = 'build ' + formatRelativeTime(new Date(data.commit_date));
+      } else {
+        // Fallback : commit SHA court si l'appel GitHub a échoué
+        label = 'build ' + (data.commit_short || '???');
+      }
+      targetEl.textContent = label;
+
+      // Tooltip détaillé
+      var tooltipLines = ['Commit : ' + (data.commit_short || '?')];
+      if (data.commit_message) tooltipLines.push('« ' + data.commit_message + ' »');
+      if (data.branch) tooltipLines.push('Branche : ' + data.branch);
+      if (data.commit_date) {
+        var d = new Date(data.commit_date);
+        tooltipLines.push('Date : ' + d.toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }));
+      }
+      targetEl.title = tooltipLines.join('\n');
     } catch (e) {
       targetEl.textContent = 'build ?';
     }
+  }
+
+  /**
+   * Format relatif court :
+   *   - "à l'instant"    (< 1 min)
+   *   - "il y a 23 min"  (< 1h)
+   *   - "il y a 5h"      (< 24h)
+   *   - "13/05 22h34"    (au-delà)
+   */
+  function formatRelativeTime(d) {
+    var now = new Date();
+    var diffMs = now - d;
+    var diffMin = Math.floor(diffMs / 60000);
+    var diffHrs = Math.floor(diffMs / 3600000);
+
+    if (diffMs < 60000) return 'à l\'instant';
+    if (diffMin < 60) return 'il y a ' + diffMin + ' min';
+    if (diffHrs < 24) return 'il y a ' + diffHrs + 'h';
+
+    // Date absolue compacte
+    var jour = String(d.getDate()).padStart(2, '0');
+    var mois = String(d.getMonth() + 1).padStart(2, '0');
+    var heure = String(d.getHours()).padStart(2, '0');
+    var min = String(d.getMinutes()).padStart(2, '0');
+    return jour + '/' + mois + ' ' + heure + 'h' + min;
   }
 
   // Auto-load au DOM ready (cherche #admin-version)
@@ -272,6 +370,7 @@
     showMessage, confirmAction,
     isoToLocalInput, localInputToIso,
     renderPublicLink,
+    renderClientAdminLink,
     loadVersion
   };
 })();

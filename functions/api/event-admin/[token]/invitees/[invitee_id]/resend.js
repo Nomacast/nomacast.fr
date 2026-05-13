@@ -1,15 +1,18 @@
-// functions/api/admin/events/[id]/invitees/[invitee_id]/resend.js
-// POST /api/admin/events/:id/invitees/:invitee_id/resend
-// Renvoie l'email d'invitation à un invité spécifique via Resend.
+// functions/api/event-admin/[token]/invitees/[invitee_id]/resend.js
+// POST /api/event-admin/:token/invitees/:invitee_id/resend
+// Renvoie l'email d'invitation — version CLIENT (auth par HMAC token).
 //
-// NOTE : helper buildInvitationEmail() dupliqué ici (pas d'import croisé)
-// car Cloudflare Pages Functions résout mal les imports relatifs traversant
-// des dossiers avec brackets (`[id]`, `[invitee_id]`).
-// Source de référence : /functions/api/admin/_invitation-email.js
+// NOTE : helper buildInvitationEmail() dupliqué (pas d'import croisé) car
+// Cloudflare Pages Functions résout mal les imports traversant des brackets.
 
 export const onRequestPost = async ({ params, env }) => {
   if (!env.DB) return jsonResponse({ error: 'D1 binding DB manquant' }, 500);
   if (!env.RESEND_API_KEY) return jsonResponse({ error: 'RESEND_API_KEY non configurée' }, 500);
+  if (!env.ADMIN_PASSWORD) return jsonResponse({ error: 'ADMIN_PASSWORD non configuré' }, 500);
+
+  // Résolution token → event_id via HMAC
+  const event_id = await resolveEventIdByToken(params.token, env);
+  if (!event_id) return jsonResponse({ error: 'Token invalide' }, 403);
 
   const row = await env.DB.prepare(`
     SELECT
@@ -19,7 +22,7 @@ export const onRequestPost = async ({ params, env }) => {
     FROM invitees i
     JOIN events e ON i.event_id = e.id
     WHERE i.id = ? AND e.id = ?
-  `).bind(params.invitee_id, params.id).first();
+  `).bind(params.invitee_id, event_id).first();
 
   if (!row) return jsonResponse({ error: 'Invité introuvable pour cet event' }, 404);
 
@@ -72,6 +75,32 @@ export const onRequestPost = async ({ params, env }) => {
     resend_id: sendResult.id
   });
 };
+
+// ============================================================
+// Auth : résolution event_id via HMAC token
+// ============================================================
+async function resolveEventIdByToken(token, env) {
+  if (!env.DB || !env.ADMIN_PASSWORD) return null;
+  const events = await env.DB.prepare('SELECT id, slug FROM events').all();
+  for (const ev of (events.results || [])) {
+    const expected = await computeClientToken(ev.slug, env.ADMIN_PASSWORD);
+    if (token === expected) return ev.id;
+  }
+  return null;
+}
+
+async function computeClientToken(slug, secret) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug + ':client'));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    .slice(0, 24);
+}
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
