@@ -311,12 +311,12 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       ]
     },
     quiz: {
-      question: 'Part des entreprises ayant déployé l\'IA gen en 2025 ?',
+      question: 'Quel canal d\'acquisition a généré le plus de leads en 2025 ?',
       options: [
-        { letter: 'A', label: '12 %', correct: false },
-        { letter: 'B', label: '28 %', correct: true },
-        { letter: 'C', label: '45 %', correct: false },
-        { letter: 'D', label: '71 %', correct: false }
+        { letter: 'A', label: 'Salons et événements', correct: false },
+        { letter: 'B', label: 'LinkedIn Ads', correct: true },
+        { letter: 'C', label: 'Référencement naturel', correct: false },
+        { letter: 'D', label: 'Cold emailing', correct: false }
       ]
     },
     cloud: {
