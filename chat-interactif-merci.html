@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demande reçue · Chat interactif | Nomacast</title>
+  <meta name="description" content="Votre demande de configuration Chat interactif a bien été reçue. Notre équipe revient vers vous sous 24h ouvrées.">
+  <meta name="robots" content="noindex,nofollow">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-M99NLF45');</script>
+
+  <style>
+    :root {
+      --cyan: #5A98D6;
+      --cyan-hover: #4a87c5;
+      --cyan-light: #EAF2FA;
+      --navy: #0b1929;
+      --ink: #1a2735;
+      --ink-muted: #5a6b7a;
+      --ink-faint: #95a3b3;
+      --white: #ffffff;
+      --off-white: #f3f6fa;
+      --border: #e1e4e8;
+      --border-light: #f0f2f5;
+      --font-head: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --max: 1180px;
+      --h-pad: clamp(24px, 5vw, 64px);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body); color: var(--ink);
+      background: var(--off-white); line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Navbar minimaliste (logo + retour) */
+    .nav {
+      position: sticky; top: 0; z-index: 90;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: saturate(180%) blur(12px);
+      -webkit-backdrop-filter: saturate(180%) blur(12px);
+      border-bottom: 1px solid var(--border-light);
+      padding: 18px var(--h-pad);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: var(--font-head); font-size: 20px; font-weight: 700;
+      color: var(--ink); display: flex; align-items: center; gap: 8px;
+      text-decoration: none;
+    }
+    .nav-logo::before {
+      content: ''; width: 7px; height: 7px;
+      background: var(--cyan); border-radius: 50%;
+    }
+    .nav-home {
+      font-size: 14px; color: var(--ink-muted); font-weight: 500;
+      text-decoration: none;
+    }
+    .nav-home:hover { color: var(--ink); text-decoration: none; }
+
+    /* Hero confirmation */
+    .merci-section {
+      min-height: calc(100vh - 76px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 60px var(--h-pad);
+    }
+    .merci-card {
+      max-width: 560px; width: 100%;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 16px; padding: 56px 40px;
+      box-shadow: 0 8px 40px rgba(11,25,41,.06);
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .merci-card { padding: 40px 24px; }
+    }
+    .merci-icon {
+      width: 72px; height: 72px; margin: 0 auto 24px;
+      background: var(--cyan-light); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--cyan);
+    }
+    .merci-eyebrow {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--cyan);
+      margin-bottom: 10px;
+    }
+    .merci-title {
+      font-family: var(--font-head); font-size: 28px; font-weight: 600;
+      letter-spacing: -0.01em; color: var(--ink);
+      margin: 0 0 14px; line-height: 1.25;
+    }
+    @media (max-width: 600px) { .merci-title { font-size: 24px; } }
+    .merci-subtitle {
+      font-size: 15px; color: var(--ink-muted);
+      margin: 0 0 32px;
+    }
+    .merci-id-box {
+      background: var(--off-white); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px; margin: 0 0 32px;
+    }
+    .merci-id-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--ink-faint);
+      margin-bottom: 6px;
+    }
+    .merci-id-value {
+      font-family: var(--font-head); font-size: 20px; font-weight: 700;
+      color: var(--ink); letter-spacing: 0.02em;
+    }
+    .merci-actions {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .merci-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 24px; border-radius: 8px;
+      font-family: var(--font-body); font-size: 14px; font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer; border: 1px solid transparent;
+    }
+    .merci-btn-primary {
+      background: var(--cyan); color: var(--white);
+      box-shadow: 0 2px 6px rgba(14,165,233,.35);
+    }
+    .merci-btn-primary:hover {
+      background: var(--cyan-hover);
+      box-shadow: 0 6px 16px rgba(14,165,233,.55);
+      text-decoration: none; transform: translateY(-1px);
+    }
+    .merci-btn-ghost {
+      background: var(--white); color: var(--ink-muted);
+      border-color: var(--border);
+    }
+    .merci-btn-ghost:hover {
+      color: var(--ink); border-color: var(--ink-muted);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- GTM noscript -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M99NLF45" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <!-- Navbar minimale -->
+  <nav class="nav">
+    <a href="/" class="nav-logo">Nomacast</a>
+    <a href="/" class="nav-home">← Retour à l'accueil</a>
+  </nav>
+
+  <!-- Confirmation -->
+  <section class="merci-section">
+    <div class="merci-card">
+      <div class="merci-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <div class="merci-eyebrow">Demande reçue</div>
+      <h1 class="merci-title">Merci, votre demande est bien arrivée.</h1>
+      <p class="merci-subtitle">Notre équipe revient vers vous sous <strong>24 heures ouvrées</strong> avec un devis personnalisé. Un email de confirmation vient de vous être envoyé.</p>
+
+      <div class="merci-id-box" id="id-box" style="display: none;">
+        <div class="merci-id-label">Référence à conserver</div>
+        <div class="merci-id-value" id="id-value"></div>
+      </div>
+
+      <div class="merci-actions">
+        <a href="/" class="merci-btn merci-btn-primary">
+          Retour à l'accueil
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="/prestations.html" class="merci-btn merci-btn-ghost">Voir les prestations</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id');
+      if (id && /^NMC-CHAT-\d{4}-[A-Z0-9]{6}$/.test(id)) {
+        document.getElementById('id-box').style.display = 'block';
+        document.getElementById('id-value').textContent = id;
+      }
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: 'chat_wizard_conversion',
+          id: id || null
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
