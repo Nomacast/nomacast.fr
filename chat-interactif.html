@@ -651,9 +651,11 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .preview-chat {
   background: #fff; color: var(--ink);
   border-radius: 12px;
+  border-top: 3px solid var(--preview-accent, var(--cyan));
   display: flex; flex-direction: column;
   min-height: 360px; max-height: 520px;
   overflow: hidden;
+  transition: border-top-color 0.2s ease;
 }
 
 .preview-chat-head {
@@ -830,9 +832,16 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .preview-chat-input input {
   flex: 1; padding: 10px 14px; border-radius: 8px;
   border: 1px solid var(--border-light); background: var(--off-white);
-  font-family: var(--font-body); font-size: 13px; color: var(--ink-muted);
+  font-family: var(--font-body); font-size: 13px; color: var(--ink);
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
-.preview-chat-input input:disabled { cursor: default; }
+.preview-chat-input input::placeholder { color: var(--ink-faint); }
+.preview-chat-input input:focus {
+  outline: none;
+  border-color: var(--preview-accent, var(--cyan));
+  background: #fff;
+}
+.preview-chat-input input:disabled { cursor: default; color: var(--ink-muted); }
 .preview-chat-send {
   width: 38px; height: 38px; border-radius: 8px;
   background: var(--preview-accent, var(--cyan)); color: #fff;
@@ -847,7 +856,25 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   background: var(--off-white); border-top: 1px solid var(--border-light);
   letter-spacing: 0.04em;
 }
-.preview-chat-foot strong { color: var(--ink-muted); }
+.preview-chat-foot strong {
+  color: var(--preview-accent, var(--cyan));
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+/* Message envoyé par le visiteur (preview interactif · chat-preview-v2) */
+.pm-you {
+  background: var(--preview-accent-light, rgba(90,152,214,.08));
+  border-left: 3px solid var(--preview-accent, var(--cyan));
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  margin-left: -16px;
+  padding-left: 16px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.pm-you .pm-author {
+  color: var(--preview-accent, var(--cyan));
+}
 
 .preview-note {
   text-align: center; font-size: 12px; color: rgba(255,255,255,.4);
@@ -1470,8 +1497,8 @@ body.menu-open .float-call{display:none!important}
         </div>
 
         <div class="preview-chat-input" id="preview-input">
-          <input type="text" placeholder="Tapez votre message…" disabled aria-label="Aperçu seulement">
-          <button type="button" class="preview-chat-send" aria-label="Envoyer">
+          <input type="text" placeholder="Tapez votre message…" aria-label="Tester l'envoi de message dans l'aperçu" maxlength="200">
+          <button type="button" class="preview-chat-send" aria-label="Envoyer le message">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
