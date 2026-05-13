@@ -97,7 +97,9 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     youMessages: [],          // messages tapés par le visiteur dans le preview · chat-preview-v2
     previewMessageSent: false, // GTM : signal d'engagement, fire une seule fois
     carouselSlides: [],        // slides actuels du carrousel · chat-preview-v5
-    carouselIndex: 0           // index courant du carrousel · chat-preview-v5
+    carouselIndex: 0,          // index courant du carrousel · chat-preview-v5
+    logoDataUrl: null,         // data URL du logo uploadé pour affichage preview · chat-preview-v6
+    logoFile: null             // métadonnées du logo (name, size) pour la zone de drop
   };
 
   // ============================================================
@@ -533,16 +535,13 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       previewSection.style.setProperty('--preview-accent-light', lightenHex(color, 0.12));
     }
 
-    // 2. Logo client
+    // 2. Logo client (lu depuis state.logoDataUrl · chat-preview-v6)
     if (previewLogoEl) {
-      if (logoInput && logoInput.files && logoInput.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          previewLogoEl.src = e.target.result;
-          previewLogoEl.hidden = false;
-        };
-        reader.readAsDataURL(logoInput.files[0]);
+      if (state.logoDataUrl) {
+        previewLogoEl.src = state.logoDataUrl;
+        previewLogoEl.hidden = false;
       } else {
+        previewLogoEl.removeAttribute('src');
         previewLogoEl.hidden = true;
       }
     }
@@ -785,7 +784,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
   }
 
   // ============================================================
-  // UPLOAD LOGO + PREVIEW
+  // UPLOAD LOGO + PREVIEW · chat-preview-v6 (DOM API pure)
   // ============================================================
   function setupLogoPreview() {
     if (!logoInput) return;
@@ -804,22 +803,67 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       }
       var reader = new FileReader();
       reader.onload = function (evt) {
-        var sizeKb = Math.round(file.size / 1024);
-        dropZone.innerHTML = ''
-          + '<input type="file" name="logo" accept=".png,.jpg,.jpeg,.svg" hidden>'
-          + '<div style="display:flex;align-items:center;gap:14px;justify-content:center;">'
-          + '  <img src="' + evt.target.result + '" alt="Aperçu logo" style="max-height:48px;max-width:120px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:6px;padding:4px;">'
-          + '  <div style="text-align:left;">'
-          + '    <div class="wizard-file-drop-text"><strong>' + escapeHtml(file.name) + '</strong></div>'
-          + '    <div class="wizard-file-drop-hint">' + sizeKb + ' Ko · cliquez pour changer</div>'
-          + '  </div>'
-          + '</div>';
-        logoInput = dropZone.querySelector('input[name="logo"]');
-        logoInput.addEventListener('change', function (e) {
-          handleFile(e.target.files && e.target.files[0]);
-        });
+        // Stocker pour le preview (sinon updatePreview ne le retrouve plus
+        // après le re-render du dropZone)
+        state.logoDataUrl = evt.target.result;
+        state.logoFile = { name: file.name, size: file.size };
+
+        renderLogoDropZone();
+
+        // Propager au preview chat
+        updatePreview();
       };
       reader.readAsDataURL(file);
+    }
+
+    // Reconstruit le contenu du dropZone via DOM API (zéro innerHTML)
+    function renderLogoDropZone() {
+      $clear(dropZone);
+
+      // Nouvel input file (re-attaché)
+      var newInput = $el('input', {
+        attrs: { type: 'file', name: 'logo', accept: '.png,.jpg,.jpeg,.svg', hidden: 'hidden' }
+      });
+      dropZone.appendChild(newInput);
+      logoInput = newInput;
+      logoInput.addEventListener('change', function (e) {
+        handleFile(e.target.files && e.target.files[0]);
+      });
+
+      if (!state.logoFile) return;
+
+      // Aperçu visuel : image + métadonnées
+      var img = $el('img', {
+        attrs: {
+          src: state.logoDataUrl,
+          alt: 'Aperçu logo'
+        },
+        style: {
+          maxHeight: '48px', maxWidth: '120px', objectFit: 'contain',
+          background: '#fff', border: '1px solid var(--border)',
+          borderRadius: '6px', padding: '4px'
+        }
+      });
+
+      var nameStrong = $el('strong', { text: state.logoFile.name });
+      var nameRow = $el('div', { className: 'wizard-file-drop-text', children: [nameStrong] });
+
+      var hintRow = $el('div', {
+        className: 'wizard-file-drop-hint',
+        text: Math.round(state.logoFile.size / 1024) + ' Ko · cliquez pour changer'
+      });
+
+      var infoCol = $el('div', {
+        style: { textAlign: 'left' },
+        children: [nameRow, hintRow]
+      });
+
+      var row = $el('div', {
+        style: { display: 'flex', alignItems: 'center', gap: '14px', justifyContent: 'center' },
+        children: [img, infoCol]
+      });
+
+      dropZone.appendChild(row);
     }
 
     logoInput.addEventListener('change', function (e) {
@@ -841,7 +885,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       color: colorInput.value,
       white_label: whitelabelToggle ? whitelabelToggle.checked : false,
       subtitles: subtitlesCheckbox ? subtitlesCheckbox.checked : false,
-      logo_filename: (logoInput && logoInput.files && logoInput.files[0]) ? logoInput.files[0].name : null,
+      logo_filename: state.logoFile ? state.logoFile.name : null,
       email: emailInput ? emailInput.value : '',
       phone: phoneInput ? phoneInput.value : '',
       company: companyInput ? companyInput.value : '',
