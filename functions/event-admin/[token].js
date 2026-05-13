@@ -11,7 +11,7 @@ export const onRequestGet = async ({ params, env }) => {
 
   // Résolution token → event
   const events = await env.DB.prepare(
-    'SELECT id, slug, title, client_name, scheduled_at, status, white_label, primary_color, logo_url FROM events'
+    'SELECT id, slug, title, client_name, scheduled_at, status, white_label, primary_color, logo_url, access_mode FROM events'
   ).all();
 
   let event = null;
@@ -28,7 +28,11 @@ export const onRequestGet = async ({ params, env }) => {
     );
   }
 
-  return new Response(renderPage(event, params.token), {
+  // Calcul du token preview admin (HMAC du slug seul) pour permettre au client
+  // de voir un aperçu de son event privé via /chat/<slug>?preview=<token>.
+  const adminPreviewToken = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
+
+  return new Response(renderPage(event, params.token, adminPreviewToken), {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
@@ -46,6 +50,20 @@ async function computeClientToken(slug, secret) {
     false, ['sign']
   );
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug + ':client'));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    .slice(0, 24);
+}
+
+// Duplication assumée avec functions/api/admin/events/[id].js et functions/chat/[slug].js
+async function computePreviewToken(slug, secret) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug));
   return btoa(String.fromCharCode(...new Uint8Array(sig)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     .slice(0, 24);
@@ -84,9 +102,13 @@ function formatDate(iso) {
        + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function renderPage(event, token) {
+function renderPage(event, token, adminPreviewToken) {
   const apiBase = `/api/event-admin/${token}`;
   const dateLabel = formatDate(event.scheduled_at);
+  const isPrivate = event.access_mode === 'private';
+  const liveUrl = isPrivate
+    ? `https://nomacast.fr/chat/${event.slug}?preview=${adminPreviewToken}`
+    : `https://nomacast.fr/chat/${event.slug}`;
 
   return `<!doctype html>
 <html lang="fr">
@@ -124,6 +146,37 @@ body {
 }
 .event-card h1 { margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
 .event-card-meta { font-size: 14px; opacity: 0.9; }
+
+/* Lien live de l'event */
+.link-card {
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;
+  padding: 16px 18px; margin-bottom: 16px;
+}
+.link-card-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.link-card-label {
+  font-size: 11px; font-weight: 700; color: #1e40af;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.link-card-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.link-card-badge-public { background: #dbeafe; color: #1e40af; }
+.link-card-badge-private { background: #fef3c7; color: #92400e; }
+.link-card-url {
+  display: block; word-break: break-all; font-family: ui-monospace, monospace;
+  font-size: 13px; color: #1e3a8a; text-decoration: none;
+  padding: 8px 10px; background: #fff; border: 1px solid #dbeafe;
+  border-radius: 6px; margin-bottom: 10px;
+}
+.link-card-url:hover { background: #fafbfc; }
+.link-card-actions { display: flex; gap: 8px; }
+.link-card-warn, .link-card-hint {
+  margin: 10px 0 0; font-size: 12px; color: #475569; line-height: 1.5;
+}
+.link-card-warn { color: #92400e; }
 
 .stats {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;
@@ -209,6 +262,40 @@ tbody tr:hover { background: #fafbfc; }
 }
 .modal-row textarea { min-height: 200px; resize: vertical; font-family: ui-monospace, monospace; font-size: 13px; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+/* CSV import dropzone */
+.csv-drop {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 90px;
+  border: 2px dashed #cbd5e1; border-radius: 8px;
+  padding: 24px 16px; text-align: center; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  box-sizing: border-box;
+}
+.csv-drop:hover, .csv-drop.dragover {
+  border-color: #5D9CEC; background: #eff6ff;
+}
+.csv-drop-text { font-size: 14px; color: #64748b; }
+.csv-drop-text strong { color: #5D9CEC; }
+.csv-drop-filename { display: block; margin-top: 6px; font-size: 12px; color: #475569; font-style: italic; }
+.csv-preview {
+  margin-top: 16px; max-height: 240px; overflow: auto;
+  border: 1px solid #e2e8f0; border-radius: 6px;
+}
+.csv-preview table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.csv-preview th, .csv-preview td {
+  padding: 6px 10px; text-align: left; border-bottom: 1px solid #f1f5f9;
+}
+.csv-preview thead th {
+  background: #fafbfc; position: sticky; top: 0;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8;
+}
+.csv-info { margin-top: 14px; font-size: 12px; color: #64748b; }
+.csv-error {
+  margin-top: 14px; padding: 10px 12px;
+  background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;
+  border-radius: 6px; font-size: 13px;
+}
 
 .muted { color: #94a3b8; }
 
@@ -297,6 +384,21 @@ tbody tr:hover { background: #fafbfc; }
     <div class="event-card-meta">
       ${event.client_name ? escapeHtml(event.client_name) + ' · ' : ''}${escapeHtml(dateLabel)}
     </div>
+  </section>
+
+  <section class="link-card">
+    <div class="link-card-head">
+      <span class="link-card-label">Lien de l'événement</span>
+      <span class="link-card-badge link-card-badge-${isPrivate ? 'private' : 'public'}">${isPrivate ? 'privé' : 'public'}</span>
+    </div>
+    <a class="link-card-url" id="live-url" href="${escapeHtml(liveUrl)}" target="_blank" rel="noopener">${escapeHtml(liveUrl)}</a>
+    <div class="link-card-actions">
+      <button class="btn btn-secondary btn-sm" id="live-copy" type="button">Copier le lien</button>
+      <a class="btn btn-secondary btn-sm" href="${escapeHtml(liveUrl)}" target="_blank" rel="noopener">Ouvrir ↗</a>
+    </div>
+    ${isPrivate
+      ? `<p class="link-card-warn">Lien preview administrateur — utile pour tester le rendu. Ne le partage pas : les invités utilisent leur lien personnel reçu par email.</p>`
+      : `<p class="link-card-hint">Lien public partageable. N'importe qui peut s'y connecter.</p>`}
   </section>
 
   <div id="message-zone"></div>
@@ -389,22 +491,30 @@ tbody tr:hover { background: #fafbfc; }
 <div class="modal-backdrop" id="modal-csv" hidden>
   <div class="modal">
     <h2>Importer un CSV</h2>
-    <div class="modal-row">
-      <label>Colle ici tes invités au format CSV (une ligne par invité)</label>
-      <textarea id="csv-text" placeholder="email@example.com,Nom Prénom&#10;autre@example.com,Autre Personne&#10;contact@example.com"></textarea>
-      <p class="muted" style="font-size:12px;margin:6px 0 0">Format : <code>email,nom</code> · le nom est optionnel · ligne d'entête ignorée.</p>
+    <p class="muted" style="font-size:12px;margin:0 0 12px">
+      Colonnes attendues : <code>email</code>, <code>full_name</code>, <code>company</code>.
+      Les en-têtes sont obligatoires (1ère ligne du CSV). Max 500 invités par import.
+    </p>
+    <div class="csv-drop" id="csv-drop" role="button" tabindex="0">
+      <input type="file" id="csv-file" accept=".csv,text/csv" hidden>
+      <div>
+        <div class="csv-drop-text">Cliquez pour <strong>choisir un fichier</strong> ou glissez-le ici</div>
+        <span class="csv-drop-filename" id="csv-filename" hidden></span>
+      </div>
     </div>
+    <div id="csv-preview-wrap"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" data-close>Annuler</button>
-      <button class="btn btn-primary" id="csv-submit">Importer</button>
+      <button class="btn btn-primary" id="csv-submit" disabled>Importer</button>
     </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
 (function () {
   var API = ${JSON.stringify(apiBase)};
-  var state = { invitees: [] };
+  var state = { invitees: [], csvData: null };
 
   function $(id) { return document.getElementById(id); }
   function escapeHtml(s) {
@@ -555,28 +665,112 @@ tbody tr:hover { background: #fafbfc; }
     }
   });
 
-  // Import CSV
+  // Import CSV (file picker + drag-drop + Papa Parse — même UX que admin Nomacast)
+  var csvDropZone = $('csv-drop');
+  var csvInput = $('csv-file');
+  var csvPreviewWrap = $('csv-preview-wrap');
+  var csvSubmit = $('csv-submit');
+  var csvFilename = $('csv-filename');
+
+  function resetCsvModal() {
+    csvInput.value = '';
+    state.csvData = null;
+    csvSubmit.disabled = true;
+    csvFilename.hidden = true;
+    csvFilename.textContent = '';
+    csvPreviewWrap.innerHTML = '';
+  }
+
   $('btn-import').addEventListener('click', function () {
-    $('csv-text').value = '';
+    resetCsvModal();
     $('modal-csv').hidden = false;
-    setTimeout(function () { $('csv-text').focus(); }, 50);
   });
-  $('csv-submit').addEventListener('click', async function () {
-    var text = $('csv-text').value.trim();
-    if (!text) { alert('Colle ton CSV'); return; }
-    var lines = text.split(/\\r?\\n/).filter(function (l) { return l.trim(); });
-    var rows = lines.map(function (l) {
-      var parts = l.split(/[,;\\t]/).map(function (p) { return p.trim(); });
-      return { email: parts[0], full_name: parts[1] || '' };
-    }).filter(function (r) { return r.email && r.email.includes('@'); });
-    if (rows.length === 0) { alert('Aucun email valide trouvé'); return; }
-    this.disabled = true; this.textContent = '...';
+
+  csvDropZone.addEventListener('click', function () { csvInput.click(); });
+  csvDropZone.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); csvInput.click(); }
+  });
+  csvInput.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) parseCsvFile(file);
+  });
+  csvDropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    csvDropZone.classList.add('dragover');
+  });
+  csvDropZone.addEventListener('dragleave', function () { csvDropZone.classList.remove('dragover'); });
+  csvDropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    csvDropZone.classList.remove('dragover');
+    var file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) parseCsvFile(file);
+  });
+
+  function parseCsvFile(file) {
+    csvFilename.textContent = file.name;
+    csvFilename.hidden = false;
+    if (typeof Papa === 'undefined') {
+      csvPreviewWrap.innerHTML = '<div class="csv-error">Bibliothèque CSV non chargée (vérifie ta connexion réseau).</div>';
+      csvSubmit.disabled = true;
+      return;
+    }
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function (results) {
+        var rows = (results.data || []).map(function (r) {
+          var emailKey = Object.keys(r).find(function (k) { return /^email$/i.test(k.trim()); });
+          var nameKey = Object.keys(r).find(function (k) { return /^(full_name|name|nom|nom complet)$/i.test(k.trim()); });
+          var companyKey = Object.keys(r).find(function (k) { return /^(company|entreprise|société|societe)$/i.test(k.trim()); });
+          return {
+            email: emailKey ? String(r[emailKey] || '').trim() : '',
+            full_name: nameKey ? String(r[nameKey] || '').trim() : '',
+            company: companyKey ? String(r[companyKey] || '').trim() : ''
+          };
+        }).filter(function (r) { return r.email && r.email.includes('@'); });
+
+        if (rows.length === 0) {
+          csvPreviewWrap.innerHTML = '<div class="csv-error">Aucune ligne exploitable. Vérifie que ton CSV a une colonne <code>email</code>.</div>';
+          csvSubmit.disabled = true;
+          state.csvData = null;
+          return;
+        }
+        state.csvData = rows;
+        renderCsvPreview(rows);
+        csvSubmit.disabled = false;
+      },
+      error: function (err) {
+        csvPreviewWrap.innerHTML = '<div class="csv-error">Parsing CSV échoué : ' + escapeHtml(err.message) + '</div>';
+        csvSubmit.disabled = true;
+        state.csvData = null;
+      }
+    });
+  }
+
+  function renderCsvPreview(rows) {
+    var html = '<div class="csv-info">' + rows.length + ' ligne(s) prête(s) à importer (aperçu des 10 premières) :</div>';
+    html += '<div class="csv-preview"><table>';
+    html += '<thead><tr><th>Email</th><th>Nom</th><th>Entreprise</th></tr></thead><tbody>';
+    rows.slice(0, 10).forEach(function (r) {
+      html += '<tr><td>' + escapeHtml(r.email) + '</td>'
+        + '<td>' + escapeHtml(r.full_name || '—') + '</td>'
+        + '<td>' + escapeHtml(r.company || '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    csvPreviewWrap.innerHTML = html;
+  }
+
+  csvSubmit.addEventListener('click', async function () {
+    if (!state.csvData || !state.csvData.length) return;
+    this.disabled = true; this.textContent = 'Import…';
     try {
-      var data = await api('/invitees', { method: 'POST', body: { invitees: rows } });
-      var msg = data.added + ' ajouté(s)';
-      if (data.duplicates > 0) msg += ', ' + data.duplicates + ' doublon(s)';
-      if (data.errors && data.errors.length > 0) msg += ', ' + data.errors.length + ' erreur(s)';
-      showMsg(data.added > 0 ? 'success' : 'error', msg);
+      var data = await api('/invitees', { method: 'POST', body: { invitees: state.csvData } });
+      var msg = (data.added || data.created_count || 0) + ' ajouté(s)';
+      var dup = data.duplicates || data.skipped_count || 0;
+      if (dup > 0) msg += ' · ' + dup + ' doublon(s)';
+      var errs = (data.errors && data.errors.length) || data.errors_count || 0;
+      if (errs > 0) msg += ' · ' + errs + ' erreur(s)';
+      showMsg((data.added || data.created_count) > 0 ? 'success' : 'error', msg);
       $('modal-csv').hidden = true;
       loadInvitees();
     } catch (err) {
@@ -627,6 +821,23 @@ tbody tr:hover { background: #fafbfc; }
       if (e.target === m) m.hidden = true;
     });
   });
+
+  // Bouton "Copier" du lien live
+  var liveCopyBtn = $('live-copy');
+  if (liveCopyBtn) {
+    liveCopyBtn.addEventListener('click', function () {
+      var url = ($('live-url').getAttribute('href') || '').trim();
+      if (!url) return;
+      var btn = this;
+      navigator.clipboard.writeText(url).then(
+        function () {
+          btn.textContent = 'Copié ✓';
+          setTimeout(function () { btn.textContent = 'Copier le lien'; }, 1500);
+        },
+        function () { window.prompt('Copie ce lien :', url); }
+      );
+    });
+  }
 
   // ============================================================
   // Branding (color + logo) - uniquement si white_label === true
@@ -711,7 +922,8 @@ tbody tr:hover { background: #fafbfc; }
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        var data = await r.json();
+        var data;
+        try { data = await r.json(); } catch (e) { data = {}; }
         if (!r.ok) throw new Error(data.error || 'Échec');
         showMsg('success', 'Personnalisation enregistrée.');
         brandingSaved.hidden = false;
