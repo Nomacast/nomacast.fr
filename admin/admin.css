@@ -61,6 +61,14 @@ a:hover { color: var(--cyan-hover); text-decoration: underline; }
   display: flex; align-items: center; gap: 10px;
   font-family: var(--font-head); font-weight: 700; font-size: 16px;
 }
+.admin-header-brand-link {
+  color: var(--white);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.admin-header-brand-link:hover {
+  opacity: 0.85; color: var(--white); text-decoration: none;
+}
 .admin-header-brand-dot {
   width: 8px; height: 8px; border-radius: 50%; background: var(--cyan);
 }
