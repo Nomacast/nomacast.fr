@@ -112,6 +112,31 @@ export const onRequestPost = async ({ request, params, env }) => {
 };
 
 // ============================================================
+// DELETE — Vide tous les invités d'un event (action destructive)
+// ============================================================
+export const onRequestDelete = async ({ params, env }) => {
+  if (!env.DB) return jsonResponse({ error: 'D1 binding DB manquant' }, 500);
+
+  const event = await env.DB.prepare('SELECT id FROM events WHERE id = ?')
+    .bind(params.id).first();
+  if (!event) return jsonResponse({ error: 'Event introuvable' }, 404);
+
+  try {
+    const result = await env.DB.prepare(
+      'DELETE FROM invitees WHERE event_id = ?'
+    ).bind(params.id).run();
+
+    return jsonResponse({
+      success: true,
+      deleted_count: result.meta.changes || 0
+    });
+  } catch (err) {
+    console.error('[invitees DELETE ALL]', err);
+    return jsonResponse({ error: err.message }, 500);
+  }
+};
+
+// ============================================================
 // Helpers
 // ============================================================
 function jsonResponse(body, status = 200) {
