@@ -11,7 +11,11 @@ export const onRequestGet = async ({ params, env }) => {
 
   try {
     const row = await env.DB.prepare(
-      'SELECT * FROM events WHERE id = ?'
+      `SELECT e.*,
+              (SELECT COUNT(*) FROM invitees i WHERE i.event_id = e.id) AS invitees_count,
+              (SELECT COUNT(*) FROM invitees i WHERE i.event_id = e.id AND i.invited_at IS NOT NULL) AS invitees_sent
+         FROM events e
+         WHERE e.id = ?`
     ).bind(params.id).first();
 
     if (!row) return jsonResponse({ error: 'Event introuvable' }, 404);
@@ -131,12 +135,25 @@ export const onRequestPatch = async ({ request, params, env }) => {
 };
 
 // ============================================================
-// DELETE — Suppression (cascade via FK)
+// DELETE — Suppression (refusée si invités présents · Q4 option B)
 // ============================================================
 export const onRequestDelete = async ({ params, env }) => {
   if (!env.DB) return jsonResponse({ error: 'D1 binding DB manquant' }, 500);
 
   try {
+    // Protection : on refuse le hard-delete si l'event a au moins 1 invité.
+    // L'admin doit d'abord vider la liste d'invités, OU archiver l'event (status='ended').
+    const countRow = await env.DB.prepare(
+      'SELECT COUNT(*) AS n FROM invitees WHERE event_id = ?'
+    ).bind(params.id).first();
+
+    if (countRow && countRow.n > 0) {
+      return jsonResponse({
+        error: 'Cet event a ' + countRow.n + ' invité(s). Supprime-les d\'abord, ou archive l\'event (statut « Terminé ») pour conserver l\'historique.',
+        invitees_count: countRow.n
+      }, 409); // 409 Conflict
+    }
+
     const result = await env.DB.prepare(
       'DELETE FROM events WHERE id = ?'
     ).bind(params.id).run();
@@ -185,6 +202,8 @@ function deserializeEvent(row) {
     stream_uid: row.stream_uid,
     stream_playback_url: row.stream_playback_url,
     created_at: row.created_at,
-    updated_at: row.updated_at
+    updated_at: row.updated_at,
+    invitees_count: typeof row.invitees_count === 'number' ? row.invitees_count : 0,
+    invitees_sent: typeof row.invitees_sent === 'number' ? row.invitees_sent : 0
   };
 }
