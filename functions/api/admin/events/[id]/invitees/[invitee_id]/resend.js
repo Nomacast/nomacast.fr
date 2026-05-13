@@ -124,14 +124,34 @@ function escapeHtml(s) {
 }
 
 function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel }) {
-  return [
-    greeting, '',
-    `Vous êtes invité(e) au chat live de l'événement : « ${event.title} »` + (orgLine ? `, ${orgLine}` : '') + '.',
-    '', dateLabel ? `Date : ${dateLabel}` : '', '',
-    'Pour rejoindre le chat live le jour J :', link, '',
-    'Vous pouvez sauvegarder ce lien dans votre agenda dès maintenant.', '',
-    whiteLabel ? '—' : '—\nPropulsé par Nomacast · live streaming corporate\nhttps://nomacast.fr'
-  ].filter(line => line !== null).join('\n');
+  const lines = [
+    greeting,
+    '',
+    `Vous êtes invité(e) à participer au chat live de l'événement « ${event.title} »` + (orgLine ? `, ${orgLine}` : '') + '.',
+    '',
+    '— DÉTAILS DE L\'ÉVÉNEMENT —',
+    dateLabel ? `Date    : ${dateLabel}` : '',
+    event.access_mode === 'private'
+      ? 'Accès   : Lien personnel (ne pas partager)'
+      : 'Accès   : Lien public',
+    '',
+    'Pour rejoindre le chat live :',
+    link,
+    '',
+    'Vous pouvez sauvegarder ce lien dans votre agenda dès maintenant.',
+    'Le chat ouvrira automatiquement le jour J.',
+    '',
+    whiteLabel
+      ? ''
+      : '---',
+    whiteLabel
+      ? ''
+      : 'Propulsé par Nomacast — live streaming corporate',
+    whiteLabel
+      ? ''
+      : 'https://nomacast.fr'
+  ];
+  return lines.filter(line => line !== null && line !== undefined).join('\n');
 }
 
 function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabel }) {
@@ -140,41 +160,118 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
   const safeGreeting = escapeHtml(greeting);
   const safeDate = escapeHtml(dateLabel);
   const safeLink = escapeHtml(link);
+  const accessLabel = event.access_mode === 'private'
+    ? 'Lien personnel'
+    : 'Lien public';
+
   const footerHtml = whiteLabel
     ? ''
-    : `<tr><td style="padding:24px 32px 32px;font-family:Arial,sans-serif;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;">
-         Propulsé par <strong style="color:#0f172a;">Nomacast</strong> · live streaming corporate &middot;
-         <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:underline;">nomacast.fr</a>
+    : `<tr><td style="padding:24px 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#94a3b8;border-top:1px solid #eef2f6;background:#fafbfc;">
+         <div style="margin-bottom:4px;color:#475569;font-size:13px;">
+           <strong style="color:#0f172a;font-size:14px;letter-spacing:0.02em;">Nomacast</strong>
+           &middot; live streaming corporate
+         </div>
+         <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:none;">nomacast.fr</a>
+         &nbsp;&middot;&nbsp;
+         <a href="mailto:${REPLY_TO}" style="color:#94a3b8;text-decoration:none;">${REPLY_TO}</a>
        </td></tr>`;
+
   return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>${safeTitle}</title></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f1f5f9;padding:32px 0;">
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${safeTitle}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif;">
+<!-- Préheader (texte d'aperçu masqué) -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
+  Vous êtes invité(e) au chat live ${safeTitle}.${safeDate ? ' ' + safeDate : ''}
+</div>
+
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f4f6fa;padding:40px 0;">
   <tr><td align="center">
-    <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
-      <tr><td style="background:${color};padding:24px 32px;color:#ffffff;font-family:Arial,sans-serif;">
-        <div style="font-size:13px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;opacity:0.85;">Invitation chat live</div>
-        <h1 style="margin:6px 0 0;font-size:22px;font-weight:700;line-height:1.3;">${safeTitle}</h1>
-      </td></tr>
-      <tr><td style="padding:28px 32px 8px;font-family:Arial,sans-serif;color:#0f172a;font-size:15px;line-height:1.6;">
-        <p style="margin:0 0 14px;">${safeGreeting}</p>
-        <p style="margin:0 0 14px;">Vous êtes invité(e) à participer au chat live de l'événement <strong>${safeTitle}</strong>${safeOrg ? ', ' + safeOrg : ''}.</p>
-        ${safeDate ? `<p style="margin:0 0 14px;color:#475569;font-size:14px;"><strong>Date</strong> : ${safeDate}</p>` : ''}
-      </td></tr>
-      <tr><td align="center" style="padding:16px 32px 28px;">
-        <a href="${safeLink}" style="display:inline-block;background:${color};color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-family:Arial,sans-serif;font-size:15px;font-weight:600;">
-          Rejoindre le chat live →
-        </a>
-      </td></tr>
-      <tr><td style="padding:0 32px 24px;font-family:Arial,sans-serif;color:#475569;font-size:13px;line-height:1.6;">
-        <p style="margin:0 0 8px;">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :</p>
-        <p style="margin:0;word-break:break-all;"><a href="${safeLink}" style="color:${color};text-decoration:underline;">${safeLink}</a></p>
-      </td></tr>
-      <tr><td style="padding:0 32px 24px;font-family:Arial,sans-serif;color:#94a3b8;font-size:12px;line-height:1.5;">
-        Vous pouvez sauvegarder ce lien dans votre agenda dès maintenant. Le chat ouvrira automatiquement le jour J.
-      </td></tr>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(15,23,42,0.08);">
+
+      <!-- HERO -->
+      <tr>
+        <td style="background:${color};padding:34px 36px 28px;font-family:Arial,Helvetica,sans-serif;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#ffffff;opacity:0.85;margin-bottom:10px;">
+            Invitation chat live
+          </div>
+          <h1 style="margin:0;font-size:24px;font-weight:700;line-height:1.3;color:#ffffff;">
+            ${safeTitle}
+          </h1>
+          ${safeOrg ? `<div style="margin-top:8px;font-size:14px;color:#ffffff;opacity:0.9;">${safeOrg}</div>` : ''}
+        </td>
+      </tr>
+
+      <!-- GREETING + INTRO -->
+      <tr>
+        <td style="padding:32px 36px 8px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-size:15px;line-height:1.65;">
+          <p style="margin:0 0 14px;font-size:16px;">${safeGreeting}</p>
+          <p style="margin:0 0 8px;color:#334155;">
+            Vous êtes invité(e) à participer au chat live de l'événement.
+            Posez vos questions à l'oral, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur — aucune installation nécessaire.
+          </p>
+        </td>
+      </tr>
+
+      <!-- DETAILS BOX -->
+      <tr>
+        <td style="padding:18px 36px 8px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f7f9fc;border:1px solid #e6ecf3;border-radius:10px;">
+            <tr>
+              ${safeDate ? `<td style="padding:18px 22px;font-family:Arial,Helvetica,sans-serif;border-right:1px solid #e6ecf3;width:60%;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;">Date</div>
+                <div style="font-size:14px;color:#0f172a;font-weight:600;line-height:1.4;">${safeDate}</div>
+              </td>` : ''}
+              <td style="padding:18px 22px;font-family:Arial,Helvetica,sans-serif;${safeDate ? '' : 'width:100%;'}">
+                <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;">Accès</div>
+                <div style="font-size:14px;color:#0f172a;font-weight:600;line-height:1.4;">${accessLabel}</div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- CTA -->
+      <tr>
+        <td align="center" style="padding:24px 36px 8px;">
+          <table role="presentation" cellpadding="0" cellspacing="0">
+            <tr><td style="border-radius:10px;background:${color};box-shadow:0 4px 12px ${color}33;">
+              <a href="${safeLink}" style="display:inline-block;padding:15px 36px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.01em;">
+                Rejoindre le chat live →
+              </a>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- FALLBACK LINK -->
+      <tr>
+        <td style="padding:14px 36px 22px;font-family:Arial,Helvetica,sans-serif;color:#64748b;font-size:12px;line-height:1.6;text-align:center;">
+          Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+          <a href="${safeLink}" style="color:${color};text-decoration:underline;word-break:break-all;">${safeLink}</a>
+        </td>
+      </tr>
+
+      <!-- AGENDA TIP -->
+      <tr>
+        <td style="padding:0 36px 28px;">
+          <div style="border-top:1px dashed #e6ecf3;padding-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;line-height:1.6;">
+            <strong style="color:#0f172a;">Astuce&nbsp;:</strong>
+            sauvegardez ce lien dans votre agenda dès maintenant. Le chat ouvrira automatiquement le jour J.
+            ${event.access_mode === 'private' ? '<br><span style="color:#94a3b8;">Ce lien est personnel — merci de ne pas le partager.</span>' : ''}
+          </div>
+        </td>
+      </tr>
+
       ${footerHtml}
+
     </table>
+
   </td></tr>
 </table>
 </body></html>`;
