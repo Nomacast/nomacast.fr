@@ -6,7 +6,7 @@
 // - Si event public → page comme /i/[token] mais sans tracking (pas d'invitee)
 // - No-index header
 
-export const onRequestGet = async ({ params, env }) => {
+export const onRequestGet = async ({ params, env, request }) => {
   if (!env.DB) {
     return htmlResponse(renderErrorPage(
       'Service indisponible',
@@ -36,8 +36,17 @@ export const onRequestGet = async ({ params, env }) => {
     access_mode: row.access_mode
   };
 
+  // Vérifier si c'est une preview admin (HMAC valide du slug)
+  const url = new URL(request.url);
+  const previewToken = url.searchParams.get('preview');
+  let isAdminPreview = false;
+  if (previewToken && env.ADMIN_PASSWORD) {
+    const expected = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
+    isAdminPreview = (previewToken === expected);
+  }
+
   let html;
-  if (event.access_mode === 'private') {
+  if (event.access_mode === 'private' && !isAdminPreview) {
     html = renderPrivatePage(event);
   } else if (event.status === 'draft') {
     html = renderWaitingPage(event);
@@ -50,6 +59,20 @@ export const onRequestGet = async ({ params, env }) => {
   }
   return htmlResponse(html, 200);
 };
+
+async function computePreviewToken(slug, secret) {
+  if (!secret) return null;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    .slice(0, 24);
+}
 
 function htmlResponse(html, status = 200) {
   return new Response(html, {
