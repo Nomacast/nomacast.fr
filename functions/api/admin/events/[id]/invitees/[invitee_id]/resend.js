@@ -238,19 +238,32 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
   // ===== FOOTER =====
   const footerHtml = whiteLabel
     ? ''
-    : `<tr><td style="padding:28px 36px 30px;background:#fafbfc;border-top:1px solid #eef2f6;font-family:Arial,Helvetica,sans-serif;">
+    : `<tr><td style="padding:36px 36px 38px;background:#fafbfc;border-top:1px solid #e2e8f0;font-family:Arial,Helvetica,sans-serif;text-align:center;">
          <a href="https://www.nomacast.fr/" target="_blank" style="text-decoration:none;display:inline-block;">
-           <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:17px;font-weight:800;letter-spacing:-0.4px;line-height:1;white-space:nowrap;">
+           <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;line-height:1;white-space:nowrap;">
              <span style="color:#5D9CEC;">&bull;</span><span style="color:#0f172a;">&nbsp;Nomacast</span>
            </div>
          </a>
-         <div style="margin:8px 0 14px;color:#475569;font-size:13px;font-style:italic;">
+         <div style="margin:10px 0 0;color:#475569;font-size:13px;font-style:italic;">
            La qualité agence. Un seul interlocuteur.
          </div>
+         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px auto;">
+           <tr>
+             <td width="6" height="2" style="background:#cbd5e1;font-size:0;line-height:0;">&nbsp;</td>
+             <td width="8" style="font-size:0;line-height:0;">&nbsp;</td>
+             <td width="6" height="2" style="background:#cbd5e1;font-size:0;line-height:0;">&nbsp;</td>
+             <td width="8" style="font-size:0;line-height:0;">&nbsp;</td>
+             <td width="6" height="2" style="background:#cbd5e1;font-size:0;line-height:0;">&nbsp;</td>
+           </tr>
+         </table>
+         <div style="color:#64748b;font-size:13px;line-height:1.6;margin:0 0 18px;">
+           Live streaming corporate à Paris,<br>
+           en France et en Europe.
+         </div>
          <div style="color:#94a3b8;font-size:12px;line-height:1.6;">
-           <a href="https://www.nomacast.fr" target="_blank" style="color:#64748b;text-decoration:none;">www.nomacast.fr</a>
+           <a href="https://www.nomacast.fr" target="_blank" style="color:#334155;text-decoration:none;font-weight:600;">www.nomacast.fr</a>
            <span style="color:#cbd5e1;">&nbsp;·&nbsp;</span>
-           <a href="mailto:${REPLY_TO}" style="color:#64748b;text-decoration:none;">${REPLY_TO}</a>
+           <a href="mailto:${REPLY_TO}" style="color:#334155;text-decoration:none;font-weight:600;">${REPLY_TO}</a>
          </div>
        </td></tr>`;
 
