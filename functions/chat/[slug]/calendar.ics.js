@@ -7,11 +7,14 @@ export const onRequestGet = async ({ params, env, request }) => {
   if (!env.DB) return new Response('Database error', { status: 500 });
 
   const event = await env.DB.prepare(`
-    SELECT id, slug, title, client_name, scheduled_at, duration_minutes
+    SELECT id, slug, title, client_name, scheduled_at, duration_minutes, access_mode
       FROM events WHERE slug = ?
   `).bind(params.slug).first();
 
   if (!event) return new Response('Event not found', { status: 404 });
+  if (event.access_mode === 'private') {
+    return new Response('Cet événement est privé. Utilisez votre lien d\'invitation personnel.', { status: 403 });
+  }
   if (!event.scheduled_at) return new Response('Event date not set', { status: 400 });
 
   const url = new URL(request.url);
