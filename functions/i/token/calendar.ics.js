@@ -1,30 +1,32 @@
-// functions/chat/[slug]/calendar.ics.js
-// GET /chat/:slug/calendar.ics
-// Génère un fichier iCalendar (.ics) pour ajouter l'event à n'importe quel agenda
-// (Apple Calendar, Outlook desktop, Thunderbird, etc.)
+// functions/i/[token]/calendar.ics.js
+// GET /i/:token/calendar.ics
+// Renvoie un fichier .ics basé sur le token de l'invité (URL opaque, pas de slug).
 
 export const onRequestGet = async ({ params, env, request }) => {
   if (!env.DB) return new Response('Database error', { status: 500 });
 
-  const event = await env.DB.prepare(`
-    SELECT id, slug, title, client_name, scheduled_at, duration_minutes
-      FROM events WHERE slug = ?
-  `).bind(params.slug).first();
+  const row = await env.DB.prepare(`
+    SELECT
+      e.id, e.slug, e.title, e.client_name, e.scheduled_at, e.duration_minutes
+    FROM invitees i
+    JOIN events e ON i.event_id = e.id
+    WHERE i.magic_token = ?
+  `).bind(params.token).first();
 
-  if (!event) return new Response('Event not found', { status: 404 });
-  if (!event.scheduled_at) return new Response('Event date not set', { status: 400 });
+  if (!row) return new Response('Invitation introuvable', { status: 404 });
+  if (!row.scheduled_at) return new Response('Date d\'événement non définie', { status: 400 });
 
   const url = new URL(request.url);
-  const chatLink = `${url.origin}/chat/${event.slug}` + (url.searchParams.get('t') ? `?t=${url.searchParams.get('t')}` : '');
+  const chatLink = `${url.origin}/i/${params.token}`;
 
-  const ics = buildIcs(event, chatLink);
+  const ics = buildIcs(row, chatLink);
 
   return new Response(ics, {
     status: 200,
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${event.slug}.ics"`,
-      'Cache-Control': 'public, max-age=300',
+      'Content-Disposition': `attachment; filename="${row.slug}.ics"`,
+      'Cache-Control': 'private, max-age=300',
       'X-Robots-Tag': 'noindex, nofollow'
     }
   });
@@ -46,7 +48,6 @@ function buildIcs(event, chatLink) {
   );
   const location = icsEscape(chatLink);
 
-  // Format iCalendar strict (CRLF \r\n, lignes max 75 chars conseillé mais souvent souple)
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -70,8 +71,7 @@ function buildIcs(event, chatLink) {
 }
 
 function toIcsDate(iso) {
-  const d = new Date(iso);
-  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
 function addMinutes(iso, mins) {
@@ -83,8 +83,5 @@ function addMinutes(iso, mins) {
 function icsEscape(s) {
   if (!s) return '';
   return String(s)
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
+    .replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 }
