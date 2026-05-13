@@ -12,10 +12,35 @@
  *  - Upload logo avec preview et validation
  *  - Validation au moment du submit (durée, audience, email)
  *  - Tracking GTM (events chat_wizard_*)
+ *
+ * Trusted Types compat · chat-preview-v3
+ *  - Brave avec Shields actifs et CSP `require-trusted-types-for 'script'`
+ *    bloquent les `element.innerHTML = string` natifs.
+ *  - La policy 'default' ci-dessous passe nos strings sans transformation,
+ *    ce qui rend toutes les assignations innerHTML transparentes.
  */
+
+// Trusted Types policy AVANT l'IIFE : capture la moindre assignation innerHTML
+// dans le code suivant. Sans cette policy, updatePreview() plante silencieusement
+// sur les navigateurs strict (Brave Shields, CSP enforced).
+if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.createPolicy) {
+  try {
+    window.trustedTypes.createPolicy('default', {
+      createHTML: function (input) { return input; },
+      createScriptURL: function (input) { return input; },
+      createScript: function (input) { return input; }
+    });
+  } catch (e) {
+    // La policy 'default' existe déjà OU le navigateur la refuse : on laisse passer.
+    // Le code continue à fonctionner sur les navigateurs non-strict.
+    console.warn('[CHAT-INTERACTIF] Trusted Types default policy non installée :', e && e.message);
+  }
+}
 
 (function () {
   'use strict';
+
+  console.log('[CHAT-INTERACTIF] JS chargé · version chat-interactif-v3 + chat-preview-v3');
 
   // ============================================================
   // CONSTANTES
