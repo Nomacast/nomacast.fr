@@ -1,3 +1,259 @@
+# Chat interactif · Journal de développement
+
+**Feature** : Configurateur public Chat interactif Nomacast
+**Démarrage** : 13 mai 2026
+**Statut** : V12 livrée — JS interactif fonctionnel, en attente backend (Étape 3)
+**Fichiers livrés** : `chat-interactif.html` (1410 lignes / 79 Ko) + `chat-interactif.js` (593 lignes / 21 Ko)
+
+---
+
+## 1. Contexte et objectifs
+
+Outil de configuration en ligne pour permettre aux prospects B2B de paramétrer une prestation "Chat interactif personnalisé" en complément des prestations Nomacast existantes de captation et live streaming.
+
+**Cas d'usage cibles** : conférences, séminaires, AG, conventions, webinaires, tables rondes.
+
+**Stratégie de mise sur le marché** : déployer le configurateur en premier comme outil marketing pour qualifier les leads et mesurer la demande, avant d'investir dans le backend complet du service.
+
+---
+
+## 2. Architecture retenue
+
+### Stack technique
+- **Front** : HTML/CSS/JS vanilla, hébergé sur Cloudflare Pages
+- **Backend** (à venir) : Cloudflare Workers + Durable Objects + Stream Live
+- **Stockage** (à venir) : Cloudflare KV (templates) + R2 (logos uploadés)
+- **Emails** : Resend (déjà configuré sur le domaine racine `nomacast.fr`)
+- **Coût fixe estimé** : 5 $/mois (Workers Paid plan)
+- **Coût par event** : ~$0.50 à $8 selon durée et activité du chat
+
+### Choix vidéo (à mettre en œuvre Étape 3+)
+- **MVP** : Cloudflare Stream Live (~3-8s latence LL-HLS, ~30-100€/event 2-6h × 300 viewers)
+- **Évolution** : option WebRTC sub-seconde sur VPS plus costaud quand le volume justifie l'investissement (~50-80€/mois fixe)
+
+---
+
+## 3. Décisions produit
+
+### Naming et SEO
+- **URL** : `nomacast.fr/chat-interactif`
+- **Title** : `Chat interactif personnalisé pour événements en direct | Nomacast`
+- **H1** : `Chat personnalisé et interactif pour l'engagement de votre audience.`
+- **Mots-clés cibles** : chat interactif événement, chat personnalisé entreprise, Q&A live entreprise, engagement audience direct, chat événementiel B2B, modération live
+
+### Vocabulaire B2B imposé
+| À éviter (B2C / Twitch) | À utiliser |
+|---|---|
+| viewer | participant |
+| chat room | salle / session |
+| stream / live (seul) | direct / diffusion |
+| magic link | lien d'accès nominatif |
+| snippet | code d'intégration |
+
+### Tarification
+**Grille HT, en complément de la prestation de captation Nomacast (à partir de 1 500 € HT)** :
+
+| Durée \ Audience | <50 | 50-150 | 150-300 | 300+ |
+|---|---|---|---|---|
+| 2h | 290 € | 390 € | 490 € | 690 € |
+| 3h | 390 € | 490 € | 590 € | 790 € |
+| 4h | 490 € | 590 € | 690 € | 890 € |
+| 6h+ | 590 € | 790 € | 990 € | 1 290 € |
+
+**Options additionnelles** :
+- Retrait logo Nomacast (marque blanche complète) : **+150 € HT**
+- Sous-titrage en direct (FR) : **+200 € HT**
+- Sous-titrage multilingue (au devis, hors page) : 350-500 € HT
+- Modes Q&A, sondages, réactions, nuage de mots, quiz, modération client, magic links, intégration iframe, export logs : **tous inclus dans tous les forfaits**
+
+**Note plancher** : tarif affiché = plancher. Devis final ajusté selon durée et format exacts.
+
+### Modes d'interaction proposés
+1. Q&A modéré
+2. Chat libre modéré
+3. Sondages live
+4. Réactions rapides (icônes accord / applaudissements / désaccord)
+5. Nuage de mots-clés en direct
+6. Quiz interactif (à la Twitch Predictions)
+7. Lecture seule (annonces du modérateur uniquement)
+8. Sous-titrage en direct (option payante)
+
+### Modes d'accès participants
+- **Liens d'accès nominatifs** *(défaut)* — lien personnel par email, authentification automatique en un clic
+- **Accès par login utilisateur** *(sur demande)* — utile pour événements récurrents, annuaire d'entreprise, mot de passe d'événement
+
+### Engagement sécurité
+- Chiffrement TLS 1.3
+- Hébergement Europe sur Cloudflare
+- Logs purgés automatiquement à 90 jours
+- Conformité RGPD
+
+### Structure finale de la page (V12)
+1. Hero — H1 + subtitle + 4 bullets (dont sécurité) + 2 CTA
+2. **Configurateur 5 étapes** :
+   - 01 Durée (champ numérique libre, heures)
+   - 02 Audience (champ numérique libre, participants)
+   - 03 Interaction et accès (8 checkboxes modes + 2 radios accès)
+   - 04 Personnalisation (logo upload + color picker + toggle marque blanche)
+   - 05 Coordonnées (email obligatoire, reste facultatif)
+   - Récap + estimation tarifaire + strip sécurité + bouton submit
+3. Section "Toujours inclus" (6 cards numérotées 01-06)
+4. Section "Tarifs" (grille complète + note plancher)
+5. FAQ (9 questions + Schema.org FAQPage)
+6. CTA final dark
+7. Footer (Chat interactif en tête de la colonne Prestations)
+
+### UX du wizard (Option C hybride)
+- **Mode séquentiel par défaut** : 1 étape à la fois, navigation Précédent/Suivant, progress bar
+- **Toggle "Voir toutes les étapes"** : bascule en mode stacked, toutes visibles d'un coup
+- Préférence persistée en `localStorage` (clé `nmc-wizard-mode`)
+- Indicateur dynamique "Étape 01 sur 05" → "Vérification avant envoi"
+- Validation bloquante : durée > 0 (étape 01), audience > 0 (étape 02), email valide (étape 05)
+- Calcul tarifaire en temps réel avec mapping libre → tier
+
+### Tracking GTM (events poussés dans `dataLayer`)
+- `chat_wizard_started` — 1er input utilisateur
+- `chat_wizard_step_completed` — clic Suivant validé (avec n° d'étape)
+- `chat_wizard_mode_toggled` — bascule séquentiel/stacked
+- `chat_wizard_subtitles_toggled` — toggle option sous-titrage
+- `chat_wizard_whitelabel_toggled` — toggle option marque blanche
+- `chat_wizard_access_mode_changed` — changement mode d'accès
+- `chat_wizard_submitted` — soumission finale (avec résumé config)
+
+---
+
+## 4. Journal des itérations
+
+| Version | Date | Changements clés |
+|---------|------|------------------|
+| **V1** | 13/05 | Première livraison · Structure complète : nav, hero, 2 sections intro, wizard 6 étapes stackées pour relecture, sections "Toujours inclus", "Tarifs", FAQ, CTA, footer. Design system aligné sur `prestations.html` (cyan #5A98D6, navy #0b1929, polices Outfit/Plus Jakarta Sans). |
+| **V2** | 13/05 | Restructuration majeure · Suppression des 2 sections d'intro (À qui s'adresse / Comment ça marche), wizard remonte en haut juste après le hero, hero enrichi avec 4 bullets visuels. Nav : globe FR remplacé par lien Chat interactif. Wording sweep : "magic links" → "liens d'accès nominatifs" (6 occurrences), "snippet" → "code d'intégration" (2 occurrences). FAQ enrichie de 3 questions (récupération du contenu des sections supprimées). |
+| **V3** | 13/05 | Enrichissement modes d'interaction · Étape 04 : 4 modes → 7 modes gratuits (ajout réactions, nuage de mots, quiz) + sous-titrage en option payante (+200 €). Étape 06 simplifiée : email seul obligatoire, reste facultatif. Toggle Option C "Voir étape par étape" placeholder visuel ajouté. |
+| **V4** | 13/05 | Cleanup typographique · Élimination des em dashes (15 occurrences, remplacement contextuel par `|`, `·`, `,`, parenthèses). Étape 01 : fusion conférence + séminaire en `Conférence ou séminaire`, `AG / Convention` reformulé `AG ou convention`. Étape 02 : `Autre durée` supprimé, `6 heures` renommé `6 heures et plus`. |
+| **V5** | 13/05 | Note récap reformulée · *"Tarif plancher en complément de votre prestation de captation Nomacast. Le devis final, envoyé sous 24 heures, est ajusté selon la durée et le format exacts de votre événement."* Le mot "plancher" signale implicitement que le prix peut monter, sans alourdir avec des notes spécifiques 6h+ / Autre format. |
+| **V6** | 13/05 | Formulaire allégé · Suppression de l'étape Type d'événement (format ne change pas le prix). Étape 01 (durée) et 02 (audience) passent en champs numériques libres. Étape 03 fusionne modes d'interaction + accès en 2 sous-groupes. Sous-titrage passe en checkbox standard avec prix dans le tip (`+200 € · transcription temps réel`). Wizard passe de 6 à 5 étapes. |
+| **V7** | 13/05 | Bloc sécurité déplacé · Supprimé de l'étape 03. Ajouté en strip dans le hero (forme pilule, fond translucide) et dans le récap (strip étendu avec les 5 garanties dont logs 90j). CSS orphelines `.wizard-security-block` supprimées. |
+| **V8** | 13/05 | Sécurité intégrée aux bullets · Strip hero supprimée, info sécurité intégrée comme 5e bullet point dans la liste hero (style identique aux 4 autres). Layout passé de grid à flex-wrap. |
+| **V9** | 13/05 | Fix layout bullets · Le flex-wrap donnait 4+1 sur certaines largeurs (orphelin). Passage à `grid 3-colonnes` explicites pour forcer 3+2 propre. Responsive : 1 col sous 900px (skip 2-col qui aurait re-créé un orphelin 2+2+1). |
+| **V10** | 13/05 | Réduction à 4 bullets · Suppression du bullet "Modération assurée par votre équipe", remplacement "Liens d'accès nominatifs sécurisés" par "Accès login sur demande". Retour grid 2-col pour layout 2+2 équilibré. |
+| **V11** | 13/05 | Polish menu courant + footer · Header : `opacity: 0.5` (faisait un trou visuel entre le menu et le CTA) remplacé par `color: cyan` pour indicateur de page courante plus intégré. Footer : Chat interactif promu en tête de la colonne Prestations (en gras, avant les autres dispositifs). |
+| **V12** | 13/05 | **JS interactif complet** · Navigation séquentielle Précédent/Suivant. Toggle Option C fonctionnel avec persistance localStorage. Calcul tarifaire en temps réel (mapping libre → tier). Récap live mis à jour à chaque champ. Upload logo avec preview, validation type et taille. Validation des champs requis avec feedback visuel. Tracking GTM (7 events). Soumission placeholder en attendant le backend. Wizard-mode-bar passe de "note de relecture" à indicateur dynamique "Étape 01 sur 05". |
+
+---
+
+## 5. Tests recommandés avant mise en ligne
+
+### Fonctionnels
+- [ ] Flux séquentiel complet : durée → audience → modes → personnalisation → coordonnées → vérification → soumission
+- [ ] Validation : tenter Suivant sans saisir, vérifier le blocage et le feedback visuel rouge
+- [ ] Toggle Option C : passer en stacked, vérifier que tout s'affiche, retour en séquentiel
+- [ ] Récap live : modifier chaque champ, vérifier la mise à jour instantanée
+- [ ] Calcul prix : 3h × 120 pax = `490 € HT` · + white-label = `640 €` · + sous-titrage = `840 €`
+- [ ] Calcul prix edge cases : 0.5h, 7h, 10 pax, 5000 pax
+- [ ] Upload logo : PNG valide, JPG valide, SVG valide, PDF (refus), >2 Mo (refus)
+- [ ] Persistance : basculer en stacked, recharger, vérifier conservation du mode
+
+### Visuels
+- [ ] Hero : 4 bullets en grid 2+2 propre sur desktop, vertical sur mobile
+- [ ] Header : "Chat interactif" en cyan sur la page courante, intégré au menu
+- [ ] Footer : "Chat interactif →" en tête de colonne Prestations (en gras)
+- [ ] Wizard mode bar : toggle à gauche, indicateur "Étape X sur 05" à droite
+- [ ] Récap : security strip étendue visible juste avant le bouton submit
+- [ ] FAQ : 9 questions, ouverture/fermeture fonctionnelle
+- [ ] Mobile : burger menu inclut "Chat interactif", layout responsive sur toutes les sections
+
+### Analytics
+- [ ] GTM : ouvrir la console, taper `dataLayer`, vérifier les events poussés au fil des interactions
+- [ ] Vérifier qu'au moins `chat_wizard_started`, `chat_wizard_step_completed`, `chat_wizard_submitted` apparaissent dans le flux
+
+---
+
+## 6. Backlog
+
+### Court terme (à enchaîner directement)
+- [ ] **Script Python global nav** : sweep automatique sur toutes les pages `.html` du repo pour remplacer le globe FR par "Chat interactif" en couleur cyan + remontée Chat interactif en tête de la colonne Prestations du footer. Idempotent, marker `chat-interactif-nav-v1`.
+- [ ] **Patch `prestations.html`** : ajout de Chat interactif comme dispositif 06 (Marque blanche bumpée à 07). Mise à jour du titre de section.
+- [ ] **Patch `index.html`** : ajout du dispositif Chat interactif dans la section "5 dispositifs" de la home (devient 6 dispositifs).
+
+### Étape 3 — Backend
+- [ ] Cloudflare Function `functions/chat-interactif.js` : POST handler, validation serveur
+- [ ] Génération identifiant template `NMC-2025-XXXX`
+- [ ] Stockage du template JSON en KV (`namespace: chat-templates`)
+- [ ] Upload logo en R2 (`bucket: chat-logos`)
+- [ ] Envoi email récap via Resend à `evenement@nomacast.fr`
+- [ ] Envoi email confirmation au prospect avec template ID
+- [ ] Page `chat-interactif-merci.html` avec affichage du template ID
+- [ ] Variables env à configurer : `RESEND_API_KEY` (existante), `TURNSTILE_SECRET_KEY` (existante)
+- [ ] Remplacer le placeholder Turnstile site key `0x4AAAAAAAxxxxxxx` par la vraie clé
+
+### Étape 4+ — Produit complet (post-validation lead-gen)
+- [ ] Schéma D1 (events, invités, tokens, messages, modérateurs)
+- [ ] Magic link generator + envoi emails participants
+- [ ] Durable Object par event (chat room WebSocket)
+- [ ] Cloudflare Stream Live integration (ingest RTMP/SRT + lecture LL-HLS)
+- [ ] Interface modération client (lien séparé + token modérateur)
+- [ ] Admin Nomacast (CRUD events, import CSV invités, branding, dashboard live)
+- [ ] Snippet iframe d'intégration générée par event
+- [ ] Page d'attente J-15min avec compte à rebours
+- [ ] Page "session terminée"
+- [ ] Export logs CSV post-event
+
+### Long terme
+- [ ] Replay vidéo avec chat synchronisé (option à la demande)
+- [ ] Mode WebRTC sub-seconde (premium, VPS Hetzner ou OVH Advance dédié)
+- [ ] Interface client self-service (alternative à l'admin Nomacast)
+- [ ] Version EN du configurateur (`en/interactive-chat.html`)
+
+---
+
+## 7. Paramètres opérationnels à configurer
+
+### Cloudflare
+- [ ] Turnstile : générer site key + secret key, remplacer le placeholder dans le HTML
+- [ ] R2 bucket : créer `chat-logos`
+- [ ] KV namespace : créer `chat-templates`
+- [ ] Pages : déployer `chat-interactif.html` + `chat-interactif.js` à la racine
+
+### Resend
+- [ ] Template email récap pour Jérôme (HTML, branding Nomacast)
+- [ ] Template email confirmation prospect avec template ID
+
+### GTM (`GTM-M99NLF45`)
+- [ ] Créer 7 triggers pour les events `chat_wizard_*`
+- [ ] Connecter à GA4 ou autre tag de destination
+- [ ] Vérifier en debug mode sur staging avant prod
+
+---
+
+## 8. Notes techniques
+
+### Markers idempotents (pour scripts de mise à jour)
+- `chat-interactif-v1` : présent dans le commentaire d'en-tête HTML et dans les commentaires CSS des nouveaux composants
+- `chat-interactif-nav-v1` *(à créer)* : pour le script de sweep global de la nav
+
+### Conventions respectées (cohérence site)
+- Pas d'emojis Unicode (cards numérotées 01/02/03)
+- Polices : Outfit (titres) + Plus Jakarta Sans (body)
+- Couleurs : cyan `#5A98D6`, navy `#0b1929`, cyan-light `#EAF2FA`, off-white `#f3f6fa`
+- Espacement : `var(--h-pad): clamp(24px, 5vw, 64px)`, `var(--max): 1180px`
+- CTA shadows : `box-shadow: 0 2px 6px rgba(14,165,233,.35)` hover → `0 6px 16px rgba(14,165,233,.55)`
+- Burger menu mobile + globe langue dans footer
+
+### Logique de calcul tarifaire (dans `chat-interactif.js`)
+```javascript
+mapDurationToTier(h) → 2 | 3 | 4 | 6
+mapAudienceToTier(a) → 0 | 1 | 2 | 3
+PRICE_GRID[duration_tier][audience_tier] + 150 (si WL) + 200 (si subtitles)
+```
+
+### Fichiers à déployer ensemble (Cloudflare Pages)
+- `chat-interactif.html` (racine du repo)
+- `chat-interactif.js` (racine du repo)
+
+---
+
+*Dernière mise à jour : 13 mai 2026 · V12*
+
 ═════════════════════════════════════════════════════════════════
 SESSION 11 mai 2026 — Sécurité & monitoring
 ═════════════════════════════════════════════════════════════════
