@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Nouvel event · Admin Nomacast</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+
+<header class="admin-header">
+  <div class="admin-header-brand">
+    <span class="admin-header-brand-dot"></span>
+    Nomacast
+  </div>
+  <div class="admin-header-title">Admin Chat interactif</div>
+  <div class="admin-header-actions">
+    <a class="admin-header-link" href="/admin/">← Tous les events</a>
+  </div>
+</header>
+
+<main class="admin-main">
+
+  <div class="admin-page-head">
+    <div>
+      <h1>Nouvel event</h1>
+      <div class="admin-page-head-sub">Configure un nouveau chat interactif. Tu pourras inviter des participants ensuite.</div>
+    </div>
+  </div>
+
+  <div id="message-zone"></div>
+
+  <div class="admin-card">
+    <div class="admin-card-body">
+      <form id="event-form" class="admin-form" autocomplete="off">
+
+        <div class="admin-form-row">
+          <div class="admin-form-field">
+            <label class="admin-form-label admin-form-label-req" for="f-title">Titre de l'event</label>
+            <input class="admin-form-input" id="f-title" name="title" type="text" required maxlength="200" placeholder="Conférence Strategy 2026">
+            <div class="admin-form-hint">Visible par les participants. Le slug d'URL sera généré automatiquement à partir de ce titre.</div>
+          </div>
+
+          <div class="admin-form-field">
+            <label class="admin-form-label" for="f-client">Client</label>
+            <input class="admin-form-input" id="f-client" name="client_name" type="text" maxlength="200" placeholder="Acme SAS">
+            <div class="admin-form-hint">Nom de l'entreprise organisatrice (optionnel).</div>
+          </div>
+        </div>
+
+        <div class="admin-form-row">
+          <div class="admin-form-field">
+            <label class="admin-form-label admin-form-label-req" for="f-date">Date et heure</label>
+            <input class="admin-form-input" id="f-date" name="scheduled_at" type="datetime-local" required>
+            <div class="admin-form-hint">Heure locale. Le chat ouvre 15 min avant et ferme 5 min après.</div>
+          </div>
+
+          <div class="admin-form-field">
+            <label class="admin-form-label admin-form-label-req" for="f-duration">Durée (minutes)</label>
+            <input class="admin-form-input" id="f-duration" name="duration_minutes" type="number" min="1" step="1" required placeholder="120">
+            <div class="admin-form-hint">Durée totale du direct.</div>
+          </div>
+        </div>
+
+        <div class="admin-form-row">
+          <div class="admin-form-field">
+            <label class="admin-form-label" for="f-audience">Audience estimée</label>
+            <input class="admin-form-input" id="f-audience" name="audience_estimate" type="number" min="1" step="1" placeholder="150">
+            <div class="admin-form-hint">Nombre approximatif de participants connectés simultanément.</div>
+          </div>
+
+          <div class="admin-form-field">
+            <label class="admin-form-label" for="f-color">Couleur primaire</label>
+            <input class="admin-form-input" id="f-color" name="primary_color" type="color" value="#5A98D6">
+            <div class="admin-form-hint">Couleur d'accent dans l'interface chat du client.</div>
+          </div>
+        </div>
+
+        <div class="admin-form-field">
+          <div class="admin-form-label">Modes d'interaction</div>
+          <div class="admin-form-checkboxes">
+            <label class="admin-form-check">
+              <input type="checkbox" name="mode" value="qa">
+              <div>
+                <div class="admin-form-check-label">Q&A modéré</div>
+                <div class="admin-form-check-desc">Questions soumises et approuvées avant diffusion.</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="checkbox" name="mode" value="libre">
+              <div>
+                <div class="admin-form-check-label">Chat libre</div>
+                <div class="admin-form-check-desc">Tous les participants peuvent écrire en direct.</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="checkbox" name="mode" value="sondages">
+              <div>
+                <div class="admin-form-check-label">Sondages live</div>
+                <div class="admin-form-check-desc">Le modérateur lance des sondages instantanés.</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="checkbox" name="mode" value="quiz">
+              <div>
+                <div class="admin-form-check-label">Quiz interactif</div>
+                <div class="admin-form-check-desc">Questions avec bonne réponse, classement à la fin.</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="checkbox" name="mode" value="nuage">
+              <div>
+                <div class="admin-form-check-label">Nuage de mots-clés</div>
+                <div class="admin-form-check-desc">Réponses libres agrégées en visu.</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="checkbox" name="mode" value="reactions">
+              <div>
+                <div class="admin-form-check-label">Réactions rapides</div>
+                <div class="admin-form-check-desc">Bravo, d'accord, clair, insight…</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="checkbox" name="mode" value="lecture">
+              <div>
+                <div class="admin-form-check-label">Lecture seule</div>
+                <div class="admin-form-check-desc">Les participants regardent uniquement, pas d'envoi.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="admin-form-field">
+          <div class="admin-form-label">Options</div>
+          <div class="admin-form-checkboxes">
+            <label class="admin-form-check">
+              <input type="checkbox" id="f-white-label" name="white_label">
+              <div>
+                <div class="admin-form-check-label">Marque blanche</div>
+                <div class="admin-form-check-desc">Retire la mention « Propulsé par Nomacast » du footer chat.</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="checkbox" id="f-subtitles" name="subtitles">
+              <div>
+                <div class="admin-form-check-label">Sous-titrage live</div>
+                <div class="admin-form-check-desc">Bandeau de sous-titres temps réel sous la vidéo.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="admin-form-field">
+          <div class="admin-form-label">Mode d'accès</div>
+          <div class="admin-form-checkboxes">
+            <label class="admin-form-check">
+              <input type="radio" name="access_mode" value="public" checked>
+              <div>
+                <div class="admin-form-check-label">Public</div>
+                <div class="admin-form-check-desc">Le lien direct est partageable, pas d'invitation nominative.</div>
+              </div>
+            </label>
+            <label class="admin-form-check">
+              <input type="radio" name="access_mode" value="private">
+              <div>
+                <div class="admin-form-check-label">Privé (sur invitation)</div>
+                <div class="admin-form-check-desc">Chaque participant reçoit un magic link nominatif.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="admin-form-actions">
+          <a class="admin-btn admin-btn-ghost" href="/admin/">Annuler</a>
+          <button type="submit" class="admin-btn admin-btn-primary" id="f-submit">Créer l'event</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</main>
+
+<script src="/admin/admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.NomacastAdmin;
+  var form = document.getElementById('event-form');
+  var submitBtn = document.getElementById('f-submit');
+  var messageZone = document.getElementById('message-zone');
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Création…';
+
+    var data = {
+      title: form.title.value,
+      client_name: form.client_name.value,
+      scheduled_at: A.localInputToIso(form.scheduled_at.value),
+      duration_minutes: form.duration_minutes.value,
+      audience_estimate: form.audience_estimate.value || null,
+      primary_color: form.primary_color.value,
+      white_label: form.white_label.checked,
+      subtitles: form.subtitles.checked,
+      modes: Array.prototype.slice.call(form.querySelectorAll('input[name="mode"]:checked')).map(function (c) { return c.value; }),
+      access_mode: (form.access_mode.value || 'public')
+    };
+
+    try {
+      var result = await A.apiFetch('/api/admin/events', {
+        method: 'POST',
+        body: data
+      });
+      // Redirection vers la page d'édition de l'event créé
+      window.location.href = '/admin/edit.html?id=' + encodeURIComponent(result.event.id) + '&created=1';
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Création échouée : ' + err.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Créer l\'event';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
