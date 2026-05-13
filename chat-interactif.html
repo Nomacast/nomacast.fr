@@ -480,14 +480,15 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 /* Wizard numeric input · chat-interactif-v1 */
 .wizard-numeric {
   display: flex; align-items: center; gap: 12px;
-  max-width: 320px; margin: 8px 0 12px;
+  max-width: 180px; margin: 8px 0 12px;   /* chat-numeric-compact-v1 : container réduit de 320→180px (saisie d'un nombre, pas besoin de 320px) */
 }
 .wizard-numeric input[type="number"] {
-  flex: 1; font-family: var(--font-body);
-  font-size: 24px; font-weight: 600;
+  flex: 1; min-width: 0;                  /* chat-numeric-compact-v1 : min-width:0 nécessaire pour que flex:1 puisse réellement rétrécir l'input en dessous de sa largeur intrinsèque (~266px par défaut sur un input number) */
+  font-family: var(--font-body);
+  font-size: 17px; font-weight: 600;      /* chat-numeric-compact-v1 : 24→17px */
   text-align: right;
   background: var(--white); border: 1.5px solid var(--border);
-  border-radius: 10px; padding: 14px 16px; color: var(--ink);
+  border-radius: 10px; padding: 9px 12px; color: var(--ink);  /* chat-numeric-compact-v1 : padding 14px 16px → 9px 12px */
   transition: border-color .2s;
   -moz-appearance: textfield;
 }
@@ -499,7 +500,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   outline: none; border-color: var(--cyan);
 }
 .wizard-numeric-suffix {
-  font-size: 16px; color: var(--ink-muted);
+  font-size: 14px; color: var(--ink-muted);   /* chat-numeric-compact-v1 : 16→14px */
   font-weight: 500; white-space: nowrap;
 }
 .wizard-numeric-hint {
@@ -623,12 +624,11 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   background: #0b1929; border-radius: 12px;
   overflow: hidden;
   aspect-ratio: 16/9;
-  /* chat-preview-v10 : min-height: 280px déplacé dans le media query mobile.
-     En 2 colonnes, min-height force une largeur minimale (280 × 16/9 ≈ 498 px)
-     via l'aspect-ratio qui dépasse la cellule de grille à viewport étroit. */
-}
-@media (max-width: 880px) {
-  .preview-video { min-height: 280px; }
+  /* chat-preview-v11 : pas de min-height. aspect-ratio 16/9 dimensionne la
+     hauteur depuis la largeur de cellule (~175 px mobile, ~376 px desktop).
+     Tout min-height combiné à aspect-ratio impose une largeur minimale
+     intrinsèque (min-height × 16/9) qui dépasse la cellule sur viewport
+     étroit et fait déborder la vidéo dans la colonne chat (bug initial). */
 }
 .preview-video-svg { display: block; width: 100%; height: 100%; }
 
