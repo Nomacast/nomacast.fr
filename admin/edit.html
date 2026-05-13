@@ -144,6 +144,69 @@
       }))
     ]));
 
+    // --- Logo client (URL + preview) ---
+    var logoUrlInput = A.el('input', {
+      className: 'admin-form-input',
+      attrs: {
+        type: 'url',
+        name: 'logo_url',
+        placeholder: 'https://exemple.com/logo-client.png',
+        value: ev.logo_url || ''
+      }
+    });
+    var logoPreview = A.el('div', {
+      className: 'admin-logo-preview',
+      attrs: { id: 'logo-preview' }
+    });
+    function renderLogoPreview(url) {
+      A.clearNode(logoPreview);
+      if (!url) {
+        logoPreview.appendChild(A.el('span', {
+          className: 'admin-text-muted',
+          text: 'Aperçu : aucun logo · le logo Nomacast sera utilisé par défaut.'
+        }));
+        return;
+      }
+      var bg = form && form.primary_color ? form.primary_color.value : (ev.primary_color || '#5A98D6');
+      var box = A.el('div', {
+        attrs: { style: 'background:' + bg + ';padding:14px 18px;border-radius:8px;display:inline-block;' }
+      });
+      var img = A.el('img', {
+        attrs: {
+          src: url,
+          alt: 'Logo client',
+          style: 'display:block;max-height:48px;width:auto;border:0;'
+        },
+        on: {
+          error: function () {
+            A.clearNode(logoPreview);
+            logoPreview.appendChild(A.el('span', {
+              className: 'admin-msg-error-inline',
+              text: '⚠ Image inaccessible à cette URL. Vérifie qu\'elle est publique et au format image (PNG/JPG/WEBP).'
+            }));
+          }
+        }
+      });
+      box.appendChild(img);
+      logoPreview.appendChild(box);
+    }
+    logoUrlInput.addEventListener('input', function () { renderLogoPreview(this.value.trim()); });
+    setTimeout(function () { renderLogoPreview(ev.logo_url || ''); }, 50);
+
+    form.appendChild(formRow([
+      field(
+        'URL du logo client',
+        false,
+        logoUrlInput,
+        'URL publique du logo (PNG transparent recommandé, hauteur 60–120 px). Apparaîtra dans le header du mail d\'invitation et sur la page participant. Laisse vide pour utiliser le logo Nomacast par défaut.'
+      )
+    ], true));
+    form.appendChild(A.el('div', {
+      className: 'admin-form-field',
+      style: { marginTop: '-12px', marginBottom: '12px' },
+      children: [logoPreview]
+    }));
+
     // --- Statut ---
     var statusSelect = A.el('select', {
       className: 'admin-form-select',
@@ -358,6 +421,7 @@
       duration_minutes: form.duration_minutes.value,
       audience_estimate: form.audience_estimate.value || null,
       primary_color: form.primary_color.value,
+      logo_url: form.logo_url.value.trim() || null,
       status: form.status.value,
       white_label: form.white_label.checked,
       subtitles: form.subtitles.checked,
