@@ -68,7 +68,9 @@
   // STATE
   // ============================================================
   var state = {
-    firstInteractionFired: false
+    firstInteractionFired: false,
+    youMessages: [],         // messages tapés par le visiteur dans le preview · chat-preview-v2
+    previewMessageSent: false // GTM : signal d'engagement, fire une seule fois
   };
 
   // ============================================================
@@ -429,6 +431,25 @@
       previewMessagesEl.innerHTML = parts.join('');
     }
 
+    // Réinjecter les messages "Vous" que le visiteur aurait pu envoyer
+    // (sinon ils sont effacés à chaque toggle de mode) · chat-preview-v2
+    if (state.youMessages && state.youMessages.length) {
+      // Si on était en empty, retirer le placeholder avant d'ajouter les messages Vous
+      var emptyEl = previewMessagesEl.querySelector('.preview-empty');
+      if (emptyEl) emptyEl.parentNode.removeChild(emptyEl);
+      state.youMessages.forEach(function (text) {
+        var msg = document.createElement('div');
+        msg.className = 'pm pm-you';
+        msg.innerHTML = ''
+          + '<div class="pm-head">'
+          + '  <span class="pm-author">Vous</span>'
+          + '  <span class="pm-time">à l\'instant</span>'
+          + '</div>'
+          + '<div class="pm-text">' + escapeHtml(text) + '</div>';
+        previewMessagesEl.appendChild(msg);
+      });
+    }
+
     // 5. Lecture seule → masquer l'input
     if (previewInputEl) {
       previewInputEl.style.display = (hasLectureSeule && hasLectureSeule.checked) ? 'none' : 'flex';
@@ -458,6 +479,61 @@
       timerEl.textContent = '00:' + mm + ':' + ss;
     }, 1000);
   })();
+
+  // ============================================================
+  // PREVIEW CHAT INPUT LOCAL · chat-preview-v2
+  // Le visiteur peut tester l'envoi de messages dans l'aperçu.
+  // Pure démo : aucun backend, le message reste local au DOM.
+  // ============================================================
+  function setupPreviewChatInput() {
+    if (!previewInputEl || !previewMessagesEl) return;
+    var inputEl = previewInputEl.querySelector('input[type="text"]');
+    var sendBtn = previewInputEl.querySelector('.preview-chat-send');
+    if (!inputEl || !sendBtn) return;
+
+    function sendPreviewMessage() {
+      var text = (inputEl.value || '').trim();
+      if (!text) return;
+
+      // Mémoriser dans le state pour ne pas perdre au re-render
+      state.youMessages.push(text);
+
+      // Supprimer l'empty state s'il est encore là
+      var emptyEl = previewMessagesEl.querySelector('.preview-empty');
+      if (emptyEl) emptyEl.parentNode.removeChild(emptyEl);
+
+      // Construire le message "Vous"
+      var msg = document.createElement('div');
+      msg.className = 'pm pm-you';
+      msg.innerHTML = ''
+        + '<div class="pm-head">'
+        + '  <span class="pm-author">Vous</span>'
+        + '  <span class="pm-time">à l\'instant</span>'
+        + '</div>'
+        + '<div class="pm-text">' + escapeHtml(text) + '</div>';
+
+      previewMessagesEl.appendChild(msg);
+
+      // Reset + focus + scroll vers le bas
+      inputEl.value = '';
+      previewMessagesEl.scrollTop = previewMessagesEl.scrollHeight;
+      inputEl.focus();
+
+      // Tracker UNE FOIS l'envoi de message preview (signal d'engagement)
+      if (!state.previewMessageSent) {
+        state.previewMessageSent = true;
+        track('chat_wizard_preview_message_sent', {});
+      }
+    }
+
+    sendBtn.addEventListener('click', sendPreviewMessage);
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendPreviewMessage();
+      }
+    });
+  }
 
   // ============================================================
   // VALIDATION
@@ -682,6 +758,7 @@
     }
 
     setupLogoPreview();
+    setupPreviewChatInput();
 
     if (btnSubmit) btnSubmit.addEventListener('click', handleSubmit);
 
