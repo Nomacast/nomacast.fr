@@ -168,12 +168,12 @@
         Colonnes attendues : <code>email</code>, <code>full_name</code>, <code>company</code>.
         Les en-têtes sont obligatoires (1ère ligne du CSV). Maximum 500 invités par import.
       </p>
-      <label class="csv-drop" id="csv-drop">
+      <div class="csv-drop" id="csv-drop" role="button" tabindex="0">
         <input type="file" id="csv-file" accept=".csv" hidden>
         <div class="csv-drop-text">
           Cliquez pour <strong>choisir un fichier</strong> ou glissez-le ici
         </div>
-      </label>
+      </div>
       <div id="csv-preview-wrap"></div>
     </div>
     <div class="modal-foot">
@@ -511,8 +511,16 @@
     document.getElementById('csv-modal').hidden = true;
   }
 
-  csvDropZone.addEventListener('click', function (e) {
-    if (e.target.tagName !== 'INPUT') csvInput.click();
+  // Click handler explicite (on a remplacé <label> par <div> pour éviter
+  // le comportement parfois capricieux du label natif sur certains navigateurs)
+  csvDropZone.addEventListener('click', function () {
+    csvInput.click();
+  });
+  csvDropZone.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      csvInput.click();
+    }
   });
 
   csvInput.addEventListener('change', function (e) {
