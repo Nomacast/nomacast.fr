@@ -770,6 +770,18 @@ body.menu-open .float-call{display:none!important}
 }
 .lang-switch .lang-globe { padding: 4px 0 !important; font-weight: 400 !important; }
 .lang-switch .lang-globe > svg:first-of-type { margin-right: 2px; }
+
+/* nomacast-footer-lang-v3 — dropdown globe dans le footer, identique au header */
+.footer-lang-switch { position: relative; display: inline-flex; align-items: center; margin-left: auto; }
+.footer-lang-switch .lang-globe { color: rgba(255,255,255,.55); font-size: 12px; padding: 4px 0; font-weight: 400; }
+.footer-lang-switch .lang-globe:hover { color: #fff; background: transparent; }
+.footer-lang-switch .lang-globe[aria-expanded="true"] { color: #fff; background: transparent; border-color: transparent; }
+.footer-lang-switch .lang-globe > svg:first-of-type { width: 12px; height: 12px; opacity: .65; }
+.footer-lang-switch .lang-globe .lang-chevron { width: 10px; height: 10px; }
+.footer-lang-switch .lang-dropdown { top: auto; bottom: calc(100% + 6px); right: 0; }
+@media (max-width: 600px) {
+  .footer-lang-switch { margin-left: 0 !important; }
+}
 </style>
 <!-- lot11-turnstile-lazy : Turnstile chargé seulement au focus form ou à l'intersection (gain TBT/LCP) -->
 <script>
@@ -1244,7 +1256,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <a href="politique-de-confidentialite.html">Confidentialité</a>
 <a href="plan-du-site.html">Plan du site</a>
 <a href="index.html#contact">Demander un devis</a>
-<span class="footer-lang" data-marker="nomacast-lang-footer-v1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><a href="" class="active" lang="fr">FR</a><span class="footer-lang-sep">·</span><a href="https://www.nomacast.fr/en/" hreflang="en" lang="en">EN</a></span><a href="/en/pricing.html" hreflang="en" lang="en" class="footer-lang-link" data-marker="nomacast-lang-footer-v2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>English</a></div>
+<div class="footer-lang-switch" data-marker="nomacast-lang-footer-v3"><button type="button" class="lang-globe" aria-haspopup="listbox" aria-expanded="false" aria-label="Choisir la langue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="lang-current">FR</span><svg class="lang-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button><ul class="lang-dropdown" role="listbox" hidden><li role="option"><a href="" class="active" aria-current="page">FR — Français</a></li><li role="option"><a href="https://www.nomacast.fr/en/pricing.html" hreflang="en" lang="en">EN — English</a></li></ul></div></div>
 </div>
 </footer>
 
