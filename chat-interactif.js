@@ -833,15 +833,17 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       if (!state.logoFile) return;
 
       // Aperçu visuel : image + métadonnées
+      // Note : pas de background ni de border sur l'image — sinon les logos
+      // blancs disparaissent dans le cadre blanc. On laisse le logo dans son
+      // contexte naturel (la zone d'upload est déjà sur fond clair).
       var img = $el('img', {
         attrs: {
           src: state.logoDataUrl,
           alt: 'Aperçu logo'
         },
         style: {
-          maxHeight: '48px', maxWidth: '120px', objectFit: 'contain',
-          background: '#fff', border: '1px solid var(--border)',
-          borderRadius: '6px', padding: '4px'
+          maxHeight: '64px', maxWidth: '160px', objectFit: 'contain',
+          borderRadius: '6px'
         }
       });
 
