@@ -1,0 +1,19 @@
+# Fichiers et dossiers à NE PAS uploader sur Cloudflare Pages.
+# Format identique a .gitignore.
+# Pages exclut deja automatiquement : .git, node_modules, .DS_Store
+
+# Workflows GitHub (pas pour le public)
+.github
+
+# Scripts de developpement (certains contiennent des cles API)
+*.py
+
+# Documentation interne du repo
+README.md
+CHANGELOG.md
+.gitignore
+
+# Editeurs / OS
+.vscode
+.idea
+Thumbs.db
