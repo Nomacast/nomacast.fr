@@ -105,6 +105,7 @@
           A.el('th', { text: 'Date' }),
           A.el('th', { text: 'Durée' }),
           A.el('th', { text: 'Audience' }),
+          A.el('th', { text: 'Invités' }),
           A.el('th', { text: 'Statut' }),
           A.el('th', { text: '', style: { textAlign: 'right' } })
         ]
@@ -139,6 +140,20 @@
       text: ev.audience_estimate ? ev.audience_estimate + ' pers.' : '—'
     });
 
+    // Cellule invités : count + count envoyés
+    var inviteesText;
+    if (ev.invitees_count === 0) {
+      inviteesText = '—';
+    } else if (ev.invitees_sent === ev.invitees_count) {
+      inviteesText = ev.invitees_count + ' (tous envoyés)';
+    } else {
+      inviteesText = ev.invitees_sent + ' / ' + ev.invitees_count + ' envoyés';
+    }
+    var inviteesCell = A.el('td', {
+      text: inviteesText,
+      className: ev.invitees_count === 0 ? 'admin-text-muted' : ''
+    });
+
     var statusCell = A.el('td', {
       children: [A.el('span', {
         className: 'admin-badge admin-badge-' + ev.status,
@@ -152,22 +167,32 @@
       text: 'Éditer'
     });
 
+    var inviteesBtn = A.el('a', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { href: '/admin/invitees.html?event_id=' + encodeURIComponent(ev.id) },
+      text: 'Invités'
+    });
+
     var deleteBtn = A.el('button', {
       className: 'admin-btn admin-btn-danger admin-btn-sm',
-      attrs: { type: 'button' },
+      attrs: {
+        type: 'button',
+        disabled: ev.invitees_count > 0,
+        title: ev.invitees_count > 0 ? 'Supprime d\'abord les invités' : 'Supprimer cet event'
+      },
       text: 'Suppr.',
-      on: { click: function () { onDelete(ev); } }
+      on: { click: function () { if (ev.invitees_count === 0) onDelete(ev); } }
     });
 
     var actionsCell = A.el('td', {
       children: [A.el('div', {
         className: 'admin-table-actions',
-        children: [editBtn, deleteBtn]
+        children: [inviteesBtn, editBtn, deleteBtn]
       })]
     });
 
     return A.el('tr', {
-      children: [titleCell, clientCell, dateCell, durationCell, audienceCell, statusCell, actionsCell]
+      children: [titleCell, clientCell, dateCell, durationCell, audienceCell, inviteesCell, statusCell, actionsCell]
     });
   }
 
