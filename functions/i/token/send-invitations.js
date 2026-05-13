@@ -116,13 +116,13 @@ const REPLY_TO = `evenement@${DOMAIN}`;
 function buildInvitationEmail(event, invitee) {
   const firstName = extractFirstName(invitee.full_name);
   const greeting = firstName ? `Bonjour ${firstName},` : 'Bonjour,';
-  const chatPath = `/chat/${event.slug}`;
-  const tokenQuery = event.access_mode === 'private' ? `?t=${invitee.magic_token}` : '';
-  const link = `${SITE_URL}${chatPath}${tokenQuery}`;
+  // URL opaque basée sur token : valable pour tous les invités (public OU privé).
+  // Pas de leak du slug, tracking last_seen_at, URL personnelle par invité.
+  const link = `${SITE_URL}/i/${invitee.magic_token}`;
   const dateLabel = formatFrenchDateTime(event.scheduled_at);
   const orgLine = event.client_name ? `organisé par ${event.client_name}` : '';
   const subject = `Invitation : ${event.title}`;
-  const agendaUrls = buildAgendaUrls(event, link, tokenQuery);
+  const agendaUrls = buildAgendaUrls(event, link, invitee.magic_token);
   const text = buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel: event.white_label, agendaUrls });
   const html = buildHtml({ greeting, event, link, dateLabel, orgLine, color: event.primary_color || '#5A98D6', whiteLabel: event.white_label, agendaUrls });
   return { from: FROM, to: [invitee.email], reply_to: REPLY_TO, subject, html, text };
@@ -131,14 +131,13 @@ function buildInvitationEmail(event, invitee) {
 // ============================================================
 // Helpers Agenda
 // ============================================================
-function buildAgendaUrls(event, chatLink, tokenQuery) {
+function buildAgendaUrls(event, chatLink, token) {
   const start = event.scheduled_at ? toCalDate(event.scheduled_at) : '';
   const end = event.scheduled_at ? toCalDate(addMinutes(event.scheduled_at, event.duration_minutes || 90)) : '';
   const details = `Chat live de l'événement « ${event.title} »` +
     (event.client_name ? `, organisé par ${event.client_name}.` : '.') +
     `\n\nPour rejoindre : ${chatLink}\n\nPropulsé par Nomacast — https://nomacast.fr`;
 
-  // Google Calendar TEMPLATE
   const googleParams = new URLSearchParams({
     action: 'TEMPLATE',
     text: event.title,
@@ -150,7 +149,6 @@ function buildAgendaUrls(event, chatLink, tokenQuery) {
   if (start && end) googleParams.set('dates', `${start}/${end}`);
   const google = 'https://calendar.google.com/calendar/render?' + googleParams.toString();
 
-  // Outlook Live deeplink
   const outlookParams = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
@@ -164,8 +162,7 @@ function buildAgendaUrls(event, chatLink, tokenQuery) {
   }
   const outlook = 'https://outlook.live.com/calendar/0/deeplink/compose?' + outlookParams.toString();
 
-  // .ics (Apple Calendar, Outlook desktop, Thunderbird, etc.)
-  const ics = `${SITE_URL}/chat/${event.slug}/calendar.ics${tokenQuery}`;
+  const ics = `${SITE_URL}/i/${token}/calendar.ics`;
 
   return { google, outlook, ics };
 }
