@@ -99,6 +99,8 @@ function renderWaitingPage(event, invitee, token) {
   `;
 
   const mainBody = `
+    ${buildCountdownHtml(event.scheduled_at)}
+
     <section class="card">
       <div class="card-grid">
         <div class="card-cell">
@@ -138,7 +140,11 @@ function renderWaitingPage(event, invitee, token) {
     logoUrl: event.logo_url,
     whiteLabel: event.white_label,
     heroBody,
-    mainBody
+    mainBody,
+    bodyScript: buildDraftScript({
+      scheduledAt: event.scheduled_at,
+      statusUrl: `/i/${encodeURIComponent(token)}/status`
+    })
   });
 }
 
@@ -232,7 +238,7 @@ function renderErrorPage(title, message) {
 // ============================================================
 // HTML shell (commun à toutes les pages)
 // ============================================================
-function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody }) {
+function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, bodyScript }) {
   const hasEventLogo = !!logoUrl;
   let headerHtml;
   if (hasEventLogo) {
@@ -421,6 +427,41 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody }) {
     color: #475569; font-size: 14px; line-height: 1.6; margin: 0;
   }
 
+  /* Countdown (page draft) */
+  .countdown {
+    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px;
+    padding: 24px 18px; margin: 0 0 24px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .countdown-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #94a3b8; margin-bottom: 14px;
+  }
+  .countdown-grid {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  }
+  .countdown-unit {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 62px;
+  }
+  .countdown-value {
+    font-size: 32px; font-weight: 800; color: ${color};
+    letter-spacing: -0.02em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .countdown-unit-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #94a3b8; margin-top: 6px;
+  }
+  .countdown-overdue {
+    font-size: 14px; color: #475569; line-height: 1.5;
+    padding: 4px 8px;
+  }
+  @media (max-width: 480px) {
+    .countdown-value { font-size: 26px; }
+    .countdown-unit { min-width: 52px; }
+  }
+
   /* FOOTER */
   .page-footer {
     padding: 38px 24px 40px; background: #fafbfc; border-top: 1px solid #e2e8f0;
@@ -470,8 +511,140 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody }) {
   </main>
 
   ${footerHtml}
+  ${bodyScript || ''}
 </body>
 </html>`;
+}
+
+// ============================================================
+// Helpers Countdown + polling (page draft)
+// Duplication assumée avec functions/chat/[slug].js — pas d'import croisé.
+// ============================================================
+function buildCountdownHtml(scheduledAt) {
+  if (!scheduledAt) return '';
+  return `
+    <section class="countdown" data-scheduled-at="${escapeHtml(scheduledAt)}">
+      <div class="countdown-label" id="nomacast-cd-label">Démarrage prévu dans</div>
+      <div class="countdown-grid" id="nomacast-cd-grid">
+        <div class="countdown-unit"><span class="countdown-value" data-cd-unit="days">--</span><span class="countdown-unit-label">jours</span></div>
+        <div class="countdown-unit"><span class="countdown-value" data-cd-unit="hours">--</span><span class="countdown-unit-label">heures</span></div>
+        <div class="countdown-unit"><span class="countdown-value" data-cd-unit="minutes">--</span><span class="countdown-unit-label">min</span></div>
+        <div class="countdown-unit"><span class="countdown-value" data-cd-unit="seconds">--</span><span class="countdown-unit-label">sec</span></div>
+      </div>
+      <div class="countdown-overdue" id="nomacast-cd-overdue" style="display:none">
+        L'événement devrait avoir commencé. En attente du démarrage par l'organisateur…
+      </div>
+    </section>
+  `;
+}
+
+// Script inline : countdown 1Hz + polling adaptatif du status.
+// Utilise concaténation + (pas de template strings) pour éviter les conflits
+// avec l'interpolation ${...} du template serveur.
+function buildDraftScript({ scheduledAt, statusUrl }) {
+  return `<script>
+(function () {
+  var SCHEDULED_AT_ISO = ${JSON.stringify(scheduledAt || null)};
+  var STATUS_URL = ${JSON.stringify(statusUrl)};
+
+  var scheduledAt = SCHEDULED_AT_ISO ? new Date(SCHEDULED_AT_ISO) : null;
+  if (scheduledAt && isNaN(scheduledAt.getTime())) scheduledAt = null;
+
+  var elDays    = document.querySelector('[data-cd-unit="days"]');
+  var elHours   = document.querySelector('[data-cd-unit="hours"]');
+  var elMinutes = document.querySelector('[data-cd-unit="minutes"]');
+  var elSeconds = document.querySelector('[data-cd-unit="seconds"]');
+  var elGrid    = document.getElementById('nomacast-cd-grid');
+  var elLabel   = document.getElementById('nomacast-cd-label');
+  var elOverdue = document.getElementById('nomacast-cd-overdue');
+
+  function pad(n) { return String(Math.max(0, n | 0)).padStart(2, '0'); }
+
+  function tick() {
+    if (!scheduledAt) return;
+    var diffMs = scheduledAt.getTime() - Date.now();
+    if (diffMs <= 0) {
+      if (elGrid) elGrid.style.display = 'none';
+      if (elLabel) elLabel.style.display = 'none';
+      if (elOverdue) elOverdue.style.display = 'block';
+      return;
+    }
+    if (elGrid) elGrid.style.display = '';
+    if (elLabel) elLabel.style.display = '';
+    if (elOverdue) elOverdue.style.display = 'none';
+    var s = Math.floor(diffMs / 1000);
+    var d = Math.floor(s / 86400); s -= d * 86400;
+    var h = Math.floor(s / 3600);  s -= h * 3600;
+    var m = Math.floor(s / 60);    s -= m * 60;
+    if (elDays)    elDays.textContent    = pad(d);
+    if (elHours)   elHours.textContent   = pad(h);
+    if (elMinutes) elMinutes.textContent = pad(m);
+    if (elSeconds) elSeconds.textContent = pad(s);
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ----- Polling status (draft -> live) -----
+  if (!STATUS_URL) return;
+
+  var pollTimer = null;
+  var inFlight = false;
+
+  function pollDelay() {
+    if (!scheduledAt) return 30000;
+    var diffSec = (scheduledAt.getTime() - Date.now()) / 1000;
+    if (diffSec > 600) return 60000;  // > 10 min : 60s
+    if (diffSec > 60)  return 30000;  // > 1 min  : 30s
+    return 10000;                      // < 1 min ou dépassé : 10s
+  }
+
+  function schedule() {
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(poll, pollDelay());
+  }
+
+  function buildUrl() {
+    // Conserve un éventuel ?preview=... présent dans l'URL parente
+    var qs = window.location.search || '';
+    return STATUS_URL + qs;
+  }
+
+  function poll() {
+    if (inFlight) { schedule(); return; }
+    inFlight = true;
+    fetch(buildUrl(), { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        inFlight = false;
+        if (!data) { schedule(); return; }
+        if (data.status && data.status !== 'draft') {
+          // Transition détectée : on recharge pour servir la page correspondante.
+          window.location.reload();
+          return;
+        }
+        if (data.scheduled_at) {
+          var nd = new Date(data.scheduled_at);
+          if (!isNaN(nd.getTime()) && (!scheduledAt || nd.getTime() !== scheduledAt.getTime())) {
+            scheduledAt = nd;
+            tick();
+          }
+        }
+        schedule();
+      })
+      .catch(function () { inFlight = false; schedule(); });
+  }
+
+  schedule();
+
+  // Re-poll immédiat quand l'onglet revient au premier plan
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      clearTimeout(pollTimer);
+      poll();
+    }
+  });
+})();
+<\/script>`;
 }
 
 // ============================================================
