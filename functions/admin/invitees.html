@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Invités · Admin Nomacast</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+  <style>
+    /* Styles spécifiques à la page invitees */
+    .invitees-toolbar {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center;
+    }
+    .invitees-toolbar .toolbar-spacer { flex: 1; }
+    .invitees-stats {
+      display: flex; gap: 20px; padding: 16px 20px;
+      background: var(--off-white); border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .invitees-stat strong { color: var(--ink); font-size: 16px; }
+    .invitees-stat span { color: var(--ink-muted); margin-left: 4px; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(11, 25, 41, 0.55);
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+      padding: 20px;
+    }
+    .modal {
+      background: var(--white); border-radius: var(--radius-lg);
+      max-width: 560px; width: 100%; max-height: 85vh; overflow: auto;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+    }
+    .modal-head {
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-head h3 {
+      font-family: var(--font-head); font-size: 17px; margin: 0;
+    }
+    .modal-close {
+      background: none; border: none; color: var(--ink-muted);
+      font-size: 22px; cursor: pointer; line-height: 1; padding: 0 4px;
+    }
+    .modal-close:hover { color: var(--ink); }
+    .modal-body { padding: 20px 22px; }
+    .modal-foot {
+      padding: 14px 22px; border-top: 1px solid var(--border-light);
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+
+    .csv-drop {
+      border: 2px dashed var(--border); border-radius: 8px;
+      padding: 28px 16px; text-align: center; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .csv-drop:hover, .csv-drop.dragover {
+      border-color: var(--cyan); background: var(--cyan-light);
+    }
+    .csv-drop-text { font-size: 14px; color: var(--ink-muted); }
+    .csv-drop-text strong { color: var(--cyan); }
+
+    .csv-preview {
+      margin-top: 16px; max-height: 240px; overflow: auto;
+      border: 1px solid var(--border); border-radius: 6px;
+    }
+    .csv-preview table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .csv-preview th, .csv-preview td {
+      padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border-light);
+    }
+    .csv-preview thead th {
+      background: var(--off-white); position: sticky; top: 0;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted);
+    }
+
+    .admin-badge-invitee { font-size: 11px; }
+    .admin-badge-sent::before { background: var(--cyan); }
+    .admin-badge-sent { background: var(--cyan-light); color: var(--cyan); }
+    .admin-badge-seen::before { background: var(--green); }
+    .admin-badge-seen { background: var(--green-light); color: var(--green); }
+    .admin-badge-pending::before { background: var(--ink-faint); }
+    .admin-badge-pending { background: var(--bg); color: var(--ink-muted); }
+  </style>
+</head>
+<body>
+
+<header class="admin-header">
+  <a href="/admin/" class="admin-header-brand-link">
+    <span class="admin-header-brand">
+      <span class="admin-header-brand-dot"></span>
+      Nomacast
+    </span>
+  </a>
+  <div class="admin-header-title">Admin Chat interactif</div>
+  <div class="admin-header-actions">
+    <a class="admin-header-link" href="/admin/">Accueil admin</a>
+    <a class="admin-header-link" href="/" target="_blank" rel="noopener">Site public ↗</a>
+  </div>
+</header>
+
+<main class="admin-main">
+
+  <div class="admin-page-head">
+    <div>
+      <h1 id="page-title">Invités</h1>
+      <div class="admin-page-head-sub" id="page-sub">Chargement…</div>
+    </div>
+    <div>
+      <a class="admin-btn admin-btn-secondary admin-btn-sm" id="back-to-event-btn" href="#">← Retour à l'event</a>
+    </div>
+  </div>
+
+  <div id="message-zone"></div>
+
+  <div class="admin-card" id="content-card">
+    <div class="admin-card-body admin-text-muted">
+      <span class="admin-loader"></span> Chargement des invités…
+    </div>
+  </div>
+
+</main>
+
+<!-- Modal Add invitee -->
+<div class="modal-backdrop" id="add-modal" hidden>
+  <div class="modal" role="dialog" aria-labelledby="add-modal-title">
+    <div class="modal-head">
+      <h3 id="add-modal-title">Ajouter un invité</h3>
+      <button type="button" class="modal-close" data-close="add-modal" aria-label="Fermer">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="add-form" class="admin-form" autocomplete="off">
+        <div class="admin-form-field">
+          <label class="admin-form-label admin-form-label-req" for="add-email">Email</label>
+          <input class="admin-form-input" id="add-email" name="email" type="email" required>
+        </div>
+        <div class="admin-form-field">
+          <label class="admin-form-label" for="add-name">Nom complet</label>
+          <input class="admin-form-input" id="add-name" name="full_name" type="text" placeholder="Jean Dupont">
+        </div>
+        <div class="admin-form-field">
+          <label class="admin-form-label" for="add-company">Entreprise</label>
+          <input class="admin-form-input" id="add-company" name="company" type="text" placeholder="Acme SAS">
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="admin-btn admin-btn-ghost" data-close="add-modal">Annuler</button>
+      <button type="button" class="admin-btn admin-btn-primary" id="add-submit">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Import CSV -->
+<div class="modal-backdrop" id="csv-modal" hidden>
+  <div class="modal" role="dialog" aria-labelledby="csv-modal-title">
+    <div class="modal-head">
+      <h3 id="csv-modal-title">Importer depuis un CSV</h3>
+      <button type="button" class="modal-close" data-close="csv-modal" aria-label="Fermer">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="admin-form-hint" style="margin:0 0 12px;">
+        Colonnes attendues : <code>email</code>, <code>full_name</code>, <code>company</code>.
+        Les en-têtes sont obligatoires (1ère ligne du CSV). Maximum 500 invités par import.
+      </p>
+      <label class="csv-drop" id="csv-drop">
+        <input type="file" id="csv-file" accept=".csv" hidden>
+        <div class="csv-drop-text">
+          Cliquez pour <strong>choisir un fichier</strong> ou glissez-le ici
+        </div>
+      </label>
+      <div id="csv-preview-wrap"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="admin-btn admin-btn-ghost" data-close="csv-modal">Annuler</button>
+      <button type="button" class="admin-btn admin-btn-primary" id="csv-import-btn" disabled>Importer</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="/admin/admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.NomacastAdmin;
+  var contentCard = document.getElementById('content-card');
+  var pageSub = document.getElementById('page-sub');
+  var pageTitle = document.getElementById('page-title');
+  var messageZone = document.getElementById('message-zone');
+  var backBtn = document.getElementById('back-to-event-btn');
+
+  var qs = new URLSearchParams(window.location.search);
+  var eventId = qs.get('event_id');
+  if (!eventId) {
+    A.clearNode(contentCard);
+    contentCard.appendChild(A.el('div', {
+      className: 'admin-card-body admin-msg admin-msg-error',
+      text: 'Paramètre event_id manquant dans l\'URL.'
+    }));
+    return;
+  }
+
+  backBtn.href = '/admin/edit.html?id=' + encodeURIComponent(eventId);
+
+  var state = {
+    event: null,
+    invitees: [],
+    csvData: null
+  };
+
+  // =========== LOAD ===========
+
+  async function loadAll() {
+    try {
+      var eventData = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId));
+      state.event = eventData.event;
+
+      pageTitle.textContent = 'Invités · ' + state.event.title;
+      pageSub.textContent = A.formatDateTime(state.event.scheduled_at);
+
+      var inviteesData = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/invitees');
+      state.invitees = inviteesData.invitees || [];
+
+      renderAll();
+    } catch (err) {
+      A.clearNode(contentCard);
+      contentCard.appendChild(A.el('div', {
+        className: 'admin-card-body admin-msg admin-msg-error',
+        text: 'Erreur de chargement : ' + err.message
+      }));
+    }
+  }
+
+  // =========== RENDER ===========
+
+  function renderAll() {
+    A.clearNode(contentCard);
+
+    // Stats bar
+    var sentCount = state.invitees.filter(function (i) { return i.invited_at; }).length;
+    var seenCount = state.invitees.filter(function (i) { return i.last_seen_at; }).length;
+    var pendingCount = state.invitees.length - sentCount;
+
+    var stats = A.el('div', { className: 'invitees-stats' });
+    stats.appendChild(statBox(state.invitees.length, 'invité' + (state.invitees.length > 1 ? 's' : '')));
+    stats.appendChild(statBox(pendingCount, 'à envoyer'));
+    stats.appendChild(statBox(sentCount, 'envoyé' + (sentCount > 1 ? 's' : '')));
+    stats.appendChild(statBox(seenCount, 'connecté' + (seenCount > 1 ? 's' : '')));
+    contentCard.appendChild(stats);
+
+    // Toolbar
+    var toolbar = A.el('div', { className: 'invitees-toolbar', style: { padding: '16px 20px 0' } });
+
+    toolbar.appendChild(A.el('button', {
+      className: 'admin-btn admin-btn-secondary',
+      attrs: { type: 'button' },
+      text: '+ Ajouter un invité',
+      on: { click: openAddModal }
+    }));
+
+    toolbar.appendChild(A.el('button', {
+      className: 'admin-btn admin-btn-secondary',
+      attrs: { type: 'button' },
+      text: 'Importer CSV',
+      on: { click: openCsvModal }
+    }));
+
+    toolbar.appendChild(A.el('div', { className: 'toolbar-spacer' }));
+
+    var sendBtn = A.el('button', {
+      className: 'admin-btn admin-btn-primary',
+      attrs: { type: 'button', disabled: pendingCount === 0 },
+      text: pendingCount > 0
+        ? 'Envoyer les invitations (' + pendingCount + ')'
+        : 'Tout envoyé',
+      on: { click: onSendBatch }
+    });
+    toolbar.appendChild(sendBtn);
+
+    contentCard.appendChild(toolbar);
+
+    // Liste
+    if (state.invitees.length === 0) {
+      contentCard.appendChild(A.el('div', {
+        className: 'admin-card-empty',
+        children: [
+          A.el('h3', { text: 'Aucun invité pour l\'instant' }),
+          A.el('p', { text: 'Ajoute un invité manuellement ou importe un fichier CSV.' })
+        ]
+      }));
+      return;
+    }
+
+    var thead = A.el('thead', {
+      children: [A.el('tr', {
+        children: [
+          A.el('th', { text: 'Email' }),
+          A.el('th', { text: 'Nom' }),
+          A.el('th', { text: 'Entreprise' }),
+          A.el('th', { text: 'Statut' }),
+          A.el('th', { text: 'Envoyé le' }),
+          A.el('th', { text: '', style: { textAlign: 'right' } })
+        ]
+      })]
+    });
+    var tbody = A.el('tbody');
+    state.invitees.forEach(function (inv) { tbody.appendChild(renderRow(inv)); });
+
+    contentCard.appendChild(A.el('table', {
+      className: 'admin-table',
+      style: { marginTop: '16px' },
+      children: [thead, tbody]
+    }));
+  }
+
+  function statBox(num, label) {
+    return A.el('div', {
+      className: 'invitees-stat',
+      children: [
+        A.el('strong', { text: String(num) }),
+        A.el('span', { text: ' ' + label })
+      ]
+    });
+  }
+
+  function renderRow(inv) {
+    var statusBadge;
+    if (inv.last_seen_at) {
+      statusBadge = A.el('span', { className: 'admin-badge admin-badge-seen', text: 'Connecté' });
+    } else if (inv.invited_at) {
+      statusBadge = A.el('span', { className: 'admin-badge admin-badge-sent', text: 'Envoyé' });
+    } else {
+      statusBadge = A.el('span', { className: 'admin-badge admin-badge-pending', text: 'En attente' });
+    }
+
+    var copyLinkBtn = A.el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button', title: 'Copier le magic link' },
+      text: 'Lien',
+      on: { click: function () { copyLink(inv); } }
+    });
+
+    var resendBtn = A.el('button', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { type: 'button' },
+      text: inv.invited_at ? 'Renvoyer' : 'Envoyer',
+      on: { click: function () { onResend(inv); } }
+    });
+
+    var deleteBtn = A.el('button', {
+      className: 'admin-btn admin-btn-danger admin-btn-sm',
+      attrs: { type: 'button' },
+      text: '×',
+      on: { click: function () { onDelete(inv); } }
+    });
+
+    return A.el('tr', {
+      children: [
+        A.el('td', { children: [A.el('span', { className: 'admin-mono', text: inv.email })] }),
+        A.el('td', { text: inv.full_name || '—', className: inv.full_name ? '' : 'admin-text-muted' }),
+        A.el('td', { text: inv.company || '—', className: inv.company ? '' : 'admin-text-muted' }),
+        A.el('td', { children: [statusBadge] }),
+        A.el('td', {
+          text: inv.invited_at ? A.formatDateTime(inv.invited_at) : '—',
+          className: inv.invited_at ? '' : 'admin-text-muted'
+        }),
+        A.el('td', {
+          children: [A.el('div', {
+            className: 'admin-table-actions',
+            children: [copyLinkBtn, resendBtn, deleteBtn]
+          })]
+        })
+      ]
+    });
+  }
+
+  function buildMagicLink(inv) {
+    var base = window.location.origin + '/chat/' + state.event.slug;
+    if (state.event.access_mode === 'private') {
+      return base + '?t=' + inv.magic_token;
+    }
+    return base;
+  }
+
+  // =========== ACTIONS ===========
+
+  async function copyLink(inv) {
+    var link = buildMagicLink(inv);
+    try {
+      await navigator.clipboard.writeText(link);
+      A.showMessage(messageZone, 'success', 'Lien copié : ' + link);
+    } catch (err) {
+      window.prompt('Copie ce lien :', link);
+    }
+  }
+
+  async function onResend(inv) {
+    if (!A.confirmAction('Envoyer (ou renvoyer) l\'invitation à ' + inv.email + ' ?')) return;
+    try {
+      await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/invitees/' + encodeURIComponent(inv.id) + '/resend',
+        { method: 'POST' }
+      );
+      A.showMessage(messageZone, 'success', 'Email envoyé à ' + inv.email);
+      loadAll();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Envoi échoué : ' + err.message);
+    }
+  }
+
+  async function onDelete(inv) {
+    if (!A.confirmAction('Supprimer ' + inv.email + ' ?\nLe magic link de cet invité deviendra invalide.')) return;
+    try {
+      await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/invitees/' + encodeURIComponent(inv.id),
+        { method: 'DELETE' }
+      );
+      A.showMessage(messageZone, 'success', 'Invité supprimé.');
+      loadAll();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Suppression échouée : ' + err.message);
+    }
+  }
+
+  async function onSendBatch() {
+    var pending = state.invitees.filter(function (i) { return !i.invited_at; }).length;
+    if (pending === 0) return;
+    if (!A.confirmAction('Envoyer l\'invitation par email à ' + pending + ' invité(s) ?')) return;
+
+    try {
+      var result = await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/send-invitations',
+        { method: 'POST' }
+      );
+      var msg = result.sent_count + ' email(s) envoyé(s)';
+      if (result.failed_count > 0) msg += ' · ' + result.failed_count + ' échec(s)';
+      A.showMessage(messageZone, result.sent_count > 0 ? 'success' : 'error', msg);
+      loadAll();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Batch échoué : ' + err.message);
+    }
+  }
+
+  // =========== MODAL ADD ===========
+
+  function openAddModal() {
+    document.getElementById('add-modal').hidden = false;
+    setTimeout(function () { document.getElementById('add-email').focus(); }, 30);
+  }
+  function closeAddModal() {
+    document.getElementById('add-modal').hidden = true;
+    document.getElementById('add-form').reset();
+  }
+
+  document.getElementById('add-submit').addEventListener('click', async function () {
+    var form = document.getElementById('add-form');
+    if (!form.email.value) { form.email.focus(); return; }
+
+    var btn = this;
+    btn.disabled = true; btn.textContent = 'Ajout…';
+
+    try {
+      var result = await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/invitees',
+        {
+          method: 'POST',
+          body: {
+            email: form.email.value,
+            full_name: form.full_name.value || null,
+            company: form.company.value || null
+          }
+        }
+      );
+      if (result.created_count > 0) {
+        A.showMessage(messageZone, 'success', 'Invité ajouté.');
+        closeAddModal();
+        loadAll();
+      } else if (result.skipped_count > 0) {
+        A.showMessage(messageZone, 'error', 'Email déjà invité.');
+      } else if (result.errors && result.errors.length) {
+        A.showMessage(messageZone, 'error', result.errors[0].reason);
+      }
+    } catch (err) {
+      A.showMessage(messageZone, 'error', err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Ajouter';
+    }
+  });
+
+  // =========== MODAL CSV ===========
+
+  var csvDropZone = document.getElementById('csv-drop');
+  var csvInput = document.getElementById('csv-file');
+  var csvPreviewWrap = document.getElementById('csv-preview-wrap');
+  var csvImportBtn = document.getElementById('csv-import-btn');
+
+  function openCsvModal() {
+    document.getElementById('csv-modal').hidden = false;
+    csvInput.value = '';
+    state.csvData = null;
+    A.clearNode(csvPreviewWrap);
+    csvImportBtn.disabled = true;
+  }
+  function closeCsvModal() {
+    document.getElementById('csv-modal').hidden = true;
+  }
+
+  csvDropZone.addEventListener('click', function (e) {
+    if (e.target.tagName !== 'INPUT') csvInput.click();
+  });
+
+  csvInput.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) parseCsvFile(file);
+  });
+
+  // Drag-drop
+  csvDropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    csvDropZone.classList.add('dragover');
+  });
+  csvDropZone.addEventListener('dragleave', function () { csvDropZone.classList.remove('dragover'); });
+  csvDropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    csvDropZone.classList.remove('dragover');
+    var file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) parseCsvFile(file);
+  });
+
+  function parseCsvFile(file) {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function (results) {
+        var rows = (results.data || []).map(function (r) {
+          var emailKey = Object.keys(r).find(function (k) { return /^email$/i.test(k.trim()); });
+          var nameKey = Object.keys(r).find(function (k) { return /^(full_name|name|nom|nom complet)$/i.test(k.trim()); });
+          var companyKey = Object.keys(r).find(function (k) { return /^(company|entreprise|société|societe)$/i.test(k.trim()); });
+          return {
+            email: emailKey ? r[emailKey] : '',
+            full_name: nameKey ? r[nameKey] : '',
+            company: companyKey ? r[companyKey] : ''
+          };
+        }).filter(function (r) { return r.email && r.email.trim(); });
+
+        if (rows.length === 0) {
+          A.clearNode(csvPreviewWrap);
+          csvPreviewWrap.appendChild(A.el('div', {
+            className: 'admin-msg admin-msg-error',
+            style: { marginTop: '14px' },
+            text: 'Aucune ligne exploitable. Vérifie que ton CSV a une colonne "email".'
+          }));
+          csvImportBtn.disabled = true;
+          state.csvData = null;
+          return;
+        }
+
+        state.csvData = rows;
+        renderCsvPreview(rows);
+        csvImportBtn.disabled = false;
+      },
+      error: function (err) {
+        A.clearNode(csvPreviewWrap);
+        csvPreviewWrap.appendChild(A.el('div', {
+          className: 'admin-msg admin-msg-error',
+          style: { marginTop: '14px' },
+          text: 'Parsing CSV échoué : ' + err.message
+        }));
+        csvImportBtn.disabled = true;
+      }
+    });
+  }
+
+  function renderCsvPreview(rows) {
+    A.clearNode(csvPreviewWrap);
+    var info = A.el('div', {
+      className: 'admin-form-hint',
+      style: { marginTop: '14px' },
+      text: rows.length + ' ligne(s) prêtes à importer (aperçu des 10 premières) :'
+    });
+    csvPreviewWrap.appendChild(info);
+
+    var thead = A.el('thead', {
+      children: [A.el('tr', {
+        children: [
+          A.el('th', { text: 'Email' }),
+          A.el('th', { text: 'Nom' }),
+          A.el('th', { text: 'Entreprise' })
+        ]
+      })]
+    });
+    var tbody = A.el('tbody');
+    rows.slice(0, 10).forEach(function (r) {
+      tbody.appendChild(A.el('tr', {
+        children: [
+          A.el('td', { text: r.email }),
+          A.el('td', { text: r.full_name || '—' }),
+          A.el('td', { text: r.company || '—' })
+        ]
+      }));
+    });
+    csvPreviewWrap.appendChild(A.el('div', {
+      className: 'csv-preview',
+      children: [A.el('table', { children: [thead, tbody] })]
+    }));
+  }
+
+  csvImportBtn.addEventListener('click', async function () {
+    if (!state.csvData || !state.csvData.length) return;
+    var btn = this;
+    btn.disabled = true; btn.textContent = 'Import…';
+
+    try {
+      var result = await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/invitees',
+        { method: 'POST', body: { invitees: state.csvData } }
+      );
+      var msg = result.created_count + ' invité(s) ajouté(s)';
+      if (result.skipped_count) msg += ' · ' + result.skipped_count + ' doublon(s)';
+      if (result.errors_count) msg += ' · ' + result.errors_count + ' erreur(s)';
+      A.showMessage(messageZone, 'success', msg);
+      closeCsvModal();
+      loadAll();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Import échoué : ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Importer';
+    }
+  });
+
+  // Close buttons
+  document.querySelectorAll('[data-close]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var modalId = this.getAttribute('data-close');
+      if (modalId === 'add-modal') closeAddModal();
+      else if (modalId === 'csv-modal') closeCsvModal();
+    });
+  });
+
+  // ESC to close modals
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (!document.getElementById('add-modal').hidden) closeAddModal();
+      if (!document.getElementById('csv-modal').hidden) closeCsvModal();
+    }
+  });
+
+  loadAll();
+})();
+</script>
+
+</body>
+</html>
