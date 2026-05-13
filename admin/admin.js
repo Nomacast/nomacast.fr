@@ -179,51 +179,57 @@
   // ============================================================
   // Public link card
   // ============================================================
-  function renderPublicLink(slug, accessMode, magicToken) {
-    var isPrivate = accessMode === 'private';
-    var url = window.location.origin + '/chat/' + slug;
+  function renderPublicLink(event) {
+    var isPrivate = event.access_mode === 'private';
+    var baseUrl = window.location.origin + '/chat/' + event.slug;
+    var url = isPrivate
+      ? baseUrl + '?preview=' + encodeURIComponent(event.admin_preview_token || '')
+      : baseUrl;
+
     var card = el('div', { className: 'admin-public-link' });
 
     card.appendChild(el('span', {
       className: 'admin-public-link-label',
-      text: isPrivate ? 'Événement privé' : 'Page publique partageable'
+      text: isPrivate ? 'URL preview admin (privée)' : 'Page publique partageable'
     }));
 
+    card.appendChild(el('a', {
+      className: 'admin-public-link-url',
+      attrs: { href: url, target: '_blank', rel: 'noopener' },
+      text: url
+    }));
+
+    var actions = el('div', { className: 'admin-public-link-actions' });
+    actions.appendChild(el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Copier',
+      on: { click: function () {
+        var btn = this;
+        navigator.clipboard.writeText(url).then(
+          function () {
+            btn.textContent = 'Copié ✓';
+            setTimeout(function () { btn.textContent = 'Copier'; }, 1500);
+          },
+          function () { window.prompt('Copie cette URL :', url); }
+        );
+      }}
+    }));
+    actions.appendChild(el('a', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { href: url, target: '_blank', rel: 'noopener' },
+      text: 'Ouvrir ↗'
+    }));
+    card.appendChild(actions);
+
     if (isPrivate) {
-      // Pas d'URL publique pour les events privés.
-      card.appendChild(el('span', {
-        className: 'admin-public-link-hint',
-        text: 'Pas d\'URL publique. Chaque invité reçoit un lien personnel — voir « Gérer les invités ».'
-      }));
-    } else {
-      card.appendChild(el('a', {
-        className: 'admin-public-link-url',
-        attrs: { href: url, target: '_blank', rel: 'noopener' },
-        text: url
-      }));
-      var actions = el('div', { className: 'admin-public-link-actions' });
-      actions.appendChild(el('button', {
-        className: 'admin-btn admin-btn-ghost admin-btn-sm',
-        attrs: { type: 'button' },
-        text: 'Copier',
-        on: { click: function () {
-          var btn = this;
-          navigator.clipboard.writeText(url).then(
-            function () {
-              btn.textContent = 'Copié ✓';
-              setTimeout(function () { btn.textContent = 'Copier'; }, 1500);
-            },
-            function () { window.prompt('Copie cette URL :', url); }
-          );
-        }}
-      }));
-      actions.appendChild(el('a', {
-        className: 'admin-btn admin-btn-secondary admin-btn-sm',
-        attrs: { href: url, target: '_blank', rel: 'noopener' },
-        text: 'Ouvrir ↗'
-      }));
-      card.appendChild(actions);
+      var warn = el('div', {
+        className: 'admin-public-link-warn',
+        text: '⚠ URL privée — ne la partage pas. Les invités utilisent leur lien personnel envoyé par email.'
+      });
+      card.appendChild(warn);
     }
+
     return card;
   }
 
