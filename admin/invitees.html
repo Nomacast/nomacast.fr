@@ -228,7 +228,7 @@
       // Lien public vers la page participant (cliquable + copier)
       var publicLinkZone = document.getElementById('public-link-zone');
       A.clearNode(publicLinkZone);
-      publicLinkZone.appendChild(A.renderPublicLink(state.event.slug, state.event.access_mode));
+      publicLinkZone.appendChild(A.renderPublicLink(state.event));
 
       var inviteesData = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/invitees');
       state.invitees = inviteesData.invitees || [];
