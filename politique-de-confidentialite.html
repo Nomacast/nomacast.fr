@@ -313,6 +313,18 @@ footer {
 }
 .lang-switch .lang-globe { padding: 4px 0 !important; font-weight: 400 !important; }
 .lang-switch .lang-globe > svg:first-of-type { margin-right: 2px; }
+
+/* nomacast-footer-lang-v3 — dropdown globe dans le footer, identique au header */
+.footer-lang-switch { position: relative; display: inline-flex; align-items: center; margin-left: auto; }
+.footer-lang-switch .lang-globe { color: rgba(255,255,255,.55); font-size: 12px; padding: 4px 0; font-weight: 400; }
+.footer-lang-switch .lang-globe:hover { color: #fff; background: transparent; }
+.footer-lang-switch .lang-globe[aria-expanded="true"] { color: #fff; background: transparent; border-color: transparent; }
+.footer-lang-switch .lang-globe > svg:first-of-type { width: 12px; height: 12px; opacity: .65; }
+.footer-lang-switch .lang-globe .lang-chevron { width: 10px; height: 10px; }
+.footer-lang-switch .lang-dropdown { top: auto; bottom: calc(100% + 6px); right: 0; }
+@media (max-width: 600px) {
+  .footer-lang-switch { margin-left: 0 !important; }
+}
 </style>
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://www.nomacast.fr/og-image.webp">
