@@ -279,6 +279,16 @@
 
     toolbar.appendChild(A.el('div', { className: 'toolbar-spacer' }));
 
+    // Bouton "Tout supprimer" (uniquement si invitees présents)
+    if (state.invitees.length > 0) {
+      toolbar.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button', style: 'color:#dc2626;' },
+        text: 'Tout supprimer',
+        on: { click: onDeleteAll }
+      }));
+    }
+
     var sendBtn = A.el('button', {
       className: 'admin-btn admin-btn-primary',
       attrs: { type: 'button', disabled: pendingCount === 0 },
@@ -450,6 +460,36 @@
       loadAll();
     } catch (err) {
       A.showMessage(messageZone, 'error', 'Batch échoué : ' + err.message);
+    }
+  }
+
+  async function onDeleteAll() {
+    var count = state.invitees.length;
+    if (count === 0) return;
+
+    // Confirmation forte : prompt qui demande de taper un mot-clé
+    var msg = 'Supprimer DÉFINITIVEMENT les ' + count + ' invité(s) de cet événement ?\n\n'
+      + '• Tous les magic links seront invalidés\n'
+      + '• Les invités existants ne pourront plus accéder au chat\n'
+      + '• Action irréversible\n\n'
+      + 'Tape SUPPRIMER (en majuscules) pour confirmer :';
+    var answer = window.prompt(msg);
+    if (answer !== 'SUPPRIMER') {
+      if (answer !== null) {
+        A.showMessage(messageZone, 'error', 'Suppression annulée (mot-clé incorrect).');
+      }
+      return;
+    }
+
+    try {
+      var result = await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/invitees',
+        { method: 'DELETE' }
+      );
+      A.showMessage(messageZone, 'success', result.deleted_count + ' invité(s) supprimé(s).');
+      loadAll();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Suppression échouée : ' + err.message);
     }
   }
 
