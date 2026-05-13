@@ -191,15 +191,20 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
     : 'Lien public';
 
   // ===== Logique de branding =====
-  const NOMACAST_LOGO = 'https://nomacast.fr/images/logo-nomacast-email.png';
   const hasEventLogo = !!event.logo_url;
-  const heroLogoUrl = hasEventLogo ? event.logo_url : (whiteLabel ? null : NOMACAST_LOGO);
-  const heroLogoAlt = hasEventLogo
-    ? (event.client_name || event.title)
-    : 'Nomacast';
-  const heroLogoHtml = heroLogoUrl
-    ? `<img src="${escapeHtml(heroLogoUrl)}" alt="${escapeHtml(heroLogoAlt)}" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;margin-bottom:18px;">`
-    : '';
+  let heroLogoHtml;
+  if (hasEventLogo) {
+    heroLogoHtml = `<img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;margin-bottom:20px;">`;
+  } else if (!whiteLabel) {
+    heroLogoHtml = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:22px;">
+      <tr><td style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-weight:800;font-size:18px;letter-spacing:0.22em;text-transform:uppercase;line-height:1;">Nomacast</td></tr>
+      <tr><td style="padding-top:6px;font-size:0;line-height:0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="28" height="2" style="background:#ffffff;opacity:0.55;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+      </td></tr>
+    </table>`;
+  } else {
+    heroLogoHtml = '';
+  }
 
   const footerHtml = whiteLabel
     ? ''
