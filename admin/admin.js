@@ -177,6 +177,44 @@
   }
 
   // ============================================================
+  // Public link card
+  // ============================================================
+  function renderPublicLink(slug, accessMode, magicToken) {
+    var url = window.location.origin + '/chat/' + slug;
+    // En mode privé, on ne peut pas exposer un magic-link générique : on note juste que c'est privé.
+    // L'URL "base" reste partageable et le serveur appliquera le contrôle (ou redirigera).
+    var card = el('div', { className: 'admin-public-link' });
+    card.appendChild(el('span', {
+      className: 'admin-public-link-label',
+      text: 'Page participant' + (accessMode === 'private' ? ' (privée)' : '')
+    }));
+    card.appendChild(el('a', {
+      className: 'admin-public-link-url',
+      attrs: { href: url, target: '_blank', rel: 'noopener' },
+      text: url
+    }));
+    var actions = el('div', { className: 'admin-public-link-actions' });
+    actions.appendChild(el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Copier',
+      on: { click: function () {
+        navigator.clipboard.writeText(url).then(
+          function () { this.textContent = 'Copié ✓'; setTimeout(function () { this.textContent = 'Copier'; }.bind(this), 1500); }.bind(this),
+          function () { window.prompt('Copie cette URL :', url); }
+        );
+      }}
+    }));
+    actions.appendChild(el('a', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { href: url, target: '_blank', rel: 'noopener' },
+      text: 'Ouvrir ↗'
+    }));
+    card.appendChild(actions);
+    return card;
+  }
+
+  // ============================================================
   // Export global
   // ============================================================
   window.NomacastAdmin = {
@@ -184,6 +222,7 @@
     formatDate, formatDateTime, formatDuration, statusLabel,
     el, clearNode,
     showMessage, confirmAction,
-    isoToLocalInput, localInputToIso
+    isoToLocalInput, localInputToIso,
+    renderPublicLink
   };
 })();
