@@ -19,7 +19,9 @@ export const onRequestGet = async ({ params, env }) => {
     ).bind(params.id).first();
 
     if (!row) return jsonResponse({ error: 'Event introuvable' }, 404);
-    return jsonResponse({ event: deserializeEvent(row) });
+    const event = deserializeEvent(row);
+    event.admin_preview_token = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
+    return jsonResponse({ event });
   } catch (err) {
     console.error('[admin/events/:id GET]', err);
     return jsonResponse({ error: err.message }, 500);
@@ -127,7 +129,9 @@ export const onRequestPatch = async ({ request, params, env }) => {
       'SELECT * FROM events WHERE id = ?'
     ).bind(params.id).first();
 
-    return jsonResponse({ event: deserializeEvent(updated) });
+    const event = deserializeEvent(updated);
+    event.admin_preview_token = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
+    return jsonResponse({ event });
   } catch (err) {
     console.error('[admin/events/:id PATCH]', err);
     return jsonResponse({ error: err.message }, 500);
@@ -176,6 +180,27 @@ function jsonResponse(body, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8' }
   });
+}
+
+/**
+ * Calcule un token HMAC-SHA-256 du slug avec ADMIN_PASSWORD comme clé.
+ * Permet à l'admin de générer un lien preview pour les events privés
+ * sans stocker de token en BDD. Si ADMIN_PASSWORD change, tous les
+ * anciens liens admin preview sont invalidés (sécurité positive).
+ */
+async function computePreviewToken(slug, secret) {
+  if (!secret) return null;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug));
+  // base64url encoded, ~24 chars
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    .slice(0, 24);
 }
 
 function deserializeEvent(row) {
