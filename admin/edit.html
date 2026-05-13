@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Éditer event · Admin Nomacast</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+
+<header class="admin-header">
+  <div class="admin-header-brand">
+    <span class="admin-header-brand-dot"></span>
+    Nomacast
+  </div>
+  <div class="admin-header-title">Admin Chat interactif</div>
+  <div class="admin-header-actions">
+    <a class="admin-header-link" href="/admin/">← Tous les events</a>
+  </div>
+</header>
+
+<main class="admin-main">
+
+  <div class="admin-page-head">
+    <div>
+      <h1 id="page-title">Éditer l'event</h1>
+      <div class="admin-page-head-sub" id="page-sub">Chargement…</div>
+    </div>
+    <div>
+      <span class="admin-badge" id="status-badge" hidden></span>
+    </div>
+  </div>
+
+  <div id="message-zone"></div>
+
+  <div class="admin-card" id="form-container">
+    <div class="admin-card-body admin-text-muted">
+      <span class="admin-loader"></span> Chargement de l'event…
+    </div>
+  </div>
+
+</main>
+
+<script src="/admin/admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.NomacastAdmin;
+  var container = document.getElementById('form-container');
+  var pageSub = document.getElementById('page-sub');
+  var statusBadge = document.getElementById('status-badge');
+  var messageZone = document.getElementById('message-zone');
+
+  var qs = new URLSearchParams(window.location.search);
+  var id = qs.get('id');
+  var justCreated = qs.get('created') === '1';
+
+  if (!id) {
+    A.clearNode(container);
+    container.appendChild(A.el('div', {
+      className: 'admin-card-body admin-msg admin-msg-error',
+      text: 'Paramètre "id" manquant dans l\'URL.'
+    }));
+    pageSub.textContent = '';
+    return;
+  }
+
+  if (justCreated) {
+    A.showMessage(messageZone, 'success', 'Event créé. Tu peux maintenant ajuster ses paramètres ou inviter des participants (à venir).');
+  }
+
+  async function load() {
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(id));
+      renderForm(data.event);
+    } catch (err) {
+      A.clearNode(container);
+      container.appendChild(A.el('div', {
+        className: 'admin-card-body admin-msg admin-msg-error',
+        text: 'Erreur de chargement : ' + err.message
+      }));
+      pageSub.textContent = '';
+    }
+  }
+
+  function renderForm(ev) {
+    pageSub.textContent = 'Slug : ' + ev.slug + ' · Créé le ' + A.formatDate(ev.created_at);
+    statusBadge.textContent = A.statusLabel(ev.status);
+    statusBadge.className = 'admin-badge admin-badge-' + ev.status;
+    statusBadge.hidden = false;
+
+    A.clearNode(container);
+
+    var body = A.el('div', { className: 'admin-card-body' });
+
+    var form = A.el('form', {
+      className: 'admin-form',
+      attrs: { autocomplete: 'off' }
+    });
+
+    // --- Title + Client ---
+    form.appendChild(formRow([
+      field('Titre de l\'event', true, A.el('input', {
+        className: 'admin-form-input',
+        attrs: { type: 'text', name: 'title', required: true, maxlength: '200', value: ev.title }
+      }), 'Modifie le titre affiché aux participants. Le slug d\'URL reste « ' + ev.slug + ' ».'),
+      field('Client', false, A.el('input', {
+        className: 'admin-form-input',
+        attrs: { type: 'text', name: 'client_name', maxlength: '200', value: ev.client_name || '' }
+      }), 'Nom de l\'entreprise organisatrice.')
+    ]));
+
+    // --- Date + Durée ---
+    form.appendChild(formRow([
+      field('Date et heure', true, A.el('input', {
+        className: 'admin-form-input',
+        attrs: { type: 'datetime-local', name: 'scheduled_at', required: true, value: A.isoToLocalInput(ev.scheduled_at) }
+      })),
+      field('Durée (minutes)', true, A.el('input', {
+        className: 'admin-form-input',
+        attrs: { type: 'number', name: 'duration_minutes', min: '1', step: '1', required: true, value: ev.duration_minutes }
+      }))
+    ]));
+
+    // --- Audience + Couleur ---
+    form.appendChild(formRow([
+      field('Audience estimée', false, A.el('input', {
+        className: 'admin-form-input',
+        attrs: { type: 'number', name: 'audience_estimate', min: '1', step: '1', value: ev.audience_estimate || '' }
+      })),
+      field('Couleur primaire', false, A.el('input', {
+        className: 'admin-form-input',
+        attrs: { type: 'color', name: 'primary_color', value: ev.primary_color || '#5A98D6' }
+      }))
+    ]));
+
+    // --- Statut ---
+    var statusSelect = A.el('select', {
+      className: 'admin-form-select',
+      attrs: { name: 'status' }
+    });
+    [['draft', 'Brouillon'], ['live', 'En direct'], ['ended', 'Terminé']].forEach(function (opt) {
+      statusSelect.appendChild(A.el('option', {
+        attrs: { value: opt[0], selected: ev.status === opt[0] },
+        text: opt[1]
+      }));
+    });
+    form.appendChild(formRow([
+      field('Statut', false, statusSelect, 'Brouillon (caché) → En direct (chat ouvert) → Terminé (replay).')
+    ], true));
+
+    // --- Modes ---
+    var modesField = fieldNoLabel('Modes d\'interaction',
+      buildModesCheckboxes(ev.modes || [])
+    );
+    form.appendChild(modesField);
+
+    // --- Options (white-label + subtitles) ---
+    var optionsField = fieldNoLabel('Options',
+      buildOptionsCheckboxes(ev.white_label, ev.subtitles)
+    );
+    form.appendChild(optionsField);
+
+    // --- Mode d'accès ---
+    var accessField = fieldNoLabel('Mode d\'accès',
+      buildAccessRadios(ev.access_mode || 'public')
+    );
+    form.appendChild(accessField);
+
+    // --- Actions ---
+    var saveBtn = A.el('button', {
+      className: 'admin-btn admin-btn-primary',
+      attrs: { type: 'submit' },
+      text: 'Enregistrer'
+    });
+    var deleteBtn = A.el('button', {
+      className: 'admin-btn admin-btn-danger',
+      attrs: { type: 'button' },
+      text: 'Supprimer',
+      on: { click: function () { onDelete(ev); } }
+    });
+    var cancelBtn = A.el('a', {
+      className: 'admin-btn admin-btn-ghost',
+      attrs: { href: '/admin/' },
+      text: 'Retour'
+    });
+
+    var actions = A.el('div', { className: 'admin-form-actions' });
+    actions.appendChild(A.el('div', { className: 'admin-form-actions-left', children: [deleteBtn] }));
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+    form.appendChild(actions);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      onSubmit(ev, form, saveBtn);
+    });
+
+    body.appendChild(form);
+    container.appendChild(body);
+  }
+
+  // ============ DOM builders ============
+
+  function formRow(fields, isFull) {
+    return A.el('div', {
+      className: 'admin-form-row' + (isFull ? ' full' : ''),
+      children: fields
+    });
+  }
+
+  function field(label, required, input, hint) {
+    var children = [
+      A.el('label', {
+        className: 'admin-form-label' + (required ? ' admin-form-label-req' : ''),
+        text: label
+      }),
+      input
+    ];
+    if (hint) children.push(A.el('div', { className: 'admin-form-hint', text: hint }));
+    return A.el('div', { className: 'admin-form-field', children });
+  }
+
+  function fieldNoLabel(label, content) {
+    return A.el('div', {
+      className: 'admin-form-field',
+      children: [
+        A.el('div', { className: 'admin-form-label', text: label }),
+        content
+      ]
+    });
+  }
+
+  function buildModesCheckboxes(activeModes) {
+    var modeList = [
+      ['qa', 'Q&A modéré', 'Questions soumises et approuvées avant diffusion.'],
+      ['libre', 'Chat libre', 'Tous les participants peuvent écrire en direct.'],
+      ['sondages', 'Sondages live', 'Le modérateur lance des sondages instantanés.'],
+      ['quiz', 'Quiz interactif', 'Questions avec bonne réponse, classement à la fin.'],
+      ['nuage', 'Nuage de mots-clés', 'Réponses libres agrégées en visu.'],
+      ['reactions', 'Réactions rapides', 'Bravo, d\'accord, clair, insight…'],
+      ['lecture', 'Lecture seule', 'Les participants regardent uniquement, pas d\'envoi.']
+    ];
+
+    var container = A.el('div', { className: 'admin-form-checkboxes' });
+    modeList.forEach(function (m) {
+      var checkbox = A.el('input', {
+        attrs: { type: 'checkbox', name: 'mode', value: m[0], checked: activeModes.indexOf(m[0]) !== -1 }
+      });
+      var inner = A.el('div', {
+        children: [
+          A.el('div', { className: 'admin-form-check-label', text: m[1] }),
+          A.el('div', { className: 'admin-form-check-desc', text: m[2] })
+        ]
+      });
+      container.appendChild(A.el('label', {
+        className: 'admin-form-check',
+        children: [checkbox, inner]
+      }));
+    });
+    return container;
+  }
+
+  function buildOptionsCheckboxes(whiteLabel, subtitles) {
+    var container = A.el('div', { className: 'admin-form-checkboxes' });
+    [
+      ['white_label', 'Marque blanche', 'Retire la mention « Propulsé par Nomacast ».', whiteLabel],
+      ['subtitles', 'Sous-titrage live', 'Bandeau de sous-titres temps réel.', subtitles]
+    ].forEach(function (o) {
+      var checkbox = A.el('input', {
+        attrs: { type: 'checkbox', name: o[0], checked: !!o[3] }
+      });
+      var inner = A.el('div', {
+        children: [
+          A.el('div', { className: 'admin-form-check-label', text: o[1] }),
+          A.el('div', { className: 'admin-form-check-desc', text: o[2] })
+        ]
+      });
+      container.appendChild(A.el('label', {
+        className: 'admin-form-check',
+        children: [checkbox, inner]
+      }));
+    });
+    return container;
+  }
+
+  function buildAccessRadios(currentMode) {
+    var container = A.el('div', { className: 'admin-form-checkboxes' });
+    [
+      ['public', 'Public', 'Lien direct partageable, pas d\'invitation nominative.'],
+      ['private', 'Privé (sur invitation)', 'Chaque participant reçoit un magic link nominatif.']
+    ].forEach(function (a) {
+      var radio = A.el('input', {
+        attrs: { type: 'radio', name: 'access_mode', value: a[0], checked: currentMode === a[0] }
+      });
+      var inner = A.el('div', {
+        children: [
+          A.el('div', { className: 'admin-form-check-label', text: a[1] }),
+          A.el('div', { className: 'admin-form-check-desc', text: a[2] })
+        ]
+      });
+      container.appendChild(A.el('label', {
+        className: 'admin-form-check',
+        children: [radio, inner]
+      }));
+    });
+    return container;
+  }
+
+  // ============ Submit + Delete ============
+
+  async function onSubmit(ev, form, btn) {
+    btn.disabled = true;
+    var originalText = btn.textContent;
+    btn.textContent = 'Enregistrement…';
+
+    var data = {
+      title: form.title.value,
+      client_name: form.client_name.value,
+      scheduled_at: A.localInputToIso(form.scheduled_at.value),
+      duration_minutes: form.duration_minutes.value,
+      audience_estimate: form.audience_estimate.value || null,
+      primary_color: form.primary_color.value,
+      status: form.status.value,
+      white_label: form.white_label.checked,
+      subtitles: form.subtitles.checked,
+      modes: Array.prototype.slice.call(form.querySelectorAll('input[name="mode"]:checked')).map(function (c) { return c.value; }),
+      access_mode: form.access_mode.value || 'public'
+    };
+
+    try {
+      var result = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), {
+        method: 'PATCH',
+        body: data
+      });
+      A.showMessage(messageZone, 'success', 'Modifications enregistrées.');
+      // Mettre à jour le badge statut
+      statusBadge.textContent = A.statusLabel(result.event.status);
+      statusBadge.className = 'admin-badge admin-badge-' + result.event.status;
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Enregistrement échoué : ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  async function onDelete(ev) {
+    if (!A.confirmAction(
+      'Supprimer définitivement « ' + ev.title + ' » ?\n'
+      + 'Cette action est irréversible et supprime aussi les invités liés.'
+    )) return;
+
+    try {
+      await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), { method: 'DELETE' });
+      window.location.href = '/admin/?deleted=1';
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Suppression impossible : ' + err.message);
+    }
+  }
+
+  load();
+})();
+</script>
+
+</body>
+</html>
