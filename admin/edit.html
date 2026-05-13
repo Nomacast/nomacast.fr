@@ -99,7 +99,7 @@
 
     // Card "Page participant" avec URL publique cliquable + boutons Copier/Ouvrir
     A.clearNode(publicLinkZone);
-    publicLinkZone.appendChild(A.renderPublicLink(ev.slug, ev.access_mode));
+    publicLinkZone.appendChild(A.renderPublicLink(ev));
 
     var body = A.el('div', { className: 'admin-card-body' });
 
@@ -501,6 +501,9 @@
       // Mettre à jour le badge statut
       statusBadge.textContent = A.statusLabel(result.event.status);
       statusBadge.className = 'admin-badge admin-badge-' + result.event.status;
+      // Re-render la card "Page participant" (pour refléter changement public↔privé)
+      A.clearNode(publicLinkZone);
+      publicLinkZone.appendChild(A.renderPublicLink(result.event));
     } catch (err) {
       A.showMessage(messageZone, 'error', 'Enregistrement échoué : ' + err.message);
     } finally {
