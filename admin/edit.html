@@ -36,6 +36,7 @@
   </div>
 
   <div id="message-zone"></div>
+  <div id="public-link-zone"></div>
 
   <div class="admin-card" id="form-container">
     <div class="admin-card-body admin-text-muted">
@@ -51,6 +52,7 @@
   'use strict';
   var A = window.NomacastAdmin;
   var container = document.getElementById('form-container');
+  var publicLinkZone = document.getElementById('public-link-zone');
   var pageSub = document.getElementById('page-sub');
   var statusBadge = document.getElementById('status-badge');
   var messageZone = document.getElementById('message-zone');
@@ -94,6 +96,10 @@
     statusBadge.hidden = false;
 
     A.clearNode(container);
+
+    // Card "Page participant" avec URL publique cliquable + boutons Copier/Ouvrir
+    A.clearNode(publicLinkZone);
+    publicLinkZone.appendChild(A.renderPublicLink(ev.slug, ev.access_mode));
 
     var body = A.el('div', { className: 'admin-card-body' });
 
