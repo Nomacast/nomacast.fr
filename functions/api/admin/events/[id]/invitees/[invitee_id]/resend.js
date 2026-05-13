@@ -14,7 +14,7 @@ export const onRequestPost = async ({ params, env }) => {
   const row = await env.DB.prepare(`
     SELECT
       e.id AS e_id, e.slug, e.title, e.client_name, e.scheduled_at,
-      e.primary_color, e.white_label, e.access_mode,
+      e.primary_color, e.logo_url, e.white_label, e.access_mode,
       i.id AS i_id, i.email, i.full_name, i.company, i.magic_token, i.invited_at
     FROM invitees i
     JOIN events e ON i.event_id = e.id
@@ -26,6 +26,7 @@ export const onRequestPost = async ({ params, env }) => {
   const event = {
     id: row.e_id, slug: row.slug, title: row.title, client_name: row.client_name,
     scheduled_at: row.scheduled_at, primary_color: row.primary_color,
+    logo_url: row.logo_url,
     white_label: row.white_label === 1, access_mode: row.access_mode
   };
   const invitee = {
@@ -164,16 +165,36 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
     ? 'Lien personnel'
     : 'Lien public';
 
+  // ===== Logique de branding =====
+  // 3 cas :
+  //  - default (white_label=false, pas de logo event) → logo Nomacast en hero + footer Nomacast
+  //  - co-brand (white_label=false, logo event présent)  → logo event en hero + footer Nomacast discret
+  //  - white-label (white_label=true)                    → logo event (ou rien) + AUCUN footer Nomacast
+  const NOMACAST_LOGO = 'https://nomacast.fr/images/logo-nomacast-email.png';
+  const hasEventLogo = !!event.logo_url;
+  const heroLogoUrl = hasEventLogo ? event.logo_url : (whiteLabel ? null : NOMACAST_LOGO);
+  const heroLogoAlt = hasEventLogo
+    ? (event.client_name || event.title)
+    : 'Nomacast';
+  const heroLogoHtml = heroLogoUrl
+    ? `<img src="${escapeHtml(heroLogoUrl)}" alt="${escapeHtml(heroLogoAlt)}" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;margin-bottom:18px;">`
+    : '';
+
+  // Footer Nomacast : présent si pas white-label
   const footerHtml = whiteLabel
     ? ''
-    : `<tr><td style="padding:24px 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#94a3b8;border-top:1px solid #eef2f6;background:#fafbfc;">
-         <div style="margin-bottom:4px;color:#475569;font-size:13px;">
-           <strong style="color:#0f172a;font-size:14px;letter-spacing:0.02em;">Nomacast</strong>
-           &middot; live streaming corporate
-         </div>
-         <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:none;">nomacast.fr</a>
-         &nbsp;&middot;&nbsp;
-         <a href="mailto:${REPLY_TO}" style="color:#94a3b8;text-decoration:none;">${REPLY_TO}</a>
+    : `<tr><td style="padding:22px 36px 26px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#94a3b8;border-top:1px solid #eef2f6;background:#fafbfc;">
+         <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+           <td style="vertical-align:middle;">
+             <div style="margin-bottom:3px;color:#475569;font-size:13px;">
+               ${hasEventLogo ? 'Propulsé par ' : ''}<strong style="color:#0f172a;font-size:14px;letter-spacing:0.02em;">Nomacast</strong>
+               <span style="color:#94a3b8;">&middot; live streaming corporate</span>
+             </div>
+             <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:none;">nomacast.fr</a>
+             <span style="color:#cbd5e1;">&middot;</span>
+             <a href="mailto:${REPLY_TO}" style="color:#94a3b8;text-decoration:none;">${REPLY_TO}</a>
+           </td>
+         </tr></table>
        </td></tr>`;
 
   return `<!doctype html>
@@ -197,6 +218,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
       <!-- HERO -->
       <tr>
         <td style="background:${color};padding:34px 36px 28px;font-family:Arial,Helvetica,sans-serif;">
+          ${heroLogoHtml}
           <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#ffffff;opacity:0.85;margin-bottom:10px;">
             Invitation chat live
           </div>
