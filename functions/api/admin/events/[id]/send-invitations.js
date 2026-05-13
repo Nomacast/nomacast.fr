@@ -14,7 +14,7 @@ export const onRequestPost = async ({ params, env }) => {
 
   const event = await env.DB.prepare(`
     SELECT id, slug, title, client_name, scheduled_at,
-           primary_color, white_label, access_mode
+           primary_color, logo_url, white_label, access_mode
       FROM events WHERE id = ?
   `).bind(params.id).first();
 
@@ -190,16 +190,31 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
     ? 'Lien personnel'
     : 'Lien public';
 
+  // ===== Logique de branding =====
+  const NOMACAST_LOGO = 'https://nomacast.fr/images/logo-nomacast-email.png';
+  const hasEventLogo = !!event.logo_url;
+  const heroLogoUrl = hasEventLogo ? event.logo_url : (whiteLabel ? null : NOMACAST_LOGO);
+  const heroLogoAlt = hasEventLogo
+    ? (event.client_name || event.title)
+    : 'Nomacast';
+  const heroLogoHtml = heroLogoUrl
+    ? `<img src="${escapeHtml(heroLogoUrl)}" alt="${escapeHtml(heroLogoAlt)}" width="160" style="display:block;max-width:160px;height:auto;border:0;outline:none;margin-bottom:18px;">`
+    : '';
+
   const footerHtml = whiteLabel
     ? ''
-    : `<tr><td style="padding:24px 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#94a3b8;border-top:1px solid #eef2f6;background:#fafbfc;">
-         <div style="margin-bottom:4px;color:#475569;font-size:13px;">
-           <strong style="color:#0f172a;font-size:14px;letter-spacing:0.02em;">Nomacast</strong>
-           &middot; live streaming corporate
-         </div>
-         <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:none;">nomacast.fr</a>
-         &nbsp;&middot;&nbsp;
-         <a href="mailto:${REPLY_TO}" style="color:#94a3b8;text-decoration:none;">${REPLY_TO}</a>
+    : `<tr><td style="padding:22px 36px 26px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#94a3b8;border-top:1px solid #eef2f6;background:#fafbfc;">
+         <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+           <td style="vertical-align:middle;">
+             <div style="margin-bottom:3px;color:#475569;font-size:13px;">
+               ${hasEventLogo ? 'Propulsé par ' : ''}<strong style="color:#0f172a;font-size:14px;letter-spacing:0.02em;">Nomacast</strong>
+               <span style="color:#94a3b8;">&middot; live streaming corporate</span>
+             </div>
+             <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:none;">nomacast.fr</a>
+             <span style="color:#cbd5e1;">&middot;</span>
+             <a href="mailto:${REPLY_TO}" style="color:#94a3b8;text-decoration:none;">${REPLY_TO}</a>
+           </td>
+         </tr></table>
        </td></tr>`;
 
   return `<!doctype html>
@@ -210,7 +225,6 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
 <title>${safeTitle}</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif;">
-<!-- Préheader (texte d'aperçu masqué) -->
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
   Vous êtes invité(e) au chat live ${safeTitle}.${safeDate ? ' ' + safeDate : ''}
 </div>
@@ -220,9 +234,9 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
 
     <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(15,23,42,0.08);">
 
-      <!-- HERO -->
       <tr>
         <td style="background:${color};padding:34px 36px 28px;font-family:Arial,Helvetica,sans-serif;">
+          ${heroLogoHtml}
           <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#ffffff;opacity:0.85;margin-bottom:10px;">
             Invitation chat live
           </div>
@@ -233,7 +247,6 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
-      <!-- GREETING + INTRO -->
       <tr>
         <td style="padding:32px 36px 8px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-size:15px;line-height:1.65;">
           <p style="margin:0 0 14px;font-size:16px;">${safeGreeting}</p>
@@ -244,7 +257,6 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
-      <!-- DETAILS BOX -->
       <tr>
         <td style="padding:18px 36px 8px;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f7f9fc;border:1px solid #e6ecf3;border-radius:10px;">
@@ -262,7 +274,6 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
-      <!-- CTA -->
       <tr>
         <td align="center" style="padding:24px 36px 8px;">
           <table role="presentation" cellpadding="0" cellspacing="0">
@@ -275,7 +286,6 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
-      <!-- FALLBACK LINK -->
       <tr>
         <td style="padding:14px 36px 22px;font-family:Arial,Helvetica,sans-serif;color:#64748b;font-size:12px;line-height:1.6;text-align:center;">
           Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
@@ -283,7 +293,6 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </td>
       </tr>
 
-      <!-- AGENDA TIP -->
       <tr>
         <td style="padding:0 36px 28px;">
           <div style="border-top:1px dashed #e6ecf3;padding-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;line-height:1.6;">
