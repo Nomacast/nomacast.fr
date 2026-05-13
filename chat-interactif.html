@@ -210,15 +210,40 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 }
 .wizard-option {
   position: relative; display: flex; flex-direction: column; gap: 4px;
-  padding: 18px 20px; background: var(--white);
+  padding: 18px 44px 18px 20px; background: var(--white);
   border: 1.5px solid var(--border); border-radius: 10px;
   cursor: pointer; transition: border-color 0.2s, background 0.2s;
   font-size: 15px; font-weight: 600; color: var(--ink);
 }
-.wizard-option:hover { border-color: var(--cyan); background: var(--cyan-light); }
+.wizard-option:hover { border-color: var(--cyan); background: rgba(90,152,214,0.04); }
 .wizard-option input { position: absolute; opacity: 0; pointer-events: none; }
 .wizard-option-tip {
   font-size: 12px; font-weight: 400; color: var(--ink-muted);
+}
+/* État sélectionné · chat-interactif-fix-v1 */
+.wizard-option:has(input:checked) {
+  border-color: var(--cyan); background: var(--cyan-light);
+}
+.wizard-option:has(input:checked)::after {
+  content: ''; position: absolute;
+  top: 50%; right: 16px; transform: translateY(-50%);
+  width: 20px; height: 20px;
+  background: var(--cyan); border-radius: 50%;
+}
+.wizard-option:has(input[type="checkbox"]:checked)::before {
+  content: ''; position: absolute;
+  top: 50%; right: 22px;
+  width: 6px; height: 10px;
+  border-right: 2px solid white; border-bottom: 2px solid white;
+  transform: translateY(-65%) rotate(45deg);
+  z-index: 2;
+}
+.wizard-option:has(input[type="radio"]:checked)::before {
+  content: ''; position: absolute;
+  top: 50%; right: 21px; transform: translateY(-50%);
+  width: 8px; height: 8px;
+  background: white; border-radius: 50%;
+  z-index: 2;
 }
 
 .wizard-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
@@ -278,7 +303,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px; background: var(--off-white);
   border-radius: 10px; cursor: pointer; gap: 16px;
-  border: 1.5px solid transparent; transition: border-color 0.2s;
+  border: 1.5px solid transparent; transition: border-color 0.2s, background 0.2s;
 }
 .wizard-toggle:hover { border-color: var(--cyan); }
 .wizard-toggle-info { flex: 1; }
@@ -287,7 +312,14 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .wizard-toggle-price {
   font-size: 14px; font-weight: 700; color: var(--cyan);
   flex-shrink: 0; padding: 4px 10px; background: var(--cyan-light);
-  border-radius: 6px;
+  border-radius: 6px; transition: background 0.2s, color 0.2s;
+}
+/* État activé · chat-interactif-fix-v1 */
+.wizard-toggle:has(input:checked) {
+  border-color: var(--cyan); background: var(--cyan-light);
+}
+.wizard-toggle:has(input:checked) .wizard-toggle-price {
+  background: var(--cyan); color: white;
 }
 
 /* Hero bullets · chat-interactif-v1 */
@@ -432,6 +464,7 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .wizard-estim {
   background: rgba(90,152,214,.1); border: 1px solid rgba(90,152,214,.3);
   border-radius: 12px; padding: 24px; text-align: center;
+  margin-bottom: 28px;
 }
 .wizard-estim-label {
   font-size: 11px; font-weight: 600; letter-spacing: .12em;
@@ -990,6 +1023,13 @@ body.menu-open .float-call{display:none!important}
     <div class="wizard-recap">
       <h3 class="wizard-recap-title">Récapitulatif de votre configuration</h3>
       <p class="wizard-recap-subtitle">Ces informations seront jointes à votre demande de devis.</p>
+
+      <div class="wizard-estim">
+        <div class="wizard-estim-label">Sous-total estimé</div>
+        <div class="wizard-estim-price" data-recap="price">À partir de 290 € HT</div>
+        <div class="wizard-estim-note">Tarif plancher en complément de votre prestation de captation Nomacast. Le devis final, envoyé sous 24 heures, est ajusté selon la durée et le format exacts de votre événement.</div>
+      </div>
+
       <div class="wizard-recap-grid">
         <div class="wizard-recap-item">
           <div class="wizard-recap-label">Durée</div>
@@ -1015,12 +1055,6 @@ body.menu-open .float-call{display:none!important}
           <div class="wizard-recap-label">Marque blanche</div>
           <div class="wizard-recap-value" data-recap="white-label">Logo Nomacast conservé</div>
         </div>
-      </div>
-
-      <div class="wizard-estim">
-        <div class="wizard-estim-label">Estimation tarifaire</div>
-        <div class="wizard-estim-price" data-recap="price">À partir de 290 € HT</div>
-        <div class="wizard-estim-note">Tarif plancher en complément de votre prestation de captation Nomacast. Le devis final, envoyé sous 24 heures, est ajusté selon la durée et le format exacts de votre événement.</div>
       </div>
 
       <div class="security-strip" role="note" aria-label="Engagement sécurité">
