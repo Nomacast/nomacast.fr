@@ -862,6 +862,53 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   transition: color 0.2s ease;
 }
 
+/* === Carrousel manuel · chat-preview-v5 === */
+.preview-carousel-nav {
+  display: none;
+  align-items: center; justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--off-white);
+  border-top: 1px solid var(--border-light);
+}
+.preview-carousel-nav.active { display: flex; }
+
+.preview-carousel-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--preview-accent, var(--cyan));
+  color: #fff;
+  border: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.preview-carousel-btn:hover { opacity: 0.85; transform: scale(1.05); }
+.preview-carousel-btn:active { transform: scale(0.95); }
+.preview-carousel-btn:disabled {
+  opacity: 0.3; cursor: default;
+  transform: none;
+}
+
+.preview-carousel-info {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.preview-carousel-info-label {
+  font-weight: 700;
+  display: block;
+}
+.preview-carousel-info-count {
+  font-size: 10px;
+  color: var(--ink-muted);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
 /* Message envoyé par le visiteur (preview interactif · chat-preview-v2) */
 .pm-you {
   background: var(--preview-accent-light, rgba(90,152,214,.08));
@@ -881,24 +928,36 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   margin: 20px 0 0;
 }
 
-/* === Lien "Voir l'aperçu" dans l'aside sticky === */
+/* === Lien "Voir l'aperçu" dans l'aside sticky · chat-preview-v5 === */
 .summary-preview-link {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  margin-top: 12px;
-  padding: 9px 12px;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--cyan);
+  color: #fff;
   border-radius: 8px;
-  font-size: 12px; color: rgba(255,255,255,.7);
+  font-size: 13px; font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25);
 }
 .summary-preview-link:hover {
-  background: rgba(255,255,255,.08); color: #fff;
-  border-color: rgba(90,152,214,.4);
+  background: var(--cyan-hover);
+  color: #fff;
   text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.45);
 }
-.summary-preview-link svg { opacity: 0.8; }
+.summary-preview-link svg { opacity: 1; }
+
+/* Animation pulse quand l'aperçu change · chat-preview-v5 */
+@keyframes preview-link-pulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25); }
+  50% { box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.15), 0 2px 8px rgba(14, 165, 233, 0.45); }
+}
+.summary-preview-link.pulse {
+  animation: preview-link-pulse 1.5s ease-in-out;
+}
 
 /* ═══════ TOUJOURS INCLUS ═══════ */
 .included-grid {
@@ -1494,6 +1553,20 @@ body.menu-open .float-call{display:none!important}
             </svg>
             <p>Cochez des modes d'interaction ci-dessus<br>pour voir leur rendu en direct.</p>
           </div>
+        </div>
+
+        <!-- Carrousel manuel : visible si plus d'un mode coché · chat-preview-v5 -->
+        <div class="preview-carousel-nav" id="preview-carousel-nav">
+          <button type="button" class="preview-carousel-btn" id="preview-carousel-prev" aria-label="Précédent">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="preview-carousel-info">
+            <span class="preview-carousel-info-label" id="preview-carousel-label">—</span>
+            <span class="preview-carousel-info-count" id="preview-carousel-count">1 / 1</span>
+          </div>
+          <button type="button" class="preview-carousel-btn" id="preview-carousel-next" aria-label="Suivant">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
 
         <div class="preview-chat-input" id="preview-input">
