@@ -219,8 +219,13 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
   }
 
   // ============================================================
-  // PREVIEW INTERACTIF · chat-preview-v1
+  // PREVIEW INTERACTIF · chat-preview-v4 (DOM API pure, zéro innerHTML)
   // ============================================================
+  // Pourquoi cette version : Brave Shields, CSP strict et `require-trusted-types-for`
+  // bloquent toutes les assignations `element.innerHTML = string`, ce qui faisait
+  // planter silencieusement les versions v1, v2, v3. Ici on construit toute la DOM
+  // via createElement / createElementNS / textContent / appendChild. Plus aucune
+  // chaîne HTML n'est parsée → ça marche partout, indépendamment des policies.
   var previewMessagesEl = document.getElementById('preview-messages');
   var previewInputEl = document.getElementById('preview-input');
   var previewFootEl = document.getElementById('preview-foot');
@@ -228,6 +233,59 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
   var previewLogoEl = document.getElementById('preview-logo');
   var previewAudienceCountEl = document.getElementById('preview-audience-count');
   var previewSection = document.getElementById('preview');
+
+  // Helpers DOM
+  function $el(tag, opts) {
+    var e = document.createElement(tag);
+    if (!opts) return e;
+    if (opts.className) e.className = opts.className;
+    if (opts.text != null) e.textContent = opts.text;
+    if (opts.attrs) {
+      for (var a in opts.attrs) {
+        if (Object.prototype.hasOwnProperty.call(opts.attrs, a)) e.setAttribute(a, opts.attrs[a]);
+      }
+    }
+    if (opts.style) {
+      for (var s in opts.style) {
+        if (Object.prototype.hasOwnProperty.call(opts.style, s)) e.style[s] = opts.style[s];
+      }
+    }
+    if (opts.children) {
+      for (var i = 0; i < opts.children.length; i++) {
+        if (opts.children[i]) e.appendChild(opts.children[i]);
+      }
+    }
+    return e;
+  }
+
+  function $svg(tag, attrs) {
+    var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (Object.prototype.hasOwnProperty.call(attrs, k)) e.setAttribute(k, attrs[k]);
+      }
+    }
+    return e;
+  }
+
+  function $clear(el) {
+    while (el && el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  function $svgIcon(svgAttrs, children) {
+    var s = $svg('svg', svgAttrs);
+    for (var i = 0; i < children.length; i++) {
+      s.appendChild($svg(children[i].tag, children[i].attrs));
+    }
+    return s;
+  }
+
+  // Attrs communs pour les icônes de réactions
+  var REACT_ATTRS = {
+    width: '11', height: '11', viewBox: '0 0 24 24',
+    fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5',
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+  };
 
   // Faux contenu B2B réaliste, mappé par mode
   var PREVIEW_TEMPLATES = {
@@ -271,121 +329,195 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       ]
     },
     reactions: [
-      { svg: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>', count: 32, label: 'Bravo' },
-      { svg: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>', count: 18, label: 'D\'accord' },
-      { svg: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>', count: 12, label: 'Clair' },
-      { svg: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>', count: 8, label: 'Insight' }
+      { count: 32, label: 'Bravo', makeIcon: function () { return $svgIcon(REACT_ATTRS, [{ tag: 'path', attrs: { d: 'M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3' } }]); } },
+      { count: 18, label: 'D\'accord', makeIcon: function () { return $svgIcon(REACT_ATTRS, [{ tag: 'polyline', attrs: { points: '20 6 9 17 4 12' } }]); } },
+      { count: 12, label: 'Clair', makeIcon: function () { return $svgIcon(REACT_ATTRS, [{ tag: 'path', attrs: { d: 'M9 11.5l2 2 4-4' } }, { tag: 'circle', attrs: { cx: '12', cy: '12', r: '10' } }]); } },
+      { count: 8, label: 'Insight', makeIcon: function () { return $svgIcon(REACT_ATTRS, [
+        { tag: 'line', attrs: { x1: '12', y1: '2', x2: '12', y2: '6' } },
+        { tag: 'line', attrs: { x1: '12', y1: '18', x2: '12', y2: '22' } },
+        { tag: 'line', attrs: { x1: '4.93', y1: '4.93', x2: '7.76', y2: '7.76' } },
+        { tag: 'line', attrs: { x1: '16.24', y1: '16.24', x2: '19.07', y2: '19.07' } },
+        { tag: 'line', attrs: { x1: '2', y1: '12', x2: '6', y2: '12' } },
+        { tag: 'line', attrs: { x1: '18', y1: '12', x2: '22', y2: '12' } }
+      ]); } }
     ]
   };
 
+  // -------------------- RENDERERS (retournent des DOM nodes) --------------------
+
   function renderQA(item) {
-    return ''
-      + '<div class="pm">'
-      + '  <div class="pm-head">'
-      + '    <span class="pm-author">' + escapeHtml(item.author) + '</span>'
-      + '    <span class="pm-time">' + escapeHtml(item.time) + '</span>'
-      + '  </div>'
-      + '  <div class="pm-text">' + escapeHtml(item.text) + '</div>'
-      + '  <div class="pm-actions">'
-      + '    <span class="pm-upvote">▲ ' + item.upvotes + '</span>'
-      + '    <span class="pm-badge">Q&A modéré</span>'
-      + '  </div>'
-      + '</div>';
+    return $el('div', {
+      className: 'pm',
+      children: [
+        $el('div', {
+          className: 'pm-head',
+          children: [
+            $el('span', { className: 'pm-author', text: item.author }),
+            $el('span', { className: 'pm-time', text: item.time })
+          ]
+        }),
+        $el('div', { className: 'pm-text', text: item.text }),
+        $el('div', {
+          className: 'pm-actions',
+          children: [
+            $el('span', { className: 'pm-upvote', text: '▲ ' + item.upvotes }),
+            $el('span', { className: 'pm-badge', text: 'Q&A modéré' })
+          ]
+        })
+      ]
+    });
   }
 
   function renderLibre(item) {
-    return ''
-      + '<div class="pm">'
-      + '  <div class="pm-head">'
-      + '    <span class="pm-author">' + escapeHtml(item.author) + '</span>'
-      + '    <span class="pm-time">' + escapeHtml(item.time) + '</span>'
-      + '  </div>'
-      + '  <div class="pm-text">' + escapeHtml(item.text) + '</div>'
-      + '</div>';
+    return $el('div', {
+      className: 'pm',
+      children: [
+        $el('div', {
+          className: 'pm-head',
+          children: [
+            $el('span', { className: 'pm-author', text: item.author }),
+            $el('span', { className: 'pm-time', text: item.time })
+          ]
+        }),
+        $el('div', { className: 'pm-text', text: item.text })
+      ]
+    });
   }
 
   function renderSondage(s) {
     var total = s.options.reduce(function (a, o) { return a + o.votes; }, 0);
     var rows = s.options.map(function (o) {
       var pct = Math.round((o.votes / total) * 100);
-      return ''
-        + '<div class="pm-poll-row">'
-        + '  <span class="pm-poll-label-row">' + escapeHtml(o.label) + '</span>'
-        + '  <div class="pm-poll-bar"><div class="pm-poll-fill" style="width:' + pct + '%"></div></div>'
-        + '  <span class="pm-poll-pct">' + pct + '%</span>'
-        + '</div>';
-    }).join('');
-    return ''
-      + '<div class="pm pm-poll">'
-      + '  <div class="pm-poll-head">'
-      + '    <span class="pm-poll-label">Sondage live</span>'
-      + '    <span style="font-size:10px;color:var(--ink-faint);">' + total + ' votes</span>'
-      + '  </div>'
-      + '  <div class="pm-poll-q">' + escapeHtml(s.question) + '</div>'
-      + rows
-      + '</div>';
+      return $el('div', {
+        className: 'pm-poll-row',
+        children: [
+          $el('span', { className: 'pm-poll-label-row', text: o.label }),
+          $el('div', {
+            className: 'pm-poll-bar',
+            children: [$el('div', { className: 'pm-poll-fill', style: { width: pct + '%' } })]
+          }),
+          $el('span', { className: 'pm-poll-pct', text: pct + '%' })
+        ]
+      });
+    });
+    return $el('div', {
+      className: 'pm pm-poll',
+      children: [
+        $el('div', {
+          className: 'pm-poll-head',
+          children: [
+            $el('span', { className: 'pm-poll-label', text: 'Sondage live' }),
+            $el('span', {
+              text: total + ' votes',
+              style: { fontSize: '10px', color: 'var(--ink-faint)' }
+            })
+          ]
+        }),
+        $el('div', { className: 'pm-poll-q', text: s.question })
+      ].concat(rows)
+    });
   }
 
   function renderQuiz(q) {
     var opts = q.options.map(function (o) {
-      return ''
-        + '<div class="pm-quiz-opt' + (o.correct ? ' correct' : '') + '">'
-        + '  <span class="pm-quiz-opt-letter">' + escapeHtml(o.letter) + '</span>'
-        + '  ' + escapeHtml(o.label)
-        + '</div>';
-    }).join('');
-    return ''
-      + '<div class="pm pm-quiz">'
-      + '  <div class="pm-poll-head">'
-      + '    <span class="pm-poll-label">Quiz interactif</span>'
-      + '  </div>'
-      + '  <div class="pm-quiz-q">' + escapeHtml(q.question) + '</div>'
-      + opts
-      + '</div>';
+      var div = $el('div', {
+        className: 'pm-quiz-opt' + (o.correct ? ' correct' : ''),
+        children: [$el('span', { className: 'pm-quiz-opt-letter', text: o.letter })]
+      });
+      div.appendChild(document.createTextNode(' ' + o.label));
+      return div;
+    });
+    return $el('div', {
+      className: 'pm pm-quiz',
+      children: [
+        $el('div', {
+          className: 'pm-poll-head',
+          children: [$el('span', { className: 'pm-poll-label', text: 'Quiz interactif' })]
+        }),
+        $el('div', { className: 'pm-quiz-q', text: q.question })
+      ].concat(opts)
+    });
   }
 
   function renderCloud(c) {
     var words = c.words.map(function (w) {
-      return '<span class="pm-cloud-w s' + w.size + '">' + escapeHtml(w.text) + '</span>';
-    }).join('');
-    return ''
-      + '<div class="pm pm-cloud">'
-      + '  <div class="pm-cloud-q">' + escapeHtml(c.question) + '</div>'
-      + '  <div class="pm-cloud-words">' + words + '</div>'
-      + '</div>';
+      return $el('span', { className: 'pm-cloud-w s' + w.size, text: w.text });
+    });
+    return $el('div', {
+      className: 'pm pm-cloud',
+      children: [
+        $el('div', { className: 'pm-cloud-q', text: c.question }),
+        $el('div', { className: 'pm-cloud-words', children: words })
+      ]
+    });
   }
 
   function renderReactions(reactions) {
     var chips = reactions.map(function (r) {
-      return ''
-        + '<span class="pm-reaction-chip" title="' + escapeHtml(r.label) + '">'
-        + r.svg + ' ' + r.count
-        + '</span>';
-    }).join('');
-    return ''
-      + '<div class="pm">'
-      + '  <div class="pm-head"><span class="pm-author">Réactions rapides</span></div>'
-      + '  <div class="pm-reactions">' + chips + '</div>'
-      + '</div>';
+      var chip = $el('span', {
+        className: 'pm-reaction-chip',
+        attrs: { title: r.label }
+      });
+      if (r.makeIcon) chip.appendChild(r.makeIcon());
+      chip.appendChild(document.createTextNode(' ' + r.count));
+      return chip;
+    });
+    return $el('div', {
+      className: 'pm',
+      children: [
+        $el('div', {
+          className: 'pm-head',
+          children: [$el('span', { className: 'pm-author', text: 'Réactions rapides' })]
+        }),
+        $el('div', { className: 'pm-reactions', children: chips })
+      ]
+    });
   }
 
   function renderEmpty() {
-    return ''
-      + '<div class="preview-empty">'
-      + '  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;">'
-      + '    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>'
-      + '  </svg>'
-      + '  <p>Cochez des modes d\'interaction ci-dessus<br>pour voir leur rendu en direct.</p>'
-      + '</div>';
+    var svg = $svg('svg', {
+      width: '40', height: '40', viewBox: '0 0 24 24',
+      fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5',
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+    });
+    svg.style.opacity = '0.3';
+    svg.appendChild($svg('path', {
+      d: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z'
+    }));
+
+    var p = $el('p');
+    p.appendChild(document.createTextNode('Cochez des modes d\'interaction ci-dessus'));
+    p.appendChild($el('br'));
+    p.appendChild(document.createTextNode('pour voir leur rendu en direct.'));
+
+    return $el('div', {
+      className: 'preview-empty',
+      children: [svg, p]
+    });
+  }
+
+  function buildYouMessage(text) {
+    return $el('div', {
+      className: 'pm pm-you',
+      children: [
+        $el('div', {
+          className: 'pm-head',
+          children: [
+            $el('span', { className: 'pm-author', text: 'Vous' }),
+            $el('span', { className: 'pm-time', text: 'à l\'instant' })
+          ]
+        }),
+        $el('div', { className: 'pm-text', text: text })
+      ]
+    });
   }
 
   function lightenHex(hex, amount) {
-    // Convert hex to RGB and add alpha for the light variant
     var c = hex.replace('#', '');
-    if (c.length === 3) c = c.split('').map(function(x){return x+x;}).join('');
-    var r = parseInt(c.substr(0,2), 16);
-    var g = parseInt(c.substr(2,2), 16);
-    var b = parseInt(c.substr(4,2), 16);
+    if (c.length === 3) c = c.split('').map(function (x) { return x + x; }).join('');
+    var r = parseInt(c.substr(0, 2), 16);
+    var g = parseInt(c.substr(2, 2), 16);
+    var b = parseInt(c.substr(4, 2), 16);
     return 'rgba(' + r + ',' + g + ',' + b + ',' + amount + ')';
   }
 
@@ -413,7 +545,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       }
     }
 
-    // 3. Audience count (utilise la valeur saisie ou défaut)
+    // 3. Audience count
     if (previewAudienceCountEl) {
       var a = parseInt(audienceInput.value, 10);
       previewAudienceCountEl.textContent = (a > 0) ? a : 234;
@@ -429,49 +561,28 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     var hasLectureSeule = wizard.querySelector('input[name="mode-lecture"]');
     var hasSubtitles = subtitlesCheckbox && subtitlesCheckbox.checked;
 
-    var parts = [];
+    var nodes = [];
+    if (hasQA && hasQA.checked) PREVIEW_TEMPLATES.qa.forEach(function (m) { nodes.push(renderQA(m)); });
+    if (hasSondages && hasSondages.checked) nodes.push(renderSondage(PREVIEW_TEMPLATES.sondage));
+    if (hasReactions && hasReactions.checked) nodes.push(renderReactions(PREVIEW_TEMPLATES.reactions));
+    if (hasNuage && hasNuage.checked) nodes.push(renderCloud(PREVIEW_TEMPLATES.cloud));
+    if (hasQuiz && hasQuiz.checked) nodes.push(renderQuiz(PREVIEW_TEMPLATES.quiz));
+    if (hasLibre && hasLibre.checked) PREVIEW_TEMPLATES.libre.forEach(function (m) { nodes.push(renderLibre(m)); });
 
-    if (hasQA && hasQA.checked) {
-      PREVIEW_TEMPLATES.qa.forEach(function (m) { parts.push(renderQA(m)); });
-    }
-    if (hasSondages && hasSondages.checked) {
-      parts.push(renderSondage(PREVIEW_TEMPLATES.sondage));
-    }
-    if (hasReactions && hasReactions.checked) {
-      parts.push(renderReactions(PREVIEW_TEMPLATES.reactions));
-    }
-    if (hasNuage && hasNuage.checked) {
-      parts.push(renderCloud(PREVIEW_TEMPLATES.cloud));
-    }
-    if (hasQuiz && hasQuiz.checked) {
-      parts.push(renderQuiz(PREVIEW_TEMPLATES.quiz));
-    }
-    if (hasLibre && hasLibre.checked) {
-      PREVIEW_TEMPLATES.libre.forEach(function (m) { parts.push(renderLibre(m)); });
-    }
-
-    if (parts.length === 0) {
-      previewMessagesEl.innerHTML = renderEmpty();
+    // Vider et remplir via DOM API (zéro innerHTML)
+    $clear(previewMessagesEl);
+    if (nodes.length === 0) {
+      previewMessagesEl.appendChild(renderEmpty());
     } else {
-      previewMessagesEl.innerHTML = parts.join('');
+      for (var i = 0; i < nodes.length; i++) previewMessagesEl.appendChild(nodes[i]);
     }
 
-    // Réinjecter les messages "Vous" que le visiteur aurait pu envoyer
-    // (sinon ils sont effacés à chaque toggle de mode) · chat-preview-v2
+    // Réinjecter les messages "Vous" envoyés par le visiteur
     if (state.youMessages && state.youMessages.length) {
-      // Si on était en empty, retirer le placeholder avant d'ajouter les messages Vous
       var emptyEl = previewMessagesEl.querySelector('.preview-empty');
       if (emptyEl) emptyEl.parentNode.removeChild(emptyEl);
       state.youMessages.forEach(function (text) {
-        var msg = document.createElement('div');
-        msg.className = 'pm pm-you';
-        msg.innerHTML = ''
-          + '<div class="pm-head">'
-          + '  <span class="pm-author">Vous</span>'
-          + '  <span class="pm-time">à l\'instant</span>'
-          + '</div>'
-          + '<div class="pm-text">' + escapeHtml(text) + '</div>';
-        previewMessagesEl.appendChild(msg);
+        previewMessagesEl.appendChild(buildYouMessage(text));
       });
     }
 
@@ -480,7 +591,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       previewInputEl.style.display = (hasLectureSeule && hasLectureSeule.checked) ? 'none' : 'flex';
     }
 
-    // 6. Marque blanche → masquer le footer "Propulsé par Nomacast"
+    // 6. Marque blanche → masquer le footer
     if (previewFootEl) {
       previewFootEl.style.display = (whitelabelToggle && whitelabelToggle.checked) ? 'none' : 'block';
     }
@@ -527,17 +638,8 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       var emptyEl = previewMessagesEl.querySelector('.preview-empty');
       if (emptyEl) emptyEl.parentNode.removeChild(emptyEl);
 
-      // Construire le message "Vous"
-      var msg = document.createElement('div');
-      msg.className = 'pm pm-you';
-      msg.innerHTML = ''
-        + '<div class="pm-head">'
-        + '  <span class="pm-author">Vous</span>'
-        + '  <span class="pm-time">à l\'instant</span>'
-        + '</div>'
-        + '<div class="pm-text">' + escapeHtml(text) + '</div>';
-
-      previewMessagesEl.appendChild(msg);
+      // Construire le message "Vous" via DOM API (zéro innerHTML)
+      previewMessagesEl.appendChild(buildYouMessage(text));
 
       // Reset + focus + scroll vers le bas
       inputEl.value = '';
