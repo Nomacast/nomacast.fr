@@ -1,10 +1,11 @@
 // functions/api/admin/upload-logo.js
 // POST /api/admin/upload-logo  (multipart/form-data avec champ "file")
-// Uploade un fichier image vers le bucket R2 lié au binding `ASSETS`,
+// Uploade un fichier image vers le bucket R2 lié au binding `LOGOS_BUCKET`,
 // et renvoie l'URL publique servie depuis env.R2_PUBLIC_BASE_URL.
 //
 // Requirements (Cloudflare Pages settings) :
-//  - R2 bucket bindings → variable name: ASSETS, bucket: nomacast-assets
+//  - R2 bucket bindings → variable name: LOGOS_BUCKET, bucket: nomacast-assets
+//    (⚠️ ne PAS nommer le binding "ASSETS" — c'est un nom réservé par Pages)
 //  - Environment variables → R2_PUBLIC_BASE_URL = https://pub-xxxx.r2.dev (sans / final)
 //  - Protégé par le _middleware.js Basic Auth de /api/admin/
 
@@ -18,8 +19,8 @@ const ALLOWED_TYPES = [
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 Mo
 
 export const onRequestPost = async ({ request, env }) => {
-  if (!env.ASSETS) {
-    return jsonResponse({ error: 'Binding R2 « ASSETS » manquant côté Cloudflare Pages.' }, 500);
+  if (!env.LOGOS_BUCKET) {
+    return jsonResponse({ error: 'Binding R2 « LOGOS_BUCKET » manquant côté Cloudflare Pages.' }, 500);
   }
   if (!env.R2_PUBLIC_BASE_URL) {
     return jsonResponse({ error: 'Variable d\'environnement R2_PUBLIC_BASE_URL non configurée.' }, 500);
@@ -57,7 +58,7 @@ export const onRequestPost = async ({ request, env }) => {
   // Upload R2
   try {
     const buffer = await file.arrayBuffer();
-    await env.ASSETS.put(key, buffer, {
+    await env.LOGOS_BUCKET.put(key, buffer, {
       httpMetadata: { contentType: file.type },
       customMetadata: {
         original_name: sanitizeName(file.name || 'logo'),
