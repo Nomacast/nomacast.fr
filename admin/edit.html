@@ -144,7 +144,7 @@
       }))
     ]));
 
-    // --- Logo client (URL + preview) ---
+    // --- Logo client (URL + Upload + preview) ---
     var logoUrlInput = A.el('input', {
       className: 'admin-form-input',
       attrs: {
@@ -152,8 +152,32 @@
         name: 'logo_url',
         placeholder: 'https://exemple.com/logo-client.png',
         value: ev.logo_url || ''
-      }
+      },
+      style: { flex: '1', minWidth: '0' }
     });
+    var hiddenFileInput = A.el('input', {
+      attrs: {
+        type: 'file',
+        accept: 'image/png,image/jpeg,image/jpg,image/webp,image/svg+xml'
+      },
+      style: { display: 'none' }
+    });
+    var uploadBtn = A.el('button', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Importer un fichier',
+      style: { whiteSpace: 'nowrap' },
+      on: { click: function () { hiddenFileInput.click(); } }
+    });
+
+    // Wrapper input + bouton sur la même ligne
+    var logoInputWrap = A.el('div', {
+      style: { display: 'flex', gap: '8px', alignItems: 'center' }
+    });
+    logoInputWrap.appendChild(logoUrlInput);
+    logoInputWrap.appendChild(uploadBtn);
+    logoInputWrap.appendChild(hiddenFileInput);
+
     var logoPreview = A.el('div', {
       className: 'admin-logo-preview',
       attrs: { id: 'logo-preview' }
@@ -193,12 +217,51 @@
     logoUrlInput.addEventListener('input', function () { renderLogoPreview(this.value.trim()); });
     setTimeout(function () { renderLogoPreview(ev.logo_url || ''); }, 50);
 
+    // Upload handler
+    hiddenFileInput.addEventListener('change', async function () {
+      var file = this.files && this.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        A.showMessage(messageZone, 'error', 'Fichier trop volumineux (max 2 Mo).');
+        this.value = '';
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      var originalText = uploadBtn.textContent;
+      uploadBtn.textContent = 'Upload…';
+
+      var formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        var resp = await fetch('/api/admin/upload-logo', {
+          method: 'POST',
+          body: formData
+        });
+        var result = await resp.json().catch(function () { return { error: 'Réponse invalide' }; });
+        if (!resp.ok) {
+          throw new Error(result.error || ('Erreur HTTP ' + resp.status));
+        }
+        logoUrlInput.value = result.url;
+        renderLogoPreview(result.url);
+        A.showMessage(messageZone, 'success', 'Logo importé · ' + Math.round(result.size / 1024) + ' Ko.');
+      } catch (err) {
+        A.showMessage(messageZone, 'error', 'Upload échoué : ' + err.message);
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = originalText;
+        hiddenFileInput.value = ''; // reset pour pouvoir re-uploader le même fichier
+      }
+    });
+
     form.appendChild(formRow([
       field(
-        'URL du logo client',
+        'Logo du client',
         false,
-        logoUrlInput,
-        'URL publique du logo (PNG transparent recommandé, hauteur 60–120 px). Apparaîtra dans le header du mail d\'invitation et sur la page participant. Laisse vide pour utiliser le logo Nomacast par défaut.'
+        logoInputWrap,
+        'Colle une URL publique (PNG/JPG/WEBP/SVG, hauteur ~60–120 px conseillée) OU clique « Importer un fichier » pour uploader depuis ton ordi (max 2 Mo). Apparaîtra dans le header du mail d\'invitation et sur la page participant. Laisse vide pour utiliser le logo Nomacast par défaut.'
       )
     ], true));
     form.appendChild(A.el('div', {
