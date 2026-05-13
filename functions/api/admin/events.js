@@ -9,17 +9,19 @@ export const onRequestGet = async ({ env }) => {
   if (!env.DB) return jsonResponse({ error: 'D1 binding DB manquant' }, 500);
 
   try {
+    // JOIN sur invitees pour récupérer count + count "envoyé"
     const { results } = await env.DB.prepare(
-      `SELECT id, slug, title, client_name, scheduled_at, duration_minutes,
-              audience_estimate, status, primary_color, white_label, subtitles,
-              modes_json, access_mode, created_at, updated_at
-       FROM events
-       ORDER BY scheduled_at DESC`
+      `SELECT
+         e.id, e.slug, e.title, e.client_name, e.scheduled_at, e.duration_minutes,
+         e.audience_estimate, e.status, e.primary_color, e.white_label, e.subtitles,
+         e.modes_json, e.access_mode, e.created_at, e.updated_at,
+         (SELECT COUNT(*) FROM invitees i WHERE i.event_id = e.id) AS invitees_count,
+         (SELECT COUNT(*) FROM invitees i WHERE i.event_id = e.id AND i.invited_at IS NOT NULL) AS invitees_sent
+       FROM events e
+       ORDER BY e.scheduled_at DESC`
     ).all();
 
-    // Désérialiser modes_json pour le front
     const events = (results || []).map(deserializeEvent);
-
     return jsonResponse({ events });
   } catch (err) {
     console.error('[admin/events GET]', err);
@@ -120,7 +122,9 @@ function deserializeEvent(row) {
     stream_uid: row.stream_uid,
     stream_playback_url: row.stream_playback_url,
     created_at: row.created_at,
-    updated_at: row.updated_at
+    updated_at: row.updated_at,
+    invitees_count: typeof row.invitees_count === 'number' ? row.invitees_count : 0,
+    invitees_sent: typeof row.invitees_sent === 'number' ? row.invitees_sent : 0
   };
 }
 
