@@ -177,12 +177,38 @@
       attrs: { type: 'submit' },
       text: 'Enregistrer'
     });
-    var deleteBtn = A.el('button', {
-      className: 'admin-btn admin-btn-danger',
-      attrs: { type: 'button' },
-      text: 'Supprimer',
-      on: { click: function () { onDelete(ev); } }
+
+    // Bouton Gérer les invités (toujours présent)
+    var inviteesBtn = A.el('a', {
+      className: 'admin-btn admin-btn-secondary',
+      attrs: { href: '/admin/invitees.html?event_id=' + encodeURIComponent(ev.id) },
+      text: 'Gérer les invités' + (ev.invitees_count > 0 ? ' (' + ev.invitees_count + ')' : '')
     });
+
+    // Q4 option B : si des invités existent, Supprimer désactivé, on propose Archiver à la place
+    var dangerBtn;
+    if (ev.invitees_count > 0 && ev.status !== 'ended') {
+      dangerBtn = A.el('button', {
+        className: 'admin-btn admin-btn-secondary',
+        attrs: { type: 'button' },
+        text: 'Archiver (statut Terminé)',
+        on: { click: function () { onArchive(ev); } }
+      });
+    } else if (ev.invitees_count > 0 && ev.status === 'ended') {
+      dangerBtn = A.el('button', {
+        className: 'admin-btn admin-btn-danger',
+        attrs: { type: 'button', disabled: true, title: 'Supprime d\'abord tous les invités pour permettre la suppression' },
+        text: 'Suppression bloquée (' + ev.invitees_count + ' invités)'
+      });
+    } else {
+      dangerBtn = A.el('button', {
+        className: 'admin-btn admin-btn-danger',
+        attrs: { type: 'button' },
+        text: 'Supprimer définitivement',
+        on: { click: function () { onDelete(ev); } }
+      });
+    }
+
     var cancelBtn = A.el('a', {
       className: 'admin-btn admin-btn-ghost',
       attrs: { href: '/admin/' },
@@ -190,7 +216,8 @@
     });
 
     var actions = A.el('div', { className: 'admin-form-actions' });
-    actions.appendChild(A.el('div', { className: 'admin-form-actions-left', children: [deleteBtn] }));
+    actions.appendChild(A.el('div', { className: 'admin-form-actions-left', children: [dangerBtn] }));
+    actions.appendChild(inviteesBtn);
     actions.appendChild(cancelBtn);
     actions.appendChild(saveBtn);
     form.appendChild(actions);
@@ -349,17 +376,38 @@
     }
   }
 
+  async function onArchive(ev) {
+    if (!A.confirmAction(
+      'Archiver « ' + ev.title + ' » ?\n'
+      + 'Le statut passera à « Terminé ». Les invités et leurs magic links restent en base.'
+    )) return;
+    try {
+      var result = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), {
+        method: 'PATCH',
+        body: { status: 'ended' }
+      });
+      A.showMessage(messageZone, 'success', 'Event archivé. Statut → Terminé.');
+      statusBadge.textContent = A.statusLabel(result.event.status);
+      statusBadge.className = 'admin-badge admin-badge-' + result.event.status;
+      // Rafraîchit le formulaire pour mettre à jour les boutons
+      setTimeout(load, 500);
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Archivage échoué : ' + err.message);
+    }
+  }
+
   async function onDelete(ev) {
     if (!A.confirmAction(
       'Supprimer définitivement « ' + ev.title + ' » ?\n'
-      + 'Cette action est irréversible et supprime aussi les invités liés.'
+      + 'Cette action est irréversible.'
     )) return;
 
     try {
       await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), { method: 'DELETE' });
       window.location.href = '/admin/?deleted=1';
     } catch (err) {
-      A.showMessage(messageZone, 'error', 'Suppression impossible : ' + err.message);
+      // Si 409 → des invités sont présents, on bloque
+      A.showMessage(messageZone, 'error', err.message);
     }
   }
 
