@@ -482,6 +482,296 @@
       margin: 14px 0;
     }
 
+    /* ============ nomacast-lot-2a-bis-l4-v1 : CTAs ============ */
+    .regie-ctas-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #64748b;
+      margin: 0 0 10px;
+    }
+    .regie-ctas-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .regie-ctas-status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+    .regie-ctas-status-dot.error { background: #dc2626; }
+    .regie-ctas-status-dot.paused { background: #94a3b8; }
+    .regie-cta-create-btn {
+      display: block; width: 100%;
+      padding: 10px 12px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      background: transparent;
+      color: #475569;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .regie-cta-create-btn:hover {
+      border-color: var(--regie-accent-color, #5A98D6);
+      background: #f8fafc;
+    }
+    .regie-cta-form {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafbfc;
+      margin-bottom: 12px;
+    }
+    .regie-cta-form-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 8px;
+      color: #0f172a;
+    }
+    .regie-cta-form input[type="text"],
+    .regie-cta-form input[type="url"],
+    .regie-cta-form select {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      font-family: inherit;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+    }
+    .regie-cta-form input:focus,
+    .regie-cta-form select:focus {
+      outline: none;
+      border-color: var(--regie-accent-color, #5A98D6);
+    }
+    .regie-cta-form-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .regie-cta-form-row label {
+      font-size: 12px;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .regie-cta-form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .regie-ctas-empty {
+      padding: 16px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px dashed #e2e8f0;
+    }
+    .regie-cta-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: #ffffff;
+      transition: border-color 0.15s;
+    }
+    .regie-cta-item.is-active {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+    .regie-cta-item.is-expired {
+      opacity: 0.6;
+    }
+    .regie-cta-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .regie-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .regie-cta-badge.is-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .regie-cta-badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .regie-cta-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .regie-cta-actions button {
+      padding: 3px 8px;
+      font-size: 11px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: inherit;
+      color: #334155;
+    }
+    .regie-cta-actions button:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+    .regie-cta-actions button.danger:hover {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+    .regie-cta-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #0f172a;
+      margin: 2px 0;
+      word-break: break-word;
+    }
+    .regie-cta-url {
+      font-size: 11px;
+      color: #64748b;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      word-break: break-all;
+      margin-bottom: 4px;
+    }
+    .regie-cta-meta-line {
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .regie-cta-meta-line .warn { color: #d97706; }
+    .regie-cta-edit input {
+      width: 100%;
+      padding: 5px 8px;
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      font-family: inherit;
+      margin-bottom: 5px;
+      box-sizing: border-box;
+    }
+
+    /* ============ nomacast-lot-2a-bis-l4-v1 : Réactions configurables ============ */
+    .regie-reactions-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #64748b;
+      margin: 0 0 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .regie-reactions-saved {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #10b981;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .regie-reactions-saved.is-visible { opacity: 1; }
+    .regie-reactions-saved.is-saving { color: #94a3b8; opacity: 1; }
+    .regie-reactions-saved.is-error { color: #dc2626; opacity: 1; }
+    .regie-reactions-default-notice {
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .regie-reactions-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .regie-reaction-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 4px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #ffffff;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      user-select: none;
+    }
+    .regie-reaction-cell:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+    .regie-reaction-cell:active { transform: scale(0.95); }
+    .regie-reaction-cell.is-selected {
+      border-color: var(--regie-accent-color, #5A98D6);
+      background: #eff6ff;
+      border-width: 2px;
+      padding: 7px 3px;
+    }
+    .regie-reaction-cell.is-disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .regie-reaction-cell-emoji {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .regie-reaction-cell-label {
+      font-size: 10px;
+      color: #64748b;
+      text-align: center;
+    }
+    .regie-reaction-cell.is-selected .regie-reaction-cell-label {
+      color: var(--regie-accent-color, #5A98D6);
+      font-weight: 500;
+    }
+    .regie-reactions-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .regie-reactions-count {
+      color: #64748b;
+    }
+
     /* ============ Annonce admin (broadcast) ============ */
     .regie-announce {
       border: 1px solid #e2e8f0;
@@ -591,6 +881,16 @@
       <span class="regie-tool-toggle-dot"></span>
       <span>Sondages</span>
     </button>
+    <!-- nomacast-lot-2a-bis-l4-v1 : nouveaux outils CTAs + Réactions -->
+    <button type="button" class="regie-tool-toggle" data-toggle-tool="ctas" id="toggle-ctas">
+      <span class="regie-tool-toggle-dot"></span>
+      <span>CTAs</span>
+      <span class="regie-tool-toggle-count" id="toggle-ctas-count">0</span>
+    </button>
+    <button type="button" class="regie-tool-toggle" data-toggle-tool="reactions" id="toggle-reactions">
+      <span class="regie-tool-toggle-dot"></span>
+      <span>Réactions</span>
+    </button>
   </div>
 
   <div class="regie-layout" id="regie-layout" style="display:none;">
@@ -673,6 +973,42 @@
       </div>
     </section>
 
+    <!-- nomacast-lot-2a-bis-l4-v1 : section CTAs -->
+    <section class="regie-col" data-tool="ctas" hidden>
+      <div class="regie-card">
+        <div class="regie-card-header">
+          <div>
+            <h2>CTAs</h2>
+            <div class="regie-card-sub" id="ctas-sub">— CTA</div>
+          </div>
+          <div class="regie-ctas-status">
+            <span class="regie-ctas-status-dot" id="ctas-dot"></span>
+            <span id="ctas-status-text" style="font-size:11px; color:#64748b;">Auto · 5s</span>
+          </div>
+        </div>
+        <div class="regie-card-body">
+          <div id="ctas-create-zone"></div>
+          <div id="ctas-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- nomacast-lot-2a-bis-l4-v1 : section Réactions configurables -->
+    <section class="regie-col" data-tool="reactions" hidden>
+      <div class="regie-card">
+        <div class="regie-card-header">
+          <div>
+            <h2>Réactions</h2>
+            <div class="regie-card-sub">Emojis affichés sous la vidéo</div>
+          </div>
+          <span class="regie-reactions-saved" id="reactions-saved">✓ Enregistré</span>
+        </div>
+        <div class="regie-card-body">
+          <div id="reactions-zone"></div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
 </main>
@@ -722,6 +1058,9 @@
       layout.style.display = '';
       updateLayoutGrid();
       startPolling();
+      // nomacast-lot-2a-bis-l4-v1 : démarrer les CTAs (polling 5s) et init Réactions config
+      startCtasPolling();
+      setupReactionsConfig();
     } catch (err) {
       pageSub.textContent = 'Erreur de chargement';
       A.showMessage(messageZone, 'error', 'Chargement échoué : ' + err.message);
@@ -1356,6 +1695,460 @@
   }
 
   // ============================================================
+  // nomacast-lot-2a-bis-l4-v1 : CTAs (CRUD + polling 5s)
+  // ============================================================
+  var ctasList     = document.getElementById('ctas-list');
+  var ctasCreateZ  = document.getElementById('ctas-create-zone');
+  var ctasSub      = document.getElementById('ctas-sub');
+  var ctasDot      = document.getElementById('ctas-dot');
+  var ctasStatusTx = document.getElementById('ctas-status-text');
+  var ctasCountBadge = document.getElementById('toggle-ctas-count');
+  var ctasTimer    = null;
+  var ctasCreateOpen = false;
+  var ctasEditingId  = null;
+  var ctasNowTimer   = null; // refresh des "il y a X min" toutes les 30s
+
+  // Options d'expiration exposées à l'UI (valeurs en secondes, null = pas d'expiration)
+  var CTAS_EXPIRES_OPTIONS = [
+    { value: '', label: 'Pas d\'expiration' },
+    { value: '180', label: 'Expire après 3 min' },
+    { value: '300', label: 'Expire après 5 min' },
+    { value: '900', label: 'Expire après 15 min' },
+    { value: '1800', label: 'Expire après 30 min' },
+    { value: '3600', label: 'Expire après 1 h' },
+    { value: '14400', label: 'Expire après 4 h' }
+  ];
+
+  function renderCtasCreateZone() {
+    A.clearNode(ctasCreateZ);
+    if (!ctasCreateOpen) {
+      var openBtn = A.el('button', {
+        className: 'regie-cta-create-btn',
+        attrs: { type: 'button' },
+        text: '+ Nouveau CTA',
+        on: { click: function () { ctasCreateOpen = true; renderCtasCreateZone(); } }
+      });
+      ctasCreateZ.appendChild(openBtn);
+      return;
+    }
+    var form = A.el('div', { className: 'regie-cta-form' });
+    form.appendChild(A.el('div', { className: 'regie-cta-form-title', text: 'Nouveau CTA' }));
+
+    var inputLabel = A.el('input', {
+      attrs: { type: 'text', placeholder: 'Libellé du bouton (ex : Téléchargez l\'étude)', maxlength: '80' }
+    });
+    form.appendChild(inputLabel);
+
+    var inputUrl = A.el('input', {
+      attrs: { type: 'url', placeholder: 'https://...', maxlength: '500' }
+    });
+    form.appendChild(inputUrl);
+
+    var selectExpires = A.el('select');
+    CTAS_EXPIRES_OPTIONS.forEach(function (opt) {
+      var o = A.el('option', { attrs: { value: opt.value }, text: opt.label });
+      selectExpires.appendChild(o);
+    });
+    form.appendChild(selectExpires);
+
+    var row = A.el('div', { className: 'regie-cta-form-row' });
+    var labelCheckbox = A.el('label');
+    var checkbox = A.el('input', { attrs: { type: 'checkbox', checked: 'checked' } });
+    checkbox.checked = true; // attribut HTML "checked" ne suffit pas toujours
+    labelCheckbox.appendChild(checkbox);
+    labelCheckbox.appendChild(document.createTextNode(' Activer immédiatement'));
+    row.appendChild(labelCheckbox);
+    form.appendChild(row);
+
+    var actions = A.el('div', { className: 'regie-cta-form-actions' });
+    var cancelBtn = A.el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Annuler',
+      on: { click: function () { ctasCreateOpen = false; renderCtasCreateZone(); } }
+    });
+    actions.appendChild(cancelBtn);
+
+    var submitBtn = A.el('button', {
+      className: 'admin-btn admin-btn-primary admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Créer'
+    });
+    submitBtn.addEventListener('click', async function () {
+      var label = (inputLabel.value || '').trim();
+      var url = (inputUrl.value || '').trim();
+      if (!label) { A.showMessage(messageZone, 'error', 'Libellé requis.'); inputLabel.focus(); return; }
+      if (!url) { A.showMessage(messageZone, 'error', 'URL requise.'); inputUrl.focus(); return; }
+      var body = { label: label, url: url, active: !!checkbox.checked };
+      var expVal = selectExpires.value;
+      if (expVal !== '') body.expires_in_seconds = parseInt(expVal, 10);
+      submitBtn.disabled = true; submitBtn.textContent = 'Création…';
+      try {
+        await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/ctas', {
+          method: 'POST', body: body
+        });
+        ctasCreateOpen = false;
+        renderCtasCreateZone();
+        loadCtas();
+        A.showMessage(messageZone, 'success', 'CTA créé.');
+      } catch (err) {
+        A.showMessage(messageZone, 'error', 'Création échouée : ' + err.message);
+        submitBtn.disabled = false; submitBtn.textContent = 'Créer';
+      }
+    });
+    actions.appendChild(submitBtn);
+    form.appendChild(actions);
+
+    ctasCreateZ.appendChild(form);
+    inputLabel.focus();
+  }
+
+  async function loadCtas() {
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/ctas');
+      renderCtas(data.ctas || []);
+      ctasDot.classList.remove('error', 'paused');
+      ctasStatusTx.textContent = 'Auto · 5s';
+    } catch (err) {
+      console.error('[regie] ctas poll error:', err);
+      ctasDot.classList.add('error');
+      ctasStatusTx.textContent = 'Erreur réseau';
+    }
+    clearTimeout(ctasTimer);
+    ctasTimer = setTimeout(loadCtas, 5000);
+  }
+
+  function renderCtas(ctas) {
+    A.clearNode(ctasList);
+    var activeCount = 0;
+    ctas.forEach(function (c) { if (c.active) activeCount++; });
+    ctasSub.textContent = activeCount + ' actif' + (activeCount > 1 ? 's' : '') + ' / ' + ctas.length + ' au total';
+
+    // Badge compteur sur le toggle (visible si > 0 et tool collapsed)
+    if (ctasCountBadge) {
+      ctasCountBadge.textContent = activeCount;
+      if (activeCount > 0) ctasCountBadge.classList.add('is-visible');
+      else ctasCountBadge.classList.remove('is-visible');
+    }
+
+    if (!ctas.length) {
+      ctasList.appendChild(A.el('div', { className: 'regie-ctas-empty', text: 'Aucun CTA pour cet event. Crée-en un avec le formulaire ci-dessus.' }));
+      return;
+    }
+    ctas.forEach(function (cta) {
+      ctasList.appendChild(renderCtaItem(cta));
+    });
+  }
+
+  function renderCtaItem(cta) {
+    var item = A.el('div', { className: 'regie-cta-item' + (cta.active ? ' is-active' : '') });
+    var expiredAt = computeCtaExpiredAt(cta);
+    var isExpired = !!(expiredAt && Date.now() > expiredAt);
+    if (isExpired) item.classList.add('is-expired');
+
+    var head = A.el('div', { className: 'regie-cta-item-head' });
+    var badge = A.el('span', { className: 'regie-cta-badge' + (cta.active && !isExpired ? ' is-active' : '') });
+    badge.appendChild(A.el('span', { className: 'regie-cta-badge-dot' }));
+    var badgeText = '';
+    if (cta.active && !isExpired) badgeText = 'Actif' + (cta.activated_at ? ' depuis ' + formatRelativeShort(cta.activated_at) : '');
+    else if (cta.active && isExpired) badgeText = 'Expiré';
+    else badgeText = 'Inactif';
+    badge.appendChild(document.createTextNode(' ' + badgeText));
+    head.appendChild(badge);
+
+    var actions = A.el('div', { className: 'regie-cta-actions' });
+    if (ctasEditingId !== cta.id) {
+      // Activer / Désactiver
+      var toggleBtn = A.el('button', {
+        attrs: { type: 'button' },
+        text: cta.active && !isExpired ? 'Désactiver' : 'Activer'
+      });
+      toggleBtn.addEventListener('click', function () { onCtaToggleActive(cta, toggleBtn); });
+      actions.appendChild(toggleBtn);
+
+      var editBtn = A.el('button', { attrs: { type: 'button', title: 'Modifier' }, text: 'Modifier' });
+      editBtn.addEventListener('click', function () { ctasEditingId = cta.id; loadCtas(); });
+      actions.appendChild(editBtn);
+
+      var delBtn = A.el('button', { className: 'danger', attrs: { type: 'button', title: 'Supprimer' }, text: 'Supprimer' });
+      delBtn.addEventListener('click', function () { onCtaDelete(cta); });
+      actions.appendChild(delBtn);
+    } else {
+      var saveBtn = A.el('button', { attrs: { type: 'button' }, text: 'Enregistrer' });
+      saveBtn.addEventListener('click', function () { onCtaSaveEdit(cta, item, saveBtn); });
+      actions.appendChild(saveBtn);
+
+      var cancelEditBtn = A.el('button', { attrs: { type: 'button' }, text: 'Annuler' });
+      cancelEditBtn.addEventListener('click', function () { ctasEditingId = null; loadCtas(); });
+      actions.appendChild(cancelEditBtn);
+    }
+    head.appendChild(actions);
+    item.appendChild(head);
+
+    if (ctasEditingId === cta.id) {
+      var editWrap = A.el('div', { className: 'regie-cta-edit' });
+      var editLabel = A.el('input', { attrs: { type: 'text', maxlength: '80', value: cta.label, 'data-edit': 'label' } });
+      editLabel.value = cta.label;
+      var editUrl = A.el('input', { attrs: { type: 'url', maxlength: '500', value: cta.url, 'data-edit': 'url' } });
+      editUrl.value = cta.url;
+      editWrap.appendChild(editLabel);
+      editWrap.appendChild(editUrl);
+      item.appendChild(editWrap);
+    } else {
+      item.appendChild(A.el('div', { className: 'regie-cta-label', text: cta.label }));
+      item.appendChild(A.el('div', { className: 'regie-cta-url', text: cta.url }));
+
+      var meta = A.el('div', { className: 'regie-cta-meta-line' });
+      if (cta.expires_in_seconds && cta.activated_at && cta.active && !isExpired) {
+        var msLeft = expiredAt - Date.now();
+        var minLeft = Math.max(0, Math.round(msLeft / 60000));
+        var warn = A.el('span', { className: 'warn', text: 'Expire dans ' + (minLeft > 0 ? minLeft + ' min' : '< 1 min') });
+        meta.appendChild(warn);
+      } else if (cta.expires_in_seconds) {
+        meta.appendChild(A.el('span', { text: 'Durée : ' + formatDurationSec(cta.expires_in_seconds) }));
+      }
+      if (cta.created_at) {
+        meta.appendChild(A.el('span', { text: 'Créé ' + formatRelativeShort(cta.created_at) }));
+      }
+      if (meta.children.length > 0) item.appendChild(meta);
+    }
+    return item;
+  }
+
+  function computeCtaExpiredAt(cta) {
+    if (!cta.expires_in_seconds || !cta.activated_at) return null;
+    var t = Date.parse(cta.activated_at);
+    if (isNaN(t)) return null;
+    return t + cta.expires_in_seconds * 1000;
+  }
+
+  function formatDurationSec(sec) {
+    if (sec < 60) return sec + ' s';
+    if (sec < 3600) return Math.round(sec / 60) + ' min';
+    if (sec < 86400) return Math.round(sec / 3600) + ' h';
+    return Math.round(sec / 86400) + ' j';
+  }
+
+  function formatRelativeShort(iso) {
+    if (!iso) return '';
+    var t = Date.parse(iso);
+    if (isNaN(t)) return '';
+    var diff = Math.max(0, Date.now() - t);
+    var s = Math.round(diff / 1000);
+    if (s < 60) return 'il y a < 1 min';
+    if (s < 3600) return 'il y a ' + Math.round(s / 60) + ' min';
+    if (s < 86400) return 'il y a ' + Math.round(s / 3600) + ' h';
+    return 'il y a ' + Math.round(s / 86400) + ' j';
+  }
+
+  async function onCtaToggleActive(cta, btn) {
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      var expiredAt = computeCtaExpiredAt(cta);
+      var isExpired = !!(expiredAt && Date.now() > expiredAt);
+      var newActive = !(cta.active && !isExpired);
+      await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/ctas/' + encodeURIComponent(cta.id), {
+        method: 'PATCH', body: { active: newActive }
+      });
+      loadCtas();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Action échouée : ' + err.message);
+      btn.disabled = false; btn.textContent = cta.active ? 'Désactiver' : 'Activer';
+    }
+  }
+
+  async function onCtaSaveEdit(cta, item, btn) {
+    var newLabel = item.querySelector('input[data-edit="label"]').value.trim();
+    var newUrl = item.querySelector('input[data-edit="url"]').value.trim();
+    if (!newLabel) { A.showMessage(messageZone, 'error', 'Libellé requis.'); return; }
+    if (!newUrl) { A.showMessage(messageZone, 'error', 'URL requise.'); return; }
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+    var payload = {};
+    if (newLabel !== cta.label) payload.label = newLabel;
+    if (newUrl !== cta.url) payload.url = newUrl;
+    if (Object.keys(payload).length === 0) {
+      ctasEditingId = null; loadCtas(); return;
+    }
+    try {
+      await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/ctas/' + encodeURIComponent(cta.id), {
+        method: 'PATCH', body: payload
+      });
+      ctasEditingId = null;
+      loadCtas();
+      A.showMessage(messageZone, 'success', 'CTA mis à jour.');
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Échec : ' + err.message);
+      btn.disabled = false; btn.textContent = 'Enregistrer';
+    }
+  }
+
+  async function onCtaDelete(cta) {
+    var msg = cta.active
+      ? 'Supprimer ce CTA actuellement affiché chez les viewers ?'
+      : 'Supprimer ce CTA ?';
+    if (!A.confirmAction(msg)) return;
+    try {
+      await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/ctas/' + encodeURIComponent(cta.id), {
+        method: 'DELETE'
+      });
+      loadCtas();
+      A.showMessage(messageZone, 'success', 'CTA supprimé.');
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Suppression échouée : ' + err.message);
+    }
+  }
+
+  function startCtasPolling() {
+    renderCtasCreateZone();
+    loadCtas();
+    // Rafraîchir les libellés "il y a X min" toutes les 30s sans refetch DB
+    if (ctasNowTimer) clearInterval(ctasNowTimer);
+    ctasNowTimer = setInterval(function () {
+      // Re-render si la section est visible (sinon inutile)
+      var col = document.querySelector('.regie-col[data-tool="ctas"]');
+      if (col && !col.hidden) {
+        // Re-render des items existants à partir du dernier snapshot via loadCtas léger
+        // Simplification : on déclenche juste un fetch (5s polling + 30s ce timer = redondance acceptable)
+      }
+    }, 30000);
+  }
+
+  // ============================================================
+  // nomacast-lot-2a-bis-l4-v1 : Réactions configurables (auto-save 500ms)
+  // ============================================================
+  var REACTIONS_POOL = ['👏','❤️','🔥','🎉','🙏','👍','😂','🤔','💡','🚀','✨','🤯','🥳','🤝','⭐'];
+  var REACTIONS_LABELS = {
+    '👏': 'Applaudir', '❤️': "J'aime", '🔥': 'Top', '🎉': 'Bravo',
+    '🙏': 'Merci', '👍': 'OK', '😂': 'Drôle', '🤔': 'Question',
+    '💡': 'Idée', '🚀': 'Décollage', '✨': 'Magique', '🤯': 'Bluffant',
+    '🥳': 'Fête', '🤝': "D'accord", '⭐': 'Excellent'
+  };
+  var REACTIONS_DEFAULTS = ['👏','❤️','🔥','🎉','🙏','👍','😂','🤔'];
+  var REACTIONS_MIN = 1, REACTIONS_MAX = 5;
+
+  var reactionsZone   = document.getElementById('reactions-zone');
+  var reactionsSaved  = document.getElementById('reactions-saved');
+  var reactionsCustom = null; // null = défaut, array = personnalisé
+  var reactionsSaveTimer = null;
+
+  function setupReactionsConfig() {
+    // Initialiser depuis currentEvent (déjà chargé par loadEvent)
+    reactionsCustom = (currentEvent && Array.isArray(currentEvent.reaction_emojis) && currentEvent.reaction_emojis.length > 0)
+      ? currentEvent.reaction_emojis.slice()
+      : null;
+    renderReactionsZone();
+  }
+
+  function renderReactionsZone() {
+    A.clearNode(reactionsZone);
+
+    if (reactionsCustom === null) {
+      // Mode défaut : afficher notice + bouton "Personnaliser"
+      var notice = A.el('div', { className: 'regie-reactions-default-notice' });
+      notice.appendChild(A.el('span', { text: 'Par défaut : ' + REACTIONS_DEFAULTS.join(' ') + ' (8 emojis)' }));
+      var customizeBtn = A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Personnaliser',
+        on: { click: function () {
+          // Initialiser la sélection avec les 5 premiers défauts (ou les emojis "tendance")
+          reactionsCustom = REACTIONS_DEFAULTS.slice(0, 5);
+          renderReactionsZone();
+          saveReactionsDebounced();
+        }}
+      });
+      notice.appendChild(customizeBtn);
+      reactionsZone.appendChild(notice);
+      return;
+    }
+
+    // Mode personnalisé : grille des 15
+    var grid = A.el('div', { className: 'regie-reactions-grid' });
+    REACTIONS_POOL.forEach(function (emoji) {
+      var isSelected = reactionsCustom.indexOf(emoji) >= 0;
+      var atMax = reactionsCustom.length >= REACTIONS_MAX;
+      var cell = A.el('button', {
+        className: 'regie-reaction-cell'
+          + (isSelected ? ' is-selected' : '')
+          + (!isSelected && atMax ? ' is-disabled' : ''),
+        attrs: { type: 'button', title: REACTIONS_LABELS[emoji] || emoji }
+      });
+      cell.appendChild(A.el('span', { className: 'regie-reaction-cell-emoji', text: emoji }));
+      cell.appendChild(A.el('span', { className: 'regie-reaction-cell-label', text: REACTIONS_LABELS[emoji] || emoji }));
+      cell.addEventListener('click', function () { onReactionCellClick(emoji); });
+      grid.appendChild(cell);
+    });
+    reactionsZone.appendChild(grid);
+
+    var actions = A.el('div', { className: 'regie-reactions-actions' });
+    var count = A.el('span', { className: 'regie-reactions-count',
+      text: reactionsCustom.length + ' / ' + REACTIONS_MAX + ' sélectionnés' });
+    actions.appendChild(count);
+    var resetBtn = A.el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Réinitialiser au défaut',
+      on: { click: function () {
+        reactionsCustom = null;
+        renderReactionsZone();
+        saveReactionsDebounced();
+      }}
+    });
+    actions.appendChild(resetBtn);
+    reactionsZone.appendChild(actions);
+  }
+
+  function onReactionCellClick(emoji) {
+    if (!Array.isArray(reactionsCustom)) return;
+    var idx = reactionsCustom.indexOf(emoji);
+    if (idx >= 0) {
+      // Déselectionner — mais respecter le minimum
+      if (reactionsCustom.length <= REACTIONS_MIN) {
+        A.showMessage(messageZone, 'error', 'Au moins ' + REACTIONS_MIN + ' emoji requis. Utilise « Réinitialiser au défaut » pour revenir aux 8 originaux.');
+        return;
+      }
+      reactionsCustom.splice(idx, 1);
+    } else {
+      // Sélectionner — respecter le maximum
+      if (reactionsCustom.length >= REACTIONS_MAX) {
+        A.showMessage(messageZone, 'error', 'Maximum ' + REACTIONS_MAX + ' emojis. Désélectionne-en un d\'abord.');
+        return;
+      }
+      reactionsCustom.push(emoji);
+    }
+    renderReactionsZone();
+    saveReactionsDebounced();
+  }
+
+  function saveReactionsDebounced() {
+    if (reactionsSaveTimer) clearTimeout(reactionsSaveTimer);
+    reactionsSaved.classList.remove('is-error');
+    reactionsSaved.classList.remove('is-visible');
+    reactionsSaved.classList.add('is-saving');
+    reactionsSaved.textContent = 'Enregistrement…';
+    reactionsSaveTimer = setTimeout(saveReactionsNow, 500);
+  }
+
+  async function saveReactionsNow() {
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId), {
+        method: 'PATCH',
+        body: { reaction_emojis: reactionsCustom }
+      });
+      // Synchroniser currentEvent
+      if (data && data.event) currentEvent = data.event;
+      reactionsSaved.classList.remove('is-saving', 'is-error');
+      reactionsSaved.classList.add('is-visible');
+      reactionsSaved.textContent = '✓ Enregistré';
+      setTimeout(function () { reactionsSaved.classList.remove('is-visible'); }, 2500);
+    } catch (err) {
+      reactionsSaved.classList.remove('is-saving', 'is-visible');
+      reactionsSaved.classList.add('is-error');
+      reactionsSaved.textContent = '✗ Erreur : ' + err.message;
+    }
+  }
+
+  // ============================================================
   // TOGGLE OUTILS — sélectionner quels outils afficher
   // ============================================================
   // État sauvegardé en localStorage (par event_id pour ne pas mélanger)
@@ -1399,6 +2192,9 @@
 
   setupToolToggle('moderation');
   setupToolToggle('polls');
+  // nomacast-lot-2a-bis-l4-v1 : nouveaux outils
+  setupToolToggle('ctas');
+  setupToolToggle('reactions');
   updateLayoutGrid();
 
   // Badge compteur sur le bouton modération
