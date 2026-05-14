@@ -145,6 +145,30 @@ export const onRequestPatch = async ({ request, params, env }) => {
   if (data.modes !== undefined) {
     sets.push('modes_json = ?'); binds.push(JSON.stringify(Array.isArray(data.modes) ? data.modes : []));
   }
+  // nomacast-reactions-config-v1 : sélection des emojis de réactions par event
+  // Pool de 15 autorisés, 1 à 5 par event. null = restaure le défaut (8 originaux).
+  if (data.reaction_emojis !== undefined) {
+    if (data.reaction_emojis === null) {
+      sets.push('reaction_emojis_json = ?'); binds.push(null);
+    } else if (!Array.isArray(data.reaction_emojis)) {
+      return jsonResponse({ error: 'reaction_emojis doit être un tableau' }, 400);
+    } else if (data.reaction_emojis.length < 1 || data.reaction_emojis.length > 5) {
+      return jsonResponse({ error: 'reaction_emojis doit contenir entre 1 et 5 emojis' }, 400);
+    } else {
+      const POOL = ['👏','❤️','🔥','🎉','🙏','👍','😂','🤔','💡','🚀','✨','🤯','🥳','🤝','⭐'];
+      const seen = new Set();
+      for (const e of data.reaction_emojis) {
+        if (!POOL.includes(e)) {
+          return jsonResponse({ error: 'Emoji non autorisé : ' + e }, 400);
+        }
+        if (seen.has(e)) {
+          return jsonResponse({ error: 'Emoji en double : ' + e }, 400);
+        }
+        seen.add(e);
+      }
+      sets.push('reaction_emojis_json = ?'); binds.push(JSON.stringify(data.reaction_emojis));
+    }
+  }
   if (data.access_mode !== undefined) {
     if (!['public', 'private'].includes(data.access_mode)) {
       return jsonResponse({ error: 'access_mode invalide (public/private)' }, 400);
@@ -275,6 +299,15 @@ function deserializeEvent(row) {
   if (row.modes_json) {
     try { modes = JSON.parse(row.modes_json); } catch (e) {}
   }
+  // nomacast-reactions-config-v1 : reaction_emojis = null si jamais configuré
+  // (consommateur applique le défaut des 8 originaux), sinon array 1-5 emojis.
+  let reactionEmojis = null;
+  if (row.reaction_emojis_json) {
+    try {
+      const parsed = JSON.parse(row.reaction_emojis_json);
+      if (Array.isArray(parsed) && parsed.length > 0) reactionEmojis = parsed;
+    } catch (e) {}
+  }
   return {
     id: row.id,
     slug: row.slug,
@@ -289,6 +322,7 @@ function deserializeEvent(row) {
     white_label: row.white_label === 1,
     subtitles: row.subtitles === 1,
     modes,
+    reaction_emojis: reactionEmojis,
     access_mode: row.access_mode,
     stream_uid: row.stream_uid,
     stream_rtmps_url: row.stream_rtmps_url,
