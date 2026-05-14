@@ -6,6 +6,7 @@
 // - Si event public → page comme /i/[token] mais sans tracking (pas d'invitee)
 // - No-index header
 
+// Marqueur : nomacast-analytics-visits-tracking-v1
 export const onRequestGet = async ({ params, env, request }) => {
   if (!env.DB) {
     return htmlResponse(renderErrorPage(
@@ -65,6 +66,39 @@ export const onRequestGet = async ({ params, env, request }) => {
     }
   }
 
+  // Tracking visits détaillé (analytics - chaque ouverture du lien public)
+  // Conditions : on track uniquement les VRAIES visites publiques
+  //   - PAS de tracking si access_mode === 'private' (le viewer voit la page "wall" privé)
+  //   - PAS de tracking si isAdminPreview (visite interne admin Nomacast, pas un vrai viewer)
+  // Wrappé en try/catch indépendant : non-bloquant pour le rendu de la page.
+  const trackVisit = !isAdminPreview && event.access_mode === 'public';
+  if (trackVisit) {
+    try {
+      let anonKey = null;
+      let ipHashFull = null;
+      if (env.CHAT_IP_HASH_SECRET) {
+        const ip = request.headers.get('CF-Connecting-IP') || '';
+        ipHashFull = await hashIp(ip, env.CHAT_IP_HASH_SECRET);
+        anonKey = ipHashFull.slice(0, 32);
+      }
+      await env.DB.prepare(`
+        INSERT INTO visits (id, event_id, invitee_id, anon_key, visited_at, page_kind, user_agent, country_code, ip_hash, referrer)
+        VALUES (?, ?, NULL, ?, ?, 'public', ?, ?, ?, ?)
+      `).bind(
+        crypto.randomUUID(),
+        event.id,
+        anonKey,
+        new Date().toISOString(),
+        request.headers.get('User-Agent') || null,
+        request.headers.get('CF-IPCountry') || null,
+        ipHashFull,
+        request.headers.get('Referer') || null
+      ).run();
+    } catch (err) {
+      console.error('[chat/slug] visits track failed', err);
+    }
+  }
+
   let html;
   if (event.access_mode === 'private' && !isAdminPreview) {
     html = renderPrivatePage(event);
@@ -92,6 +126,15 @@ async function computePreviewToken(slug, secret) {
   return btoa(String.fromCharCode(...new Uint8Array(sig)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     .slice(0, 24);
+}
+
+async function hashIp(ip, secret) {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 function htmlResponse(html, status = 200) {
