@@ -12,7 +12,12 @@
 //   - stream_uid              : UID retourné par Cloudflare
 //   - stream_rtmps_url        : URL RTMPS à mettre dans OBS (rtmps://live.cloudflare.com:443/live/)
 //   - stream_rtmps_key        : streamKey à mettre dans OBS (SECRET — affiché uniquement dans /admin)
-//   - stream_playback_url     : URL iframe à embed côté participant (stream.nomacast.fr/<uid>/iframe)
+//   - stream_playback_url     : URL iframe à embed côté participant (iframe.videodelivery.net/<uid>)
+//
+// NOTE : on n'utilise PAS le custom subdomain (stream.nomacast.fr) car Cloudflare
+// bloque le CNAME cross-account avec une erreur 1014 ("CNAME Cross-User Banned").
+// Pour activer un vrai custom subdomain, il faudrait Cloudflare for SaaS (Business plan).
+// L'URL générique iframe.videodelivery.net fonctionne sans config.
 //   - stream_created_at       : timestamp de création
 
 const CF_API_BASE = 'https://api.cloudflare.com/client/v4';
@@ -85,7 +90,7 @@ export const onRequestPost = async ({ params, env }) => {
     return jsonResponse({ error: 'Réponse Cloudflare incomplète', cf_data: cfData }, 502);
   }
 
-  const playbackUrl = `https://stream.nomacast.fr/${cfData.uid}/iframe`;
+  const playbackUrl = `https://iframe.videodelivery.net/${cfData.uid}`;
   const createdAt = new Date().toISOString();
 
   // Stockage en D1
