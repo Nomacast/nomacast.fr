@@ -203,6 +203,7 @@ function renderLivePage(event, invitee, token) {
   const mainBody = `
     <div class="live-layout">
       <div class="live-video">
+        <div class="live-poll-zone" id="live-poll-zone" style="display:none;"></div>
         ${playerHtml}
       </div>
       <aside class="live-chat">
@@ -226,6 +227,8 @@ function renderLivePage(event, invitee, token) {
     bodyScript: buildLivePageScript({
       statusUrl: `/i/${encodeURIComponent(token)}/status`,
       chatMessagesUrl: `/api/chat/${encodeURIComponent(event.slug)}/messages`,
+      pollsActiveUrl: `/api/chat/${encodeURIComponent(event.slug)}/polls/active`,
+      voteUrlBase: `/api/chat/${encodeURIComponent(event.slug)}/polls`,
       accessMode: event.access_mode,
       magicToken: token,
       isLectureSeule,
@@ -744,6 +747,157 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   }
   .footer-links a:hover { text-decoration: underline; }
   .footer-dot { color: #cbd5e1; margin: 0 6px; }
+
+  /* ============ Sondage participant (Phase C) ============ */
+  .live-poll-zone {
+    margin-bottom: 14px;
+    animation: poll-slide-in 0.4s ease;
+  }
+  @keyframes poll-slide-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .live-poll-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid ${color};
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .live-poll-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700;
+    color: ${color};
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  .live-poll-header-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: ${color};
+    box-shadow: 0 0 0 0 ${color};
+    animation: poll-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes poll-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 ${color}40; }
+    50%      { box-shadow: 0 0 0 6px ${color}00; }
+  }
+  .live-poll-question {
+    font-size: 16px; font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    margin-bottom: 12px;
+    word-break: break-word;
+  }
+  .live-poll-options-vote {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .live-poll-option-vote {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fafbfc;
+  }
+  .live-poll-option-vote:hover {
+    border-color: ${color};
+    background: #fff;
+  }
+  .live-poll-option-vote input[type="radio"] { margin: 0; cursor: pointer; }
+  .live-poll-option-vote input[type="radio"]:checked + .live-poll-option-text {
+    color: ${color};
+    font-weight: 600;
+  }
+  .live-poll-option-text {
+    flex: 1; min-width: 0;
+    font-size: 14px;
+    color: #1e293b;
+    word-break: break-word;
+  }
+  .live-poll-vote-btn {
+    width: 100%;
+    padding: 11px 16px;
+    background: ${color};
+    color: #ffffff;
+    border: none; border-radius: 8px;
+    font: inherit; font-weight: 700; font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.05s;
+  }
+  .live-poll-vote-btn:hover:not(:disabled) { opacity: 0.92; }
+  .live-poll-vote-btn:active:not(:disabled) { transform: translateY(1px); }
+  .live-poll-vote-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .live-poll-options-results {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .live-poll-result-row {
+    display: flex; flex-direction: column;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fafbfc;
+    position: relative;
+    overflow: hidden;
+  }
+  .live-poll-result-row.is-mine {
+    border-color: ${color};
+    background: ${color}0d;
+  }
+  .live-poll-result-bar-bg {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    background: ${color}1a;
+    transition: width 0.4s ease;
+    z-index: 0;
+  }
+  .live-poll-result-row.is-mine .live-poll-result-bar-bg {
+    background: ${color}2e;
+  }
+  .live-poll-result-content {
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
+  }
+  .live-poll-result-label {
+    flex: 1; min-width: 0;
+    font-size: 14px; color: #1e293b;
+    word-break: break-word;
+  }
+  .live-poll-result-row.is-mine .live-poll-result-label {
+    font-weight: 700;
+    color: ${color};
+  }
+  .live-poll-result-mine-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    background: ${color}; color: #fff;
+    padding: 2px 6px; border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .live-poll-result-pct {
+    font-size: 14px; font-weight: 700;
+    color: #1e293b;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .live-poll-footer {
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+    margin-top: 6px;
+  }
+  .live-poll-error {
+    color: #b91c1c;
+    font-size: 13px;
+    padding: 8px 10px;
+    background: #fef2f2;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
 </style>
 </head>
 <body${bodyClass ? ' class="' + escapeHtml(bodyClass) + '"' : ''}>
@@ -864,11 +1018,13 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
 // Script JS de la page live (polling chat + polling status pour live→ended).
 // Concaténation + (pas de template strings) pour éviter les conflits ${...}
 // avec le template serveur.
-function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, authorPlaceholder }) {
+function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, authorPlaceholder }) {
   return `<script>
 (function () {
   var STATUS_URL = ${JSON.stringify(statusUrl)};
   var CHAT_URL = ${JSON.stringify(chatMessagesUrl)};
+  var POLLS_ACTIVE_URL = ${JSON.stringify(pollsActiveUrl || null)};
+  var VOTE_URL_BASE = ${JSON.stringify(voteUrlBase || null)};
   var ACCESS_MODE = ${JSON.stringify(accessMode)};
   var MAGIC_TOKEN = ${JSON.stringify(magicToken || null)};
   var IS_LECTURE_SEULE = ${JSON.stringify(!!isLectureSeule)};
@@ -1106,6 +1262,161 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
       pollChat();
     }
   });
+
+  // ============ Sondages (Phase C) ============
+  // Pas de polling sondage en mode ended (l'event est terminé, pas de live polls)
+  if (!IS_ENDED && POLLS_ACTIVE_URL) {
+    var pollZone = document.getElementById('live-poll-zone');
+    var pollTimer = null;
+    var currentPollId = null;
+    var hasVoted = false;
+    var submittingVote = false;
+
+    function renderPoll(poll) {
+      if (!poll) {
+        pollZone.style.display = 'none';
+        pollZone.innerHTML = '';
+        currentPollId = null;
+        hasVoted = false;
+        return;
+      }
+      var serverSaysVoted = !!poll.my_vote;
+      if (currentPollId !== poll.id) {
+        currentPollId = poll.id;
+        hasVoted = serverSaysVoted;
+      } else if (serverSaysVoted) {
+        hasVoted = true;
+      }
+      pollZone.style.display = '';
+
+      var html = '<div class="live-poll-card">';
+      html += '<div class="live-poll-header">';
+      html += '<span class="live-poll-header-dot"></span>';
+      html += hasVoted ? '<span>Résultats en direct</span>' : '<span>Question en direct</span>';
+      html += '</div>';
+      html += '<div class="live-poll-question">' + htmlEscape(poll.question) + '</div>';
+
+      var options = poll.options || [];
+      if (!hasVoted) {
+        html += '<div class="live-poll-options-vote">';
+        options.forEach(function (o, i) {
+          html += '<label class="live-poll-option-vote">';
+          html += '<input type="radio" name="poll-' + htmlEscape(poll.id) + '" value="' + htmlEscape(o.id) + '"' + (i === 0 ? ' checked' : '') + '>';
+          html += '<span class="live-poll-option-text">' + htmlEscape(o.label) + '</span>';
+          html += '</label>';
+        });
+        html += '</div>';
+        html += '<button type="button" class="live-poll-vote-btn" id="live-poll-vote-btn"' + (submittingVote ? ' disabled' : '') + '>';
+        html += submittingVote ? 'Envoi…' : 'Voter';
+        html += '</button>';
+        html += '<div class="live-poll-error" id="live-poll-error" style="display:none;"></div>';
+      } else {
+        html += '<div class="live-poll-options-results">';
+        options.forEach(function (o) {
+          var pct = (o.percentage != null ? o.percentage : 0);
+          var isMine = (poll.my_vote === o.id);
+          html += '<div class="live-poll-result-row' + (isMine ? ' is-mine' : '') + '">';
+          html += '<div class="live-poll-result-bar-bg" style="width:' + pct + '%;"></div>';
+          html += '<div class="live-poll-result-content">';
+          html += '<div class="live-poll-result-label">' + htmlEscape(o.label);
+          if (isMine) html += '<span class="live-poll-result-mine-badge">✓ votre vote</span>';
+          html += '</div>';
+          html += '<div class="live-poll-result-pct">' + pct + '%</div>';
+          html += '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+        var totalVotes = poll.total_votes != null ? poll.total_votes : 0;
+        html += '<div class="live-poll-footer">' + totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '') + ' au total</div>';
+      }
+      html += '</div>';
+      pollZone.innerHTML = html;
+
+      if (!hasVoted) {
+        var voteBtn = document.getElementById('live-poll-vote-btn');
+        if (voteBtn) voteBtn.addEventListener('click', function () { submitVote(poll.id); });
+      }
+    }
+
+    function submitVote(pollId) {
+      var checked = pollZone.querySelector('input[type="radio"]:checked');
+      if (!checked) return;
+      var optionId = checked.value;
+      submittingVote = true;
+      var voteBtn = document.getElementById('live-poll-vote-btn');
+      var errEl = document.getElementById('live-poll-error');
+      if (voteBtn) { voteBtn.disabled = true; voteBtn.textContent = 'Envoi…'; }
+      if (errEl) errEl.style.display = 'none';
+
+      var headers = { 'Content-Type': 'application/json' };
+      if (MAGIC_TOKEN) headers['X-Magic-Token'] = MAGIC_TOKEN;
+
+      fetch(VOTE_URL_BASE + '/' + encodeURIComponent(pollId) + '/vote', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: headers,
+        body: JSON.stringify({ option_id: optionId })
+      })
+        .then(function (r) {
+          return r.json().then(function (body) { return { status: r.status, ok: r.ok, body: body }; });
+        })
+        .then(function (res) {
+          submittingVote = false;
+          if (res.ok) {
+            hasVoted = true;
+            clearTimeout(pollTimer);
+            pollActivePolls();
+          } else {
+            var msg = (res.body && res.body.error) || ('Erreur ' + res.status);
+            if (errEl) {
+              errEl.textContent = msg;
+              errEl.style.display = 'block';
+            }
+            if (voteBtn) { voteBtn.disabled = false; voteBtn.textContent = 'Voter'; }
+            if (res.status === 409) {
+              clearTimeout(pollTimer);
+              pollActivePolls();
+            }
+          }
+        })
+        .catch(function (err) {
+          submittingVote = false;
+          if (errEl) {
+            errEl.textContent = 'Réseau indisponible : ' + err.message;
+            errEl.style.display = 'block';
+          }
+          if (voteBtn) { voteBtn.disabled = false; voteBtn.textContent = 'Voter'; }
+        });
+    }
+
+    function pollActivePolls() {
+      var headers = {};
+      if (MAGIC_TOKEN) headers['X-Magic-Token'] = MAGIC_TOKEN;
+      var qs = window.location.search || '';
+      fetch(POLLS_ACTIVE_URL + qs, {
+        cache: 'no-store',
+        credentials: 'same-origin',
+        headers: headers
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          renderPoll(data && data.poll ? data.poll : null);
+        })
+        .catch(function () {})
+        .then(function () {
+          pollTimer = setTimeout(pollActivePolls, 5000);
+        });
+    }
+
+    pollActivePolls();
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        clearTimeout(pollTimer);
+        pollActivePolls();
+      }
+    });
+  }
 })();
 <\/script>`;
 }

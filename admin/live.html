@@ -170,6 +170,162 @@
       background: #fef3c7;
       color: #92400e;
     }
+
+    /* ============ Sondages (Phase B) ============ */
+    .regie-polls-empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    .regie-poll-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafbfc;
+      margin-bottom: 10px;
+    }
+    .regie-poll-item.is-live {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+    .regie-poll-item.is-closed { opacity: 0.75; }
+    .regie-poll-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .regie-poll-question {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.3;
+      flex: 1; min-width: 0;
+      word-break: break-word;
+    }
+    .regie-poll-badge {
+      flex-shrink: 0;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .regie-poll-badge.draft { background: #f1f5f9; color: #64748b; }
+    .regie-poll-badge.live { background: #10b981; color: #fff; }
+    .regie-poll-badge.closed { background: #cbd5e1; color: #1e293b; }
+    .regie-poll-stats {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    .regie-poll-options {
+      display: flex; flex-direction: column;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .regie-poll-option { font-size: 12px; }
+    .regie-poll-option-label {
+      display: flex; justify-content: space-between;
+      margin-bottom: 3px;
+      color: #1e293b;
+      word-break: break-word;
+    }
+    .regie-poll-option-label span:last-child {
+      font-variant-numeric: tabular-nums;
+      color: #64748b;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .regie-poll-bar {
+      background: #e2e8f0;
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .regie-poll-bar-fill {
+      background: #5A98D6;
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    .regie-poll-actions {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .regie-poll-create-btn {
+      width: 100%;
+      padding: 10px;
+      border: 1px dashed #cbd5e1;
+      background: transparent;
+      color: #475569;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .regie-poll-create-btn:hover {
+      border-color: #5A98D6;
+      color: #5A98D6;
+      background: #f0f7fc;
+    }
+    .regie-poll-form {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      margin-bottom: 12px;
+    }
+    .regie-poll-form-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .regie-poll-form input[type="text"] {
+      width: 100%;
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 13px;
+    }
+    .regie-poll-form input[type="text"]:focus {
+      outline: none;
+      border-color: #5A98D6;
+    }
+    .regie-poll-options-edit {
+      display: flex; flex-direction: column; gap: 5px;
+      margin: 6px 0;
+    }
+    .regie-poll-option-edit {
+      display: flex; gap: 5px; align-items: center;
+    }
+    .regie-poll-option-edit input { flex: 1; }
+    .regie-poll-option-remove {
+      width: 24px; height: 24px;
+      padding: 0; flex-shrink: 0;
+      border: 1px solid #e2e8f0;
+      background: #fff; color: #94a3b8;
+      border-radius: 4px;
+      cursor: pointer; font-size: 14px; line-height: 1;
+    }
+    .regie-poll-option-remove:hover { color: #ef4444; border-color: #ef4444; }
+    .regie-poll-add-option {
+      font-size: 11px; padding: 4px 8px;
+      background: transparent; color: #5A98D6;
+      border: 1px dashed #cbd5e1;
+      border-radius: 5px; cursor: pointer;
+      align-self: flex-start;
+    }
+    .regie-poll-add-option:hover { background: #f0f7fc; border-color: #5A98D6; }
+    .regie-poll-form-actions {
+      display: flex; gap: 6px; margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -247,21 +403,22 @@
       </div>
     </section>
 
-    <!-- Colonne 3 : sondages (placeholder) -->
+    <!-- Colonne 3 : sondages (Phase B) -->
     <section class="regie-col">
       <div class="regie-card">
         <div class="regie-card-header">
           <div>
             <h2>Sondages</h2>
-            <div class="regie-card-sub">Phase 2</div>
+            <div class="regie-card-sub" id="polls-sub">— sondage</div>
+          </div>
+          <div class="regie-poll-indicator" style="display:flex; align-items:center; gap:6px; font-size:11px; color:#64748b;">
+            <span id="polls-dot" style="width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+            <span id="polls-status-text">Auto · 5s</span>
           </div>
         </div>
-        <div class="regie-card-body admin-text-muted" style="font-size:13px;">
-          Lancement de sondages en direct - bientôt disponible.
-          <br><br>
-          Permettra de poser une question avec options à choix multiple,
-          de la diffuser à tous les participants en temps réel,
-          et de voir les résultats agrégés s'afficher en direct.
+        <div class="regie-card-body">
+          <div id="polls-list"></div>
+          <div id="polls-create-zone"></div>
         </div>
       </div>
     </section>
@@ -477,6 +634,289 @@
       Array.prototype.forEach.call(actionsParent.querySelectorAll('button'), function (b) { b.disabled = false; });
     }
   }
+
+  // ============================================================
+  // SONDAGES (Phase B)
+  // ============================================================
+  var pollsList     = document.getElementById('polls-list');
+  var pollsCreateZ  = document.getElementById('polls-create-zone');
+  var pollsSub      = document.getElementById('polls-sub');
+  var pollsDot      = document.getElementById('polls-dot');
+  var pollsText     = document.getElementById('polls-status-text');
+  var pollsTimer    = null;
+  var pollsCreateOpen = false;
+
+  function renderPollCreateZone() {
+    A.clearNode(pollsCreateZ);
+    if (!pollsCreateOpen) {
+      var btn = A.el('button', {
+        className: 'regie-poll-create-btn',
+        attrs: { type: 'button' },
+        text: '+ Nouveau sondage',
+        on: { click: function () { pollsCreateOpen = true; renderPollCreateZone(); } }
+      });
+      pollsCreateZ.appendChild(btn);
+      return;
+    }
+    // Formulaire ouvert
+    var form = A.el('div', { className: 'regie-poll-form' });
+    form.appendChild(A.el('div', { className: 'regie-poll-form-title', text: 'Nouveau sondage' }));
+    var inputQ = A.el('input', {
+      attrs: { type: 'text', placeholder: 'Question', maxlength: '300' }
+    });
+    form.appendChild(inputQ);
+
+    var optsWrap = A.el('div', { className: 'regie-poll-options-edit' });
+    form.appendChild(optsWrap);
+
+    function addOptionInput(placeholder) {
+      var nbBefore = optsWrap.children.length;
+      if (nbBefore >= 8) return;
+      var row = A.el('div', { className: 'regie-poll-option-edit' });
+      var input = A.el('input', {
+        attrs: { type: 'text', placeholder: placeholder || ('Option ' + (nbBefore + 1)), maxlength: '100' }
+      });
+      var removeBtn = A.el('button', {
+        className: 'regie-poll-option-remove',
+        attrs: { type: 'button', title: 'Retirer cette option' },
+        text: '×',
+        on: { click: function () {
+          if (optsWrap.children.length <= 2) return;
+          row.parentNode.removeChild(row);
+        }}
+      });
+      row.appendChild(input);
+      row.appendChild(removeBtn);
+      optsWrap.appendChild(row);
+    }
+    addOptionInput('Option 1');
+    addOptionInput('Option 2');
+
+    var addBtn = A.el('button', {
+      className: 'regie-poll-add-option',
+      attrs: { type: 'button' },
+      text: '+ Ajouter une option',
+      on: { click: function () { addOptionInput(); } }
+    });
+    form.appendChild(addBtn);
+
+    var actions = A.el('div', { className: 'regie-poll-form-actions' });
+    var submitBtn = A.el('button', {
+      className: 'admin-btn admin-btn-primary admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Créer (draft)',
+      on: { click: function () { submitCreate(false); } }
+    });
+    var submitLaunchBtn = A.el('button', {
+      className: 'admin-btn admin-btn-primary admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Créer et lancer',
+      on: { click: function () { submitCreate(true); } }
+    });
+    var cancelBtn = A.el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Annuler',
+      on: { click: function () { pollsCreateOpen = false; renderPollCreateZone(); } }
+    });
+    actions.appendChild(submitBtn);
+    actions.appendChild(submitLaunchBtn);
+    actions.appendChild(cancelBtn);
+    form.appendChild(actions);
+
+    pollsCreateZ.appendChild(form);
+
+    async function submitCreate(launch) {
+      var question = inputQ.value.trim();
+      if (!question) { inputQ.focus(); return; }
+      var inputs = optsWrap.querySelectorAll('input');
+      var options = [];
+      for (var i = 0; i < inputs.length; i++) {
+        var v = inputs[i].value.trim();
+        if (v) options.push(v);
+      }
+      if (options.length < 2) {
+        A.showMessage(messageZone, 'error', 'Le sondage doit avoir au moins 2 options.');
+        return;
+      }
+      submitBtn.disabled = true;
+      submitLaunchBtn.disabled = true;
+      try {
+        var res = await A.apiFetch(
+          '/api/admin/events/' + encodeURIComponent(eventId) + '/polls',
+          { method: 'POST', body: { question: question, options: options } }
+        );
+        if (launch && res.poll && res.poll.id) {
+          await A.apiFetch(
+            '/api/admin/events/' + encodeURIComponent(eventId) + '/polls/' + encodeURIComponent(res.poll.id),
+            { method: 'PATCH', body: { status: 'live' } }
+          );
+        }
+        pollsCreateOpen = false;
+        clearTimeout(pollsTimer);
+        await loadPolls();
+        renderPollCreateZone();
+      } catch (err) {
+        A.showMessage(messageZone, 'error', 'Création échouée : ' + err.message);
+        submitBtn.disabled = false;
+        submitLaunchBtn.disabled = false;
+      }
+    }
+  }
+
+  async function loadPolls() {
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/polls');
+      var polls = data.polls || [];
+      // Si un poll est live, on charge ses détails pour avoir les votes par option
+      var liveIdx = -1;
+      for (var i = 0; i < polls.length; i++) {
+        if (polls[i].status === 'live') { liveIdx = i; break; }
+      }
+      if (liveIdx >= 0) {
+        try {
+          var detail = await A.apiFetch(
+            '/api/admin/events/' + encodeURIComponent(eventId) + '/polls/' + encodeURIComponent(polls[liveIdx].id)
+          );
+          if (detail.poll) polls[liveIdx] = detail.poll;
+        } catch (e) { /* tant pis */ }
+      }
+      renderPolls(polls);
+      pollsDot.style.background = '#10b981';
+      pollsText.textContent = 'Auto · 5s';
+    } catch (err) {
+      console.error('[regie] polls poll error:', err);
+      pollsDot.style.background = '#dc2626';
+      pollsText.textContent = 'Erreur réseau';
+    }
+    pollsTimer = setTimeout(loadPolls, 5000);
+  }
+
+  function renderPolls(polls) {
+    A.clearNode(pollsList);
+    pollsSub.textContent = polls.length + ' sondage' + (polls.length !== 1 ? 's' : '');
+    if (!polls.length) {
+      pollsList.appendChild(A.el('div', { className: 'regie-polls-empty', text: 'Aucun sondage pour cet event.' }));
+      return;
+    }
+    polls.forEach(function (p) {
+      pollsList.appendChild(renderOnePoll(p));
+    });
+  }
+
+  function renderOnePoll(p) {
+    var card = A.el('div', { className: 'regie-poll-item ' + (p.status === 'live' ? 'is-live' : (p.status === 'closed' ? 'is-closed' : '')) });
+
+    // Header : question + badge
+    var head = A.el('div', { className: 'regie-poll-head' });
+    head.appendChild(A.el('div', { className: 'regie-poll-question', text: p.question }));
+    head.appendChild(A.el('span', { className: 'regie-poll-badge ' + p.status, text: p.status }));
+    card.appendChild(head);
+
+    // Stats
+    var totalVotes = p.total_votes != null ? p.total_votes : (p.votes_count || 0);
+    var optsCount = (p.options && p.options.length) || p.options_count || 0;
+    card.appendChild(A.el('div', {
+      className: 'regie-poll-stats',
+      text: optsCount + ' options · ' + totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '')
+    }));
+
+    // Options avec barres (si on a le détail)
+    if (p.options && p.options.length) {
+      var optsWrap = A.el('div', { className: 'regie-poll-options' });
+      p.options.forEach(function (o) {
+        var optDiv = A.el('div', { className: 'regie-poll-option' });
+        var lbl = A.el('div', { className: 'regie-poll-option-label' });
+        lbl.appendChild(A.el('span', { text: o.label }));
+        var pct = (o.percentage != null ? o.percentage : 0);
+        var votes = (o.votes_count != null ? o.votes_count : 0);
+        lbl.appendChild(A.el('span', { text: votes + ' (' + pct + '%)' }));
+        optDiv.appendChild(lbl);
+        var bar = A.el('div', { className: 'regie-poll-bar' });
+        var fill = A.el('div', { className: 'regie-poll-bar-fill' });
+        fill.style.width = pct + '%';
+        bar.appendChild(fill);
+        optDiv.appendChild(bar);
+        optsWrap.appendChild(optDiv);
+      });
+      card.appendChild(optsWrap);
+    }
+
+    // Actions selon status
+    var actions = A.el('div', { className: 'regie-poll-actions' });
+    if (p.status === 'draft') {
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-primary admin-btn-sm',
+        attrs: { type: 'button' },
+        text: '▶ Lancer',
+        on: { click: function () { setPollStatus(p.id, 'live', this); } }
+      }));
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Supprimer',
+        on: { click: function () { deletePoll(p.id); } }
+      }));
+    } else if (p.status === 'live') {
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: '■ Clôturer',
+        on: { click: function () { setPollStatus(p.id, 'closed', this); } }
+      }));
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Supprimer',
+        on: { click: function () { deletePoll(p.id); } }
+      }));
+    } else {
+      // closed : juste supprimer
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Supprimer',
+        on: { click: function () { deletePoll(p.id); } }
+      }));
+    }
+    card.appendChild(actions);
+    return card;
+  }
+
+  async function setPollStatus(pollId, status, btn) {
+    if (status === 'live' && !A.confirmAction('Lancer ce sondage en direct ? Tous les participants pourront voter immédiatement.')) return;
+    if (status === 'closed' && !A.confirmAction('Clôturer ce sondage ? Aucun nouveau vote ne sera accepté.')) return;
+    if (btn) btn.disabled = true;
+    try {
+      await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/polls/' + encodeURIComponent(pollId),
+        { method: 'PATCH', body: { status: status } }
+      );
+      clearTimeout(pollsTimer);
+      loadPolls();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Changement de statut échoué : ' + err.message);
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function deletePoll(pollId) {
+    if (!A.confirmAction('Supprimer DÉFINITIVEMENT ce sondage ? Les votes seront perdus.')) return;
+    try {
+      await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/polls/' + encodeURIComponent(pollId),
+        { method: 'DELETE' }
+      );
+      clearTimeout(pollsTimer);
+      loadPolls();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Suppression échouée : ' + err.message);
+    }
+  }
+
+  // Initialisation
+  renderPollCreateZone();
+  loadPolls();
 })();
 </script>
 
