@@ -546,14 +546,45 @@
       data.slug = form.slug.value;
     }
 
+    // Fix 8 v2 : confirmation explicite si le slug change (impact sur le lien admin client)
+    if (form.slug && form.slug.value && form.slug.value !== ev.slug) {
+      // Re-normaliser côté client pour montrer la valeur exacte qui sera enregistrée
+      var newSlugPreview = (form.slug.value || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      if (newSlugPreview !== ev.slug) {
+        var confirmMsg =
+          'Tu modifies l\'URL de l\'event :\n\n' +
+          '  Ancien : /chat/' + ev.slug + '\n' +
+          '  Nouveau : /chat/' + newSlugPreview + '\n\n' +
+          'IMPORTANT : cela change aussi le lien admin client (qui dépend du slug). ' +
+          'Si tu as déjà partagé l\'ancien lien admin avec ton client, il deviendra invalide. ' +
+          'Tu devras lui envoyer le nouveau lien après sauvegarde.\n\n' +
+          'Confirmer ce changement ?';
+        if (!window.confirm(confirmMsg)) {
+          btn.disabled = false;
+          btn.textContent = originalText;
+          return;
+        }
+      }
+    }
+
     try {
       var result = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), {
         method: 'PATCH',
         body: data
       });
-      A.showMessage(messageZone, 'success', 'Modifications enregistrées.');
       // Si le slug a changé, on doit re-render tout le form (URL publique, pageSub, etc.)
       var slugChanged = result.event.slug !== ev.slug;
+      if (slugChanged) {
+        A.showMessage(messageZone, 'success',
+          'Slug modifié vers « /chat/' + result.event.slug + ' ». Le lien admin client a aussi changé : pense à renvoyer le nouveau lien à ton client si tu l\'avais déjà partagé.');
+      } else {
+        A.showMessage(messageZone, 'success', 'Modifications enregistrées.');
+      }
       // Mettre à jour le badge statut
       statusBadge.textContent = A.statusLabel(result.event.status);
       statusBadge.className = 'admin-badge admin-badge-' + result.event.status;
