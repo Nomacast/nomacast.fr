@@ -72,6 +72,45 @@
       color: #94a3b8; font-size: 13px; padding: 24px; text-align: center;
     }
 
+    /* ============ Outils production (vMix) ============ */
+    .regie-vmix-tool {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .regie-vmix-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .regie-vmix-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .regie-vmix-help {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .regie-vmix-url-display {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 11px;
+      color: #475569;
+      background: #f1f5f9;
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-top: 6px;
+      word-break: break-all;
+      display: none;
+    }
+    .regie-vmix-url-display.is-visible { display: block; }
+
     /* ============ Modération messages ============ */
     .regie-msg-list {
       display: flex;
@@ -491,6 +530,20 @@
         <div class="regie-card-body">
           <div class="regie-video-wrap" id="regie-video-wrap">
             <div class="regie-video-empty">Chargement…</div>
+          </div>
+
+          <!-- Alertes participants pour vMix -->
+          <div class="regie-vmix-tool">
+            <div class="regie-vmix-label">Alertes participants — vMix</div>
+            <div class="regie-vmix-actions">
+              <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="vmix-copy-btn">Copier l'URL pour vMix</button>
+              <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="vmix-preview-btn">Aperçu</button>
+              <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="vmix-show-url-btn" title="Afficher l'URL">Voir l'URL</button>
+            </div>
+            <div class="regie-vmix-help">
+              Dans vMix : Add Input → Web Browser → coller l'URL → valider. Affiche les signalements participants en temps réel (polling 2 s).
+            </div>
+            <div class="regie-vmix-url-display" id="vmix-url-display"></div>
           </div>
         </div>
       </div>
@@ -1191,6 +1244,74 @@
       announceCancel.disabled = false;
     }
   }
+
+  // ============================================================
+  // ALERTES vMix — bouton "Copier URL", "Aperçu", "Voir l'URL"
+  // ============================================================
+  var vmixCopyBtn    = document.getElementById('vmix-copy-btn');
+  var vmixPreviewBtn = document.getElementById('vmix-preview-btn');
+  var vmixShowUrlBtn = document.getElementById('vmix-show-url-btn');
+  var vmixUrlDisplay = document.getElementById('vmix-url-display');
+
+  var cachedFeedUrl = null;
+
+  async function fetchVmixUrl() {
+    if (cachedFeedUrl) return cachedFeedUrl;
+    var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/feed-token');
+    cachedFeedUrl = data.feed_url;
+    return cachedFeedUrl;
+  }
+
+  vmixCopyBtn.addEventListener('click', async function () {
+    vmixCopyBtn.disabled = true;
+    try {
+      var url = await fetchVmixUrl();
+      try {
+        await navigator.clipboard.writeText(url);
+        A.showMessage(messageZone, 'success', 'URL vMix copiée. Colle-la dans vMix : Add Input → Web Browser.');
+      } catch (clipErr) {
+        // Fallback : afficher l'URL pour copie manuelle
+        vmixUrlDisplay.textContent = url;
+        vmixUrlDisplay.classList.add('is-visible');
+        A.showMessage(messageZone, 'info', 'Presse-papier indisponible. URL affichée ci-dessous (sélectionne + Ctrl+C).');
+      }
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Erreur : ' + err.message);
+    } finally {
+      vmixCopyBtn.disabled = false;
+    }
+  });
+
+  vmixPreviewBtn.addEventListener('click', async function () {
+    vmixPreviewBtn.disabled = true;
+    try {
+      var url = await fetchVmixUrl();
+      window.open(url, 'vmix-feed-preview', 'width=520,height=360,resizable=yes');
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Erreur : ' + err.message);
+    } finally {
+      vmixPreviewBtn.disabled = false;
+    }
+  });
+
+  vmixShowUrlBtn.addEventListener('click', async function () {
+    if (vmixUrlDisplay.classList.contains('is-visible')) {
+      vmixUrlDisplay.classList.remove('is-visible');
+      vmixShowUrlBtn.textContent = "Voir l'URL";
+      return;
+    }
+    vmixShowUrlBtn.disabled = true;
+    try {
+      var url = await fetchVmixUrl();
+      vmixUrlDisplay.textContent = url;
+      vmixUrlDisplay.classList.add('is-visible');
+      vmixShowUrlBtn.textContent = "Masquer l'URL";
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Erreur : ' + err.message);
+    } finally {
+      vmixShowUrlBtn.disabled = false;
+    }
+  });
 })();
 </script>
 
