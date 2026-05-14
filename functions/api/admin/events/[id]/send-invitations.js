@@ -241,13 +241,16 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
     : 'Lien public';
 
   // ===== HEADER BAR (logo) =====
-  const hasEventLogo = !!event.logo_url;
+  // nomacast-logo-reset-v1 : règle unifiée — le logo client n'apparaît QUE si
+  // whiteLabel === true ET event.logo_url est rempli. Sinon, logo Nomacast par défaut.
+  // Cohérent avec functions/i/[token].js, functions/chat/[slug].js, admin/live.html.
+  const showClientLogo = !!(whiteLabel && event.logo_url);
   let headerBarHtml;
-  if (hasEventLogo) {
+  if (showClientLogo) {
     headerBarHtml = `<tr><td style="padding:22px 36px;background:#ffffff;border-bottom:1px solid #eef2f6;">
       <img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" height="36" style="display:block;max-height:40px;width:auto;border:0;outline:none;">
     </td></tr>`;
-  } else if (!whiteLabel) {
+  } else {
     headerBarHtml = `<tr><td style="padding:22px 36px;background:#ffffff;border-bottom:1px solid #eef2f6;">
       <a href="https://www.nomacast.fr/" target="_blank" style="text-decoration:none;display:inline-block;">
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;line-height:1;white-space:nowrap;">
@@ -255,8 +258,6 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         </div>
       </a>
     </td></tr>`;
-  } else {
-    headerBarHtml = '';
   }
 
   // ===== FOOTER =====
