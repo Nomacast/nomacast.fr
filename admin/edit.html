@@ -31,7 +31,8 @@
       <h1 id="page-title">Éditer l'event</h1>
       <div class="admin-page-head-sub" id="page-sub">Chargement…</div>
     </div>
-    <div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <a class="admin-btn admin-btn-primary admin-btn-sm" id="regie-link" href="#" style="display:none;" title="Page de régie : preview vidéo + modération messages">🎛 Régie en direct ↗</a>
       <span class="admin-badge" id="status-badge" hidden></span>
     </div>
   </div>
@@ -95,6 +96,18 @@
     statusBadge.textContent = A.statusLabel(ev.status);
     statusBadge.className = 'admin-badge admin-badge-' + ev.status;
     statusBadge.hidden = false;
+
+    // Lien vers la page de régie (visible dès qu'on a un stream provisionné ;
+    // utile aussi en draft pour préparer / tester en amont)
+    var regieLink = document.getElementById('regie-link');
+    if (regieLink) {
+      if (ev.stream_uid) {
+        regieLink.href = '/admin/live.html?id=' + encodeURIComponent(ev.id);
+        regieLink.style.display = '';
+      } else {
+        regieLink.style.display = 'none';
+      }
+    }
 
     A.clearNode(container);
 

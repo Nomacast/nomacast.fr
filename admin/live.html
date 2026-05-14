@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Régie en direct · Admin Nomacast</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+  <style>
+    /* ============ Layout régie 3 colonnes ============ */
+    .regie-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (min-width: 1100px) {
+      .regie-layout {
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr) minmax(0, 1fr);
+        align-items: start;
+      }
+    }
+    .regie-col { min-width: 0; }
+    .regie-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .regie-card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      background: #fafbfc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .regie-card-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .regie-card-sub {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .regie-card-body { padding: 14px 16px; }
+
+    /* ============ Aperçu vidéo ============ */
+    .regie-video-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #0f172a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .regie-video-wrap iframe {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      border: 0;
+    }
+    .regie-video-empty {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      color: #94a3b8; font-size: 13px; padding: 24px; text-align: center;
+    }
+
+    /* ============ Modération messages ============ */
+    .regie-msg-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .regie-msg-empty {
+      padding: 32px 16px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    .regie-msg {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fafbfc;
+    }
+    .regie-msg-question {
+      border-left: 3px solid #f59e0b;
+      background: #fffbeb;
+    }
+    .regie-msg-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .regie-msg-author {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 12px;
+    }
+    .regie-msg-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .regie-msg-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+    .regie-msg-content {
+      font-size: 13px;
+      color: #1e293b;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 10px;
+    }
+    .regie-msg-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ============ Status du polling ============ */
+    .regie-poll-status {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .regie-poll-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .regie-poll-dot.paused { background: #94a3b8; animation: none; }
+
+    /* ============ Compteur pending mis en valeur ============ */
+    .regie-pending-count {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 11px;
+      background: #e0e7ff;
+      color: #3730a3;
+      margin-left: 6px;
+    }
+    .regie-pending-count.has-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+
+<header class="admin-header">
+  <a href="/admin/" class="admin-header-brand-link">
+    <span class="admin-header-brand">
+      <span class="admin-header-brand-dot"></span>
+      Nomacast
+    </span>
+  </a>
+  <div class="admin-header-title">Admin Chat interactif</div>
+  <div class="admin-header-actions">
+    <span class="admin-header-version" id="admin-version">build…</span>
+    <a class="admin-header-link" href="/admin/">Accueil admin</a>
+    <a class="admin-header-link" href="/" target="_blank" rel="noopener">Site public ↗</a>
+  </div>
+</header>
+
+<main class="admin-main">
+
+  <div class="admin-page-head">
+    <div>
+      <h1 id="page-title">Régie en direct</h1>
+      <div class="admin-page-head-sub" id="page-sub">Chargement…</div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <a class="admin-btn admin-btn-ghost admin-btn-sm" id="edit-link" href="#" style="display:none;">← Éditer l'event</a>
+      <span class="admin-badge" id="status-badge" hidden></span>
+    </div>
+  </div>
+
+  <div id="message-zone"></div>
+
+  <div class="regie-layout" id="regie-layout" style="display:none;">
+
+    <!-- Colonne 1 : aperçu vidéo -->
+    <section class="regie-col">
+      <div class="regie-card">
+        <div class="regie-card-header">
+          <div>
+            <h2>Aperçu vidéo</h2>
+            <div class="regie-card-sub">Flux Cloudflare Stream</div>
+          </div>
+          <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="refresh-video-btn" title="Recharger l'iframe">↻</button>
+        </div>
+        <div class="regie-card-body">
+          <div class="regie-video-wrap" id="regie-video-wrap">
+            <div class="regie-video-empty">Chargement…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Colonne 2 : modération messages -->
+    <section class="regie-col">
+      <div class="regie-card">
+        <div class="regie-card-header">
+          <div>
+            <h2>Modération
+              <span class="regie-pending-count" id="pending-count">0</span>
+            </h2>
+            <div class="regie-card-sub" id="pending-sub">message en attente</div>
+          </div>
+          <div class="regie-poll-status">
+            <span class="regie-poll-dot" id="poll-dot"></span>
+            <span id="poll-status-text">Auto · 5s</span>
+          </div>
+        </div>
+        <div class="regie-card-body">
+          <div class="regie-msg-list" id="regie-msg-list">
+            <div class="regie-msg-empty">Aucun message en attente.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Colonne 3 : sondages (placeholder) -->
+    <section class="regie-col">
+      <div class="regie-card">
+        <div class="regie-card-header">
+          <div>
+            <h2>Sondages</h2>
+            <div class="regie-card-sub">Phase 2</div>
+          </div>
+        </div>
+        <div class="regie-card-body admin-text-muted" style="font-size:13px;">
+          Lancement de sondages en direct - bientôt disponible.
+          <br><br>
+          Permettra de poser une question avec options à choix multiple,
+          de la diffuser à tous les participants en temps réel,
+          et de voir les résultats agrégés s'afficher en direct.
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<script src="/admin/admin.js"></script>
+<script>
+(function () {
+  var A = window.NomacastAdmin;
+  var eventId = null;
+  var pollTimer = null;
+  var currentEvent = null;
+
+  var pageSub      = document.getElementById('page-sub');
+  var statusBadge  = document.getElementById('status-badge');
+  var editLink     = document.getElementById('edit-link');
+  var messageZone  = document.getElementById('message-zone');
+  var layout       = document.getElementById('regie-layout');
+  var videoWrap    = document.getElementById('regie-video-wrap');
+  var msgList      = document.getElementById('regie-msg-list');
+  var pendingCount = document.getElementById('pending-count');
+  var pendingSub   = document.getElementById('pending-sub');
+  var pollDot      = document.getElementById('poll-dot');
+  var pollText     = document.getElementById('poll-status-text');
+  var refreshVideoBtn = document.getElementById('refresh-video-btn');
+
+  // --- Bootstrap ---
+  A.loadVersion();
+  var urlParams = new URLSearchParams(location.search);
+  eventId = urlParams.get('id');
+  if (!eventId) {
+    pageSub.textContent = 'Paramètre ?id= manquant dans l\'URL.';
+    A.showMessage(messageZone, 'error', 'URL invalide : ?id=<event_id> est requis.');
+    return;
+  }
+
+  loadEvent();
+
+  // --- Chargement de l'event ---
+  async function loadEvent() {
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId));
+      currentEvent = data.event;
+      renderEvent(data.event);
+      renderVideo(data.event);
+      layout.style.display = '';
+      startPolling();
+    } catch (err) {
+      pageSub.textContent = 'Erreur de chargement';
+      A.showMessage(messageZone, 'error', 'Chargement échoué : ' + err.message);
+    }
+  }
+
+  function renderEvent(ev) {
+    document.title = 'Régie · ' + ev.title + ' · Admin Nomacast';
+    pageSub.textContent = ev.title + (ev.client_name ? ' · ' + ev.client_name : '') + ' · slug : ' + ev.slug;
+    statusBadge.textContent = A.statusLabel(ev.status);
+    statusBadge.className = 'admin-badge admin-badge-' + ev.status;
+    statusBadge.hidden = false;
+    editLink.href = '/admin/edit.html?id=' + encodeURIComponent(ev.id);
+    editLink.style.display = '';
+  }
+
+  function renderVideo(ev) {
+    A.clearNode(videoWrap);
+    if (!ev.stream_uid || !ev.stream_playback_url) {
+      videoWrap.appendChild(A.el('div', {
+        className: 'regie-video-empty',
+        text: 'Aucun stream Cloudflare provisionné pour cet event. Va dans l\'admin de l\'event pour le créer.'
+      }));
+      return;
+    }
+    var color = (ev.primary_color || '#5A98D6').replace('#', '');
+    var src = ev.stream_playback_url
+      + (ev.stream_playback_url.indexOf('?') >= 0 ? '&' : '?')
+      + 'primaryColor=' + encodeURIComponent(color)
+      + '&letterboxColor=transparent'
+      + '&muted=true';
+    var iframe = A.el('iframe', {
+      attrs: {
+        src: src,
+        allow: 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture',
+        allowfullscreen: 'true',
+        title: 'Preview régie Cloudflare Stream'
+      }
+    });
+    videoWrap.appendChild(iframe);
+  }
+
+  refreshVideoBtn.addEventListener('click', function () {
+    if (currentEvent) renderVideo(currentEvent);
+  });
+
+  // --- Polling messages pending ---
+  function startPolling() {
+    pollPending();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+  }
+
+  function onVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+      pollDot.classList.remove('paused');
+      pollText.textContent = 'Auto · 5s';
+      clearTimeout(pollTimer);
+      pollPending();
+    } else {
+      pollDot.classList.add('paused');
+      pollText.textContent = 'En pause';
+      clearTimeout(pollTimer);
+    }
+  }
+
+  async function pollPending() {
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/messages?status=pending');
+      renderPending(data.messages || []);
+    } catch (err) {
+      console.error('[regie] poll error:', err);
+      // Ne pas spammer le user de messages d'erreur sur chaque tick. Juste un dot rouge.
+      pollDot.style.background = '#dc2626';
+      pollText.textContent = 'Erreur réseau';
+    }
+    pollTimer = setTimeout(pollPending, 5000);
+  }
+
+  function renderPending(messages) {
+    var n = messages.length;
+    pendingCount.textContent = n;
+    pendingCount.className = 'regie-pending-count' + (n > 0 ? ' has-pending' : '');
+    pendingSub.textContent = n === 0 ? 'message en attente' : (n === 1 ? 'message en attente' : 'messages en attente');
+
+    A.clearNode(msgList);
+    if (n === 0) {
+      msgList.appendChild(A.el('div', { className: 'regie-msg-empty', text: 'Aucun message en attente.' }));
+      return;
+    }
+
+    messages.forEach(function (m) {
+      var isQuestion = m.kind === 'question';
+      var msgEl = A.el('div', { className: 'regie-msg' + (isQuestion ? ' regie-msg-question' : '') });
+
+      // Header
+      var head = A.el('div', { className: 'regie-msg-head' });
+      head.appendChild(A.el('span', { className: 'regie-msg-author', text: m.author_name || 'Anonyme' }));
+      if (isQuestion) {
+        head.appendChild(A.el('span', { className: 'regie-msg-badge', text: 'Question' }));
+      }
+      head.appendChild(A.el('span', { className: 'regie-msg-time', text: A.formatDateTime(m.created_at) }));
+      msgEl.appendChild(head);
+
+      // Content (textContent pour échapper XSS)
+      msgEl.appendChild(A.el('div', { className: 'regie-msg-content', text: m.content }));
+
+      // Actions
+      var actions = A.el('div', { className: 'regie-msg-actions' });
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-primary admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Approuver',
+        on: { click: function () { moderate(m.id, 'approved', this); } }
+      }));
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Rejeter',
+        on: { click: function () { moderate(m.id, 'rejected', this); } }
+      }));
+      actions.appendChild(A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button', title: 'Supprime définitivement le message en base' },
+        text: 'Supprimer',
+        on: { click: function () { hardDelete(m.id, this); } }
+      }));
+      msgEl.appendChild(actions);
+
+      msgList.appendChild(msgEl);
+    });
+  }
+
+  async function moderate(msgId, status, btn) {
+    var actionsParent = btn.parentElement;
+    Array.prototype.forEach.call(actionsParent.querySelectorAll('button'), function (b) { b.disabled = true; });
+    try {
+      await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/messages/' + encodeURIComponent(msgId),
+        { method: 'PATCH', body: { status: status } }
+      );
+      // Re-poll immédiat pour mettre à jour la liste
+      clearTimeout(pollTimer);
+      pollPending();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Action échouée : ' + err.message);
+      Array.prototype.forEach.call(actionsParent.querySelectorAll('button'), function (b) { b.disabled = false; });
+    }
+  }
+
+  async function hardDelete(msgId, btn) {
+    if (!A.confirmAction('Supprimer DÉFINITIVEMENT ce message en base ?\n\nUtilise plutôt « Rejeter » si tu veux juste qu\'il ne soit pas diffusé (le message reste en base pour audit).')) return;
+    var actionsParent = btn.parentElement;
+    Array.prototype.forEach.call(actionsParent.querySelectorAll('button'), function (b) { b.disabled = true; });
+    try {
+      await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/messages/' + encodeURIComponent(msgId),
+        { method: 'DELETE' }
+      );
+      clearTimeout(pollTimer);
+      pollPending();
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Suppression échouée : ' + err.message);
+      Array.prototype.forEach.call(actionsParent.querySelectorAll('button'), function (b) { b.disabled = false; });
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
