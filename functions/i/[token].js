@@ -92,8 +92,12 @@ function htmlResponse(html, status = 200) {
 // ============================================================
 function renderWaitingPage(event, invitee, token) {
   const dateLabel = formatFrenchDateTime(event.scheduled_at);
-  const greeting = invitee.name ? `Bonjour ${escapeHtml(invitee.name.split(/\s+/)[0])}` : 'Bonjour';
   const agendaUrls = buildAgendaUrls(event, token);
+  // Lot A2 : masquer le bloc agenda si l'event démarre dans moins de 2h
+  const minutesUntilStart = event.scheduled_at
+    ? (new Date(event.scheduled_at).getTime() - Date.now()) / 60000
+    : Infinity;
+  const showAgenda = minutesUntilStart >= 120;
 
   const heroBody = `
     <span class="state-badge state-draft">
@@ -121,18 +125,17 @@ function renderWaitingPage(event, invitee, token) {
     </section>
 
     <section class="message">
-      <p>${greeting},</p>
-      <p>Cet événement n'a pas encore commencé. Vous recevrez l'accès au chat live automatiquement à la date prévue. Pensez à <strong>sauvegarder ce lien</strong> et à <strong>ajouter l'événement à votre agenda</strong> pour ne rien manquer.</p>
+      <p>Cet événement n'a pas encore commencé. Vous recevrez l'accès au chat live automatiquement à la date prévue. Pensez à <strong>sauvegarder ce lien</strong>${showAgenda ? ` et à <strong>ajouter l'événement à votre agenda</strong>` : ''} pour ne rien manquer.</p>
     </section>
 
-    <section class="agenda-block">
+    ${showAgenda ? `<section class="agenda-block">
       <div class="agenda-label">Ajouter à mon agenda</div>
       <div class="agenda-buttons">
         <a href="${escapeHtml(agendaUrls.google)}" target="_blank" rel="noopener" class="agenda-btn">Google Agenda</a>
         <a href="${escapeHtml(agendaUrls.outlook)}" target="_blank" rel="noopener" class="agenda-btn">Outlook</a>
         <a href="${escapeHtml(agendaUrls.ics)}" class="agenda-btn">Apple / iCal</a>
       </div>
-    </section>
+    </section>` : ''}
 
     <section class="tip">
       <p>Vous pouvez fermer cette page. <strong>Revenez sur ce même lien</strong> à la date prévue pour rejoindre le chat live.</p>
@@ -155,7 +158,6 @@ function renderWaitingPage(event, invitee, token) {
 }
 
 function renderLivePage(event, invitee, token) {
-  const greeting = invitee.name ? `Bonjour ${escapeHtml(invitee.name.split(/\s+/)[0])}` : 'Bonjour';
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
   const hasStream = !!event.stream_playback_url;
@@ -194,7 +196,7 @@ function renderLivePage(event, invitee, token) {
     </div>
 
     <section class="tip">
-      <p>${greeting}, vous êtes bien sur la page de l'événement. Si vous rencontrez un problème technique, contactez l'organisateur.</p>
+      <p>Vous êtes bien sur la page de l'événement. Si vous rencontrez un problème technique, contactez l'organisateur.</p>
     </section>
   `;
 
@@ -205,6 +207,7 @@ function renderLivePage(event, invitee, token) {
     whiteLabel: event.white_label,
     heroBody,
     mainBody,
+    bodyClass: 'live-page',
     bodyScript: buildLivePageScript({
       statusUrl: `/i/${encodeURIComponent(token)}/status`,
       chatMessagesUrl: `/api/chat/${encodeURIComponent(event.slug)}/messages`,
@@ -271,7 +274,7 @@ function renderErrorPage(title, message) {
 // ============================================================
 // HTML shell (commun à toutes les pages)
 // ============================================================
-function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, bodyScript }) {
+function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, bodyScript, bodyClass }) {
   const hasEventLogo = !!logoUrl;
   let headerHtml;
   if (hasEventLogo) {
@@ -496,20 +499,27 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   }
 
   /* ============ LIVE LAYOUT (C4 player + C5 chat) ============ */
+  /* Sur la page live, on élargit le container pour avoir un player confortable */
+  body.live-page .container { max-width: 1140px; }
+  body.live-page .tip { max-width: 680px; margin-left: auto; margin-right: auto; }
+
   .live-layout {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
     margin: 0 0 24px;
   }
-  @media (min-width: 720px) {
+  /* Empilé en mobile/tablette jusqu'à 900px (lisibilité du chat trop étroit en-dessous) */
+  @media (min-width: 900px) {
     .live-layout {
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
       align-items: stretch;
     }
   }
 
-  .live-video { min-width: 0; }
+  .live-video { min-width: 0; display: flex; }
+  .live-chat  { min-width: 0; display: flex; }
+
   .player-wrap {
     position: relative;
     width: 100%;
@@ -529,11 +539,18 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    /* Mobile : auto + max-height 70vh */
     min-height: 360px;
     max-height: 70vh;
+    width: 100%;
   }
-  @media (min-width: 720px) {
-    .chat-panel { max-height: none; }
+  /* Desktop ≥900px : le chat prend toute la hauteur du grid item (aligné sur le player) */
+  @media (min-width: 900px) {
+    .chat-panel {
+      max-height: none;
+      min-height: 0;
+      height: 100%;
+    }
   }
   .chat-panel-readonly { min-height: 200px; }
 
@@ -655,7 +672,7 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   .footer-dot { color: #cbd5e1; margin: 0 6px; }
 </style>
 </head>
-<body>
+<body${bodyClass ? ' class="' + escapeHtml(bodyClass) + '"' : ''}>
   <header class="page-header">
     ${headerHtml}
   </header>
@@ -684,8 +701,14 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
 // ============================================================
 function buildPlayerHtml(playbackUrl, primaryColor) {
   // Le Stream Player Cloudflare prend un param ?primaryColor=RRGGBB (sans #)
+  // Lot A4 : autoplay=true + muted=true (forcé car browsers bloquent autoplay avec son)
   const colorParam = (primaryColor || '#5A98D6').replace('#', '');
-  const src = playbackUrl + (playbackUrl.includes('?') ? '&' : '?') + 'primaryColor=' + encodeURIComponent(colorParam) + '&letterboxColor=transparent';
+  const src = playbackUrl
+    + (playbackUrl.includes('?') ? '&' : '?')
+    + 'primaryColor=' + encodeURIComponent(colorParam)
+    + '&letterboxColor=transparent'
+    + '&autoplay=true'
+    + '&muted=true';
   return `
     <div class="player-wrap">
       <iframe
@@ -753,7 +776,7 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
   var MAGIC_TOKEN = ${JSON.stringify(magicToken || null)};
   var IS_LECTURE_SEULE = ${JSON.stringify(!!isLectureSeule)};
   var IS_QA = ${JSON.stringify(!!isQaMode)};
-  var AUTHOR_NAME = ${JSON.stringify(authorPlaceholder || 'Invité')};
+  var AUTHOR_NAME = ${JSON.stringify(authorPlaceholder)};
 
   // ============ Polling status (live -> ended) ============
   var statusTimer = null;
@@ -848,12 +871,20 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (data && data.messages && data.messages.length) {
+          console.log('[Nomacast chat] Reçu', data.messages.length, 'message(s)');
           var atBottom = (elMessages.scrollHeight - elMessages.scrollTop - elMessages.clientHeight) < 80;
           data.messages.forEach(function (m) {
             renderMessage(m);
             if (m.created_at) lastTimestamp = m.created_at;
           });
           if (atBottom) scrollToBottom(true);
+        } else if (data) {
+          // Premier appel : si rien, c'est probablement normal
+          if (lastTimestamp === null) {
+            console.log('[Nomacast chat] Aucun message historique reçu');
+          }
+        } else {
+          console.warn('[Nomacast chat] Fetch sans data (réponse non-JSON ou erreur)');
         }
       })
       .catch(function () {})
@@ -866,6 +897,20 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
   if (elInput && elCounter) {
     elInput.addEventListener('input', function () {
       elCounter.textContent = elInput.value.length + ' / 500';
+    });
+  }
+
+  // Lot A5 : Entrée → submit ; Shift+Entrée → nouvelle ligne
+  if (elInput) {
+    elInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (typeof elForm.requestSubmit === 'function') {
+          elForm.requestSubmit();
+        } else {
+          elForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      }
     });
   }
 
@@ -942,6 +987,8 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
   });
 
   // Démarrage du polling chat
+  // Bug 14 debug : log discret pour diagnostiquer l'historique au reload
+  console.log('[Nomacast chat] Démarrage polling. CHAT_URL=', CHAT_URL, 'ACCESS_MODE=', ACCESS_MODE, 'MAGIC_TOKEN=', MAGIC_TOKEN ? '(set)' : '(null)');
   pollChat();
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') {
@@ -1017,6 +1064,19 @@ function buildDraftScript({ scheduledAt, statusUrl }) {
     if (elHours)   elHours.textContent   = pad(h);
     if (elMinutes) elMinutes.textContent = pad(m);
     if (elSeconds) elSeconds.textContent = pad(s);
+
+    // Lot A1 : masquer progressivement les unités à zéro
+    function setUnitVisible(el, visible) {
+      if (!el) return;
+      var unit = el.parentElement;
+      if (unit && unit.classList.contains('countdown-unit')) {
+        unit.style.display = visible ? '' : 'none';
+      }
+    }
+    setUnitVisible(elDays,    d > 0);
+    setUnitVisible(elHours,   d > 0 || h > 0);
+    setUnitVisible(elMinutes, d > 0 || h > 0 || m > 0);
+    // Secondes toujours visibles
   }
   tick();
   setInterval(tick, 1000);
