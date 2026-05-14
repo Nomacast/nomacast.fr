@@ -2,9 +2,8 @@
 // POST /api/chat/<slug>/report-issue
 // Body : { type: 'audio' | 'video' | 'both', invitee_id?: string }
 //
-// Envoie un email d'alerte à evenement@nomacast.fr via Resend.
-// AUCUN stockage en D1, AUCUN affichage côté admin/live.html : l'alerte
-// va uniquement à l'admin Nomacast (Jérôme), pas au client / organisateur.
+// 1. INSERT dans technical_alerts (pour affichage feed vMix)
+// 2. Envoie un email d'alerte à evenement@nomacast.fr via Resend (pour archive)
 
 const TYPE_LABEL = {
   audio: 'Problème de son uniquement',
@@ -21,7 +20,6 @@ const TYPE_BADGE = {
 export const onRequestPost = async ({ params, request, env }) => {
   try {
     if (!env.DB) return jsonResponse({ error: 'D1 binding manquant' }, 500);
-    if (!env.RESEND_API_KEY) return jsonResponse({ error: 'RESEND_API_KEY env var manquante' }, 503);
 
     let data;
     try { data = await request.json(); }
@@ -30,7 +28,7 @@ export const onRequestPost = async ({ params, request, env }) => {
     const type = (data.type || '').toString();
     if (!TYPE_LABEL[type]) return jsonResponse({ error: 'Type invalide (audio|video|both)' }, 400);
 
-    // SELECT minimal — uniquement les colonnes safe garanties d'exister
+    // SELECT minimal (colonnes safe garanties)
     let ev;
     try {
       ev = await env.DB.prepare(`
@@ -54,38 +52,58 @@ export const onRequestPost = async ({ params, request, env }) => {
         `).bind(inviteeId, ev.id).first();
       } catch (sqlErr) {
         console.error('[report-issue SQL invitees]', sqlErr);
-        // On ne bloque pas, on continue sans invitee
         invitee = null;
       }
     }
 
-    // Contexte technique
     const userAgent = request.headers.get('User-Agent') || '—';
     const referer = request.headers.get('Referer') || '—';
     const country = request.headers.get('CF-IPCountry') || '—';
     const now = new Date();
+    const nowIso = now.toISOString();
     const nowFr = now.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
 
-    const eventStatusLabel = {
-      draft: 'Brouillon', scheduled: 'Programmé', live: 'EN DIRECT',
-      ended: 'Terminé', cancelled: 'Annulé'
-    }[ev.status] || ev.status;
+    // Label auteur (pré-calculé pour éviter de joindre à chaque lecture du feed)
+    const authorLabel = invitee
+      ? (((invitee.first_name || '') + ' ' + (invitee.last_name || '')).trim() || invitee.email || 'Invité')
+      : 'Anonyme';
 
-    const inviteeBlock = invitee
-      ? `
-        <h3 style="margin:24px 0 8px;color:#0f172a;font-size:14px;">Participant identifié</h3>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-          <tr><td style="padding:4px 0;color:#64748b;width:120px;">Nom</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(((invitee.first_name || '') + ' ' + (invitee.last_name || '')).trim() || '—')}</td></tr>
-          <tr><td style="padding:4px 0;color:#64748b;">Email</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(invitee.email || '—')}</td></tr>
-          <tr><td style="padding:4px 0;color:#64748b;">Organisation</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(invitee.organization || '—')}</td></tr>
-          <tr><td style="padding:4px 0;color:#64748b;">Rôle</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(invitee.role || '—')}</td></tr>
-        </table>`
-      : `
-        <h3 style="margin:24px 0 8px;color:#0f172a;font-size:14px;">Participant anonyme</h3>
-        <p style="margin:0;font-size:13px;color:#64748b;">Chat public, identité inconnue.</p>`;
+    // 1. INSERT dans technical_alerts — l'alerte sera visible dans le feed vMix
+    const alertId = crypto.randomUUID();
+    try {
+      await env.DB.prepare(`
+        INSERT INTO technical_alerts
+          (id, event_id, type, invitee_id, author_label, country, user_agent, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(alertId, ev.id, type, inviteeId, authorLabel, country, userAgent, nowIso).run();
+    } catch (insertErr) {
+      console.error('[report-issue INSERT alert]', insertErr);
+      // On ne bloque pas l'email pour autant — l'admin sera notifié par mail
+    }
 
-    const subject = `[ALERTE] ${TYPE_LABEL[type]} — ${ev.title}`;
-    const html = `
+    // 2. Envoi email (si RESEND_API_KEY configurée). Pas bloquant : si pas de clé,
+    // on continue (l'alerte est dans la DB et visible dans le feed vMix).
+    if (env.RESEND_API_KEY) {
+      const eventStatusLabel = {
+        draft: 'Brouillon', scheduled: 'Programmé', live: 'EN DIRECT',
+        ended: 'Terminé', cancelled: 'Annulé'
+      }[ev.status] || ev.status;
+
+      const inviteeBlock = invitee
+        ? `
+          <h3 style="margin:24px 0 8px;color:#0f172a;font-size:14px;">Participant identifié</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tr><td style="padding:4px 0;color:#64748b;width:120px;">Nom</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(authorLabel)}</td></tr>
+            <tr><td style="padding:4px 0;color:#64748b;">Email</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(invitee.email || '—')}</td></tr>
+            <tr><td style="padding:4px 0;color:#64748b;">Organisation</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(invitee.organization || '—')}</td></tr>
+            <tr><td style="padding:4px 0;color:#64748b;">Rôle</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(invitee.role || '—')}</td></tr>
+          </table>`
+        : `
+          <h3 style="margin:24px 0 8px;color:#0f172a;font-size:14px;">Participant anonyme</h3>
+          <p style="margin:0;font-size:13px;color:#64748b;">Chat public, identité inconnue.</p>`;
+
+      const subject = `[ALERTE] ${TYPE_LABEL[type]} — ${ev.title}`;
+      const html = `
 <!DOCTYPE html>
 <html><body style="font-family:-apple-system,Segoe UI,sans-serif;background:#f8fafc;margin:0;padding:24px;">
   <div style="max-width:580px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
@@ -100,9 +118,7 @@ export const onRequestPost = async ({ params, request, env }) => {
         <tr><td style="padding:4px 0;color:#64748b;">Statut</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${eventStatusLabel}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b;">Slug</td><td style="padding:4px 0;"><a href="https://nomacast.fr/chat/${escapeHtml(ev.slug)}" style="color:#5A98D6;">/chat/${escapeHtml(ev.slug)}</a></td></tr>
       </table>
-
       ${inviteeBlock}
-
       <h3 style="margin:24px 0 8px;color:#0f172a;font-size:14px;">Contexte technique</h3>
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <tr><td style="padding:4px 0;color:#64748b;width:120px;vertical-align:top;">Reçu</td><td style="padding:4px 0;color:#0f172a;">${escapeHtml(nowFr)} (Paris)</td></tr>
@@ -110,64 +126,49 @@ export const onRequestPost = async ({ params, request, env }) => {
         <tr><td style="padding:4px 0;color:#64748b;vertical-align:top;">User-Agent</td><td style="padding:4px 0;color:#475569;font-family:monospace;font-size:11px;word-break:break-all;">${escapeHtml(userAgent)}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b;vertical-align:top;">Page</td><td style="padding:4px 0;color:#475569;font-size:11px;word-break:break-all;">${escapeHtml(referer)}</td></tr>
       </table>
-
-      <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;">
-        Alerte automatique. Vérifier le flux Cloudflare Stream et l'encodeur.
-      </div>
     </div>
   </div>
 </body></html>`;
 
-    const text = [
-      `ALERTE : ${TYPE_LABEL[type]}`,
-      ``,
-      `Événement : ${ev.title}`,
-      `Statut : ${eventStatusLabel}`,
-      `URL : https://nomacast.fr/chat/${ev.slug}`,
-      ``,
-      invitee
-        ? `Participant : ${((invitee.first_name || '') + ' ' + (invitee.last_name || '')).trim() || '—'} <${invitee.email || '—'}> (${invitee.organization || '—'})`
-        : `Participant anonyme`,
-      ``,
-      `Reçu : ${nowFr}`,
-      `Pays : ${country}`,
-      `User-Agent : ${userAgent}`,
-      `Page : ${referer}`
-    ].join('\n');
+      const text = [
+        `ALERTE : ${TYPE_LABEL[type]}`, ``,
+        `Événement : ${ev.title}`,
+        `Statut : ${eventStatusLabel}`,
+        `URL : https://nomacast.fr/chat/${ev.slug}`, ``,
+        invitee
+          ? `Participant : ${authorLabel} <${invitee.email || '—'}> (${invitee.organization || '—'})`
+          : `Participant anonyme`, ``,
+        `Reçu : ${nowFr}`,
+        `Pays : ${country}`,
+        `User-Agent : ${userAgent}`,
+        `Page : ${referer}`
+      ].join('\n');
 
-    // Envoi Resend
-    let r;
-    try {
-      r = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'Alertes Nomacast <noreply@nomacast.fr>',
-          to: ['evenement@nomacast.fr'],
-          subject,
-          html,
-          text
-        })
-      });
-    } catch (fetchErr) {
-      console.error('[report-issue fetch Resend]', fetchErr);
-      return jsonResponse({ error: 'Fetch Resend: ' + (fetchErr.message || 'unknown') }, 500);
+      try {
+        const r = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Alertes Nomacast <noreply@nomacast.fr>',
+            to: ['evenement@nomacast.fr'],
+            subject, html, text
+          })
+        });
+        if (!r.ok) {
+          const rText = await r.text().catch(() => '');
+          console.error('[report-issue Resend not ok]', r.status, rText);
+          // Pas d'erreur retournée au client : l'INSERT a réussi, c'est l'essentiel
+        }
+      } catch (fetchErr) {
+        console.error('[report-issue fetch Resend]', fetchErr);
+      }
     }
 
-    if (!r.ok) {
-      const rText = await r.text().catch(() => '');
-      console.error('[report-issue Resend not ok]', r.status, rText);
-      return jsonResponse({
-        error: 'Resend HTTP ' + r.status + ': ' + rText.slice(0, 200)
-      }, 500);
-    }
-
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: true, alert_id: alertId });
   } catch (err) {
-    // Catch-all : log + retour JSON propre (jamais de 500 Cloudflare brut)
     console.error('[report-issue FATAL]', err && err.stack || err);
     return jsonResponse({
       error: 'Exception serveur: ' + (err && err.message ? err.message : 'unknown')
