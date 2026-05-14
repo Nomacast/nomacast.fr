@@ -1661,11 +1661,18 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         if (res.ok) {
           showFeedback('success', 'Signalement envoyé. Notre équipe technique a été alertée.');
         } else {
-          var err = await res.json().catch(function () { return {}; });
-          showFeedback('error', 'Erreur : ' + (err.error || 'envoi impossible') + '. Réessayez ou contactez l\\'organisateur.');
+          var rawText = await res.text().catch(function () { return ''; });
+          var parsed = null;
+          try { parsed = JSON.parse(rawText); } catch (e) {}
+          var reason = parsed && parsed.error
+            ? parsed.error
+            : (rawText.length < 200 && rawText ? rawText : 'envoi impossible');
+          console.error('[report-issue]', res.status, REPORT_ISSUE_URL, rawText.slice(0, 500));
+          showFeedback('error', 'Erreur (HTTP ' + res.status + ') : ' + reason + '. Réessayez ou contactez l\\'organisateur.');
         }
       } catch (e) {
-        showFeedback('error', 'Erreur réseau. Vérifiez votre connexion.');
+        console.error('[report-issue network]', e);
+        showFeedback('error', 'Erreur réseau : ' + e.message + '. Vérifiez votre connexion.');
       }
     }
 
