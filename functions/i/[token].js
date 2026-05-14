@@ -1027,15 +1027,15 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
   // Mode lecture seule pendant le live : pas de chat actif
   if (isLectureSeule) {
     return `
-      <div class="chat-panel chat-panel-readonly">
+      <div class="chat-panel chat-panel-readonly chat-panel-announces">
         <div class="chat-header">
           <div class="chat-header-main">
-            <div class="chat-title">Chat</div>
-            <div class="chat-sub">Lecture seule</div>
+            <div class="chat-title">Annonces</div>
+            <div class="chat-sub">Messages du modérateur.</div>
           </div>
         </div>
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-empty">Le chat est désactivé pour cet événement.</div>
+          <div class="chat-empty" id="chat-empty">Aucune annonce pour le moment.</div>
         </div>
       </div>
     `;
@@ -1117,9 +1117,9 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
   }
 
   // ============ Chat ============
-  // Lecture seule pendant le live : pas de chat actif du tout
-  // Lecture seule + ended : on charge l'historique des messages (pour le replay)
-  if (IS_LECTURE_SEULE && !IS_ENDED) return;
+  // En lecture seule (mais event live) : on garde le polling pour afficher les
+  // annonces admin (broadcasts du modérateur). Le form est absent côté HTML.
+  // En lecture seule + ended : historique des messages (idem mode normal ended).
 
   var elMessages = document.getElementById('chat-messages');
   var elEmpty = document.getElementById('chat-empty');
@@ -1150,6 +1150,8 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
 
   function renderMessage(m) {
     if (seenIds[m.id]) return;
+    // Filtre en lecture seule : n'afficher QUE les messages admin (annonces broadcast)
+    if (IS_LECTURE_SEULE && !IS_ENDED && m.author_kind !== 'admin') return;
     seenIds[m.id] = true;
     if (elEmpty) { elEmpty.style.display = 'none'; }
 

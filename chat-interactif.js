@@ -152,6 +152,13 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
 
   function markFieldError(field, hasError) {
     if (!field) return;
+    // wizard-cards-v1 : si l'input est hidden (cas durée/audience), on ne peut pas appliquer
+    // une bordure rouge dessus ; on marque visuellement le groupe de cards parent à la place.
+    if (field.type === 'hidden') {
+      var group = field.parentNode && field.parentNode.querySelector('.wizard-cards[data-group="' + field.name + '"]');
+      if (group) group.classList.toggle('has-error', !!hasError);
+      return;
+    }
     field.style.borderColor = hasError ? '#e23636' : '';
   }
 
@@ -174,16 +181,25 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     return 3;
   }
 
+  // chat-pricing-options-v1 : les options payantes (sous-titrage, marque blanche)
+  // sont indépendantes du choix durée + audience. Elles doivent toujours s'ajouter
+  // au sous-total affiché, y compris quand on est encore sur "À partir de 290 €".
+  var BASE_PRICE = 290; // = PRICE_GRID[2][0], prix plancher du chat seul (2h, <50 audience)
+
+  function calculateOptionsPrice() {
+    var extra = 0;
+    if (whitelabelToggle && whitelabelToggle.checked) extra += WHITELABEL_PRICE;
+    if (subtitlesCheckbox && subtitlesCheckbox.checked) extra += SUBTITLES_PRICE;
+    return extra;
+  }
+
   function calculatePrice() {
     var h = parseFloat(durationInput.value);
     var a = parseInt(audienceInput.value, 10);
     var dt = mapDurationToTier(h);
     var at = mapAudienceToTier(a);
     if (dt === null || at === null) return null;
-    var p = PRICE_GRID[dt][at];
-    if (whitelabelToggle && whitelabelToggle.checked) p += WHITELABEL_PRICE;
-    if (subtitlesCheckbox && subtitlesCheckbox.checked) p += SUBTITLES_PRICE;
-    return p;
+    return PRICE_GRID[dt][at] + calculateOptionsPrice();
   }
 
   // ============================================================
@@ -216,7 +232,14 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       : 'Logo Nomacast conservé');
 
     var p = calculatePrice();
-    setRecap('price', (p === null) ? 'À partir de 290 € HT' : (formatPriceNumber(p) + ' € HT'));
+    if (p === null) {
+      // chat-pricing-options-v1 : pas encore de durée/audience, mais on inclut quand même
+      // les options payantes éventuelles dans l'estimation plancher.
+      var estimate = BASE_PRICE + calculateOptionsPrice();
+      setRecap('price', 'À partir de ' + formatPriceNumber(estimate) + ' € HT');
+    } else {
+      setRecap('price', formatPriceNumber(p) + ' € HT');
+    }
 
     // Update preview interactif
     updatePreview();
@@ -748,6 +771,22 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     });
   }
 
+  // wizard-cards-v1 : helper pour cibler scroll/focus sur le widget visible
+  // (l'input hidden ne peut pas recevoir le focus ni être scrollé en standard).
+  function focusFieldOrCards(field) {
+    if (!field) return;
+    if (field.type === 'hidden') {
+      var group = field.parentNode && field.parentNode.querySelector('.wizard-cards[data-group="' + field.name + '"]');
+      var target = group || field;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var firstCard = group && group.querySelector('.wizard-card');
+      if (firstCard && typeof firstCard.focus === 'function') firstCard.focus({ preventScroll: true });
+      return;
+    }
+    field.focus();
+    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   // ============================================================
   // VALIDATION
   // ============================================================
@@ -756,8 +795,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     var h = parseFloat(durationInput.value);
     if (!h || h <= 0) {
       markFieldError(durationInput, true);
-      durationInput.focus();
-      durationInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      focusFieldOrCards(durationInput);
       return false;
     }
     markFieldError(durationInput, false);
@@ -766,8 +804,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     var a = parseInt(audienceInput.value, 10);
     if (!a || a <= 0) {
       markFieldError(audienceInput, true);
-      audienceInput.focus();
-      audienceInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      focusFieldOrCards(audienceInput);
       return false;
     }
     markFieldError(audienceInput, false);
@@ -986,6 +1023,29 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
   // INIT
   // ============================================================
   function init() {
+    // wizard-cards-v1 : sélecteur visuel à base de cartes pour durée + audience.
+    // Au clic, on injecte data-value dans l'input hidden correspondant et on dispatche
+    // un événement "input" pour que tout le code existant (updateRecap, calculatePrice,
+    // validation, submit) continue de fonctionner sans modification.
+    Array.prototype.slice.call(wizard.querySelectorAll('.wizard-cards')).forEach(function (group) {
+      group.addEventListener('click', function (e) {
+        var card = e.target.closest('.wizard-card');
+        if (!card || !group.contains(card)) return;
+        var name = card.getAttribute('data-target');
+        var value = card.getAttribute('data-value');
+        var input = wizard.querySelector('input[name="' + name + '"]');
+        if (!input) return;
+        Array.prototype.slice.call(group.querySelectorAll('.wizard-card')).forEach(function (c) {
+          c.classList.toggle('active', c === card);
+        });
+        group.classList.remove('has-error');
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        track('chat_wizard_card_selected', { field: name, value: value });
+      });
+    });
+
     var liveInputs = [durationInput, audienceInput, colorInput, whitelabelToggle, subtitlesCheckbox];
     liveInputs.forEach(function (el) {
       if (!el) return;

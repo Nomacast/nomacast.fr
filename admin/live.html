@@ -377,6 +377,71 @@
       border-top: 1px solid #f1f5f9;
       margin: 14px 0;
     }
+
+    /* ============ Annonce admin (broadcast) ============ */
+    .regie-announce {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fafbfc;
+      margin-bottom: 12px;
+    }
+    .regie-announce-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      user-select: none;
+    }
+    .regie-announce-toggle:hover { color: #5A98D6; }
+    .regie-announce-toggle .icon {
+      font-size: 14px;
+    }
+    .regie-announce-toggle .chevron {
+      margin-left: auto;
+      color: #94a3b8;
+      transition: transform 0.15s;
+    }
+    .regie-announce.is-open .regie-announce-toggle .chevron {
+      transform: rotate(180deg);
+    }
+    .regie-announce-form {
+      display: none;
+      margin-top: 10px;
+    }
+    .regie-announce.is-open .regie-announce-form {
+      display: block;
+    }
+    .regie-announce-form textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 60px;
+      max-height: 200px;
+    }
+    .regie-announce-form textarea:focus {
+      outline: none;
+      border-color: #5A98D6;
+    }
+    .regie-announce-form-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .regie-announce-counter {
+      font-size: 11px;
+      color: #94a3b8;
+      font-variant-numeric: tabular-nums;
+      margin-right: auto;
+    }
   </style>
 </head>
 <body>
@@ -447,6 +512,23 @@
           </div>
         </div>
         <div class="regie-card-body">
+          <!-- Annonce broadcast admin (repliable) -->
+          <div class="regie-announce" id="regie-announce">
+            <div class="regie-announce-toggle" id="regie-announce-toggle">
+              <span class="icon">📢</span>
+              <span>Envoyer une annonce broadcast</span>
+              <span class="chevron">▾</span>
+            </div>
+            <div class="regie-announce-form">
+              <textarea id="regie-announce-input" placeholder="Ex : Le speaker va commencer dans 2 minutes…" maxlength="500" rows="2"></textarea>
+              <div class="regie-announce-form-row">
+                <span class="regie-announce-counter" id="regie-announce-counter">0 / 500</span>
+                <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="regie-announce-cancel">Annuler</button>
+                <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" id="regie-announce-send">Envoyer</button>
+              </div>
+            </div>
+          </div>
+
           <div class="regie-msg-list" id="regie-msg-list">
             <div class="regie-msg-empty">Aucun message en attente.</div>
           </div>
@@ -1051,6 +1133,64 @@
   // Initialisation
   renderPollCreateZone();
   loadPolls();
+
+  // ============================================================
+  // ANNONCE ADMIN (broadcast)
+  // ============================================================
+  var announcePanel  = document.getElementById('regie-announce');
+  var announceToggle = document.getElementById('regie-announce-toggle');
+  var announceInput  = document.getElementById('regie-announce-input');
+  var announceCounter= document.getElementById('regie-announce-counter');
+  var announceSend   = document.getElementById('regie-announce-send');
+  var announceCancel = document.getElementById('regie-announce-cancel');
+
+  announceToggle.addEventListener('click', function () {
+    announcePanel.classList.toggle('is-open');
+    if (announcePanel.classList.contains('is-open')) {
+      setTimeout(function () { announceInput.focus(); }, 0);
+    }
+  });
+
+  announceInput.addEventListener('input', function () {
+    announceCounter.textContent = announceInput.value.length + ' / 500';
+  });
+
+  announceInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      sendAnnounce();
+    }
+  });
+
+  announceCancel.addEventListener('click', function () {
+    announceInput.value = '';
+    announceCounter.textContent = '0 / 500';
+    announcePanel.classList.remove('is-open');
+  });
+
+  announceSend.addEventListener('click', sendAnnounce);
+
+  async function sendAnnounce() {
+    var content = announceInput.value.trim();
+    if (!content) return;
+    announceSend.disabled = true;
+    announceCancel.disabled = true;
+    try {
+      await A.apiFetch(
+        '/api/admin/events/' + encodeURIComponent(eventId) + '/announce',
+        { method: 'POST', body: { content: content } }
+      );
+      announceInput.value = '';
+      announceCounter.textContent = '0 / 500';
+      announcePanel.classList.remove('is-open');
+      A.showMessage(messageZone, 'success', 'Annonce envoyée à tous les participants.');
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Envoi annonce échoué : ' + err.message);
+    } finally {
+      announceSend.disabled = false;
+      announceCancel.disabled = false;
+    }
+  }
 })();
 </script>
 
