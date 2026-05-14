@@ -1,0 +1,22 @@
+-- Migration 0016 : reactions configurables par event
+-- Date prévue : mai 2026
+-- A déployer en chronologique après 0015.
+--
+-- 1 bloc additif, aucun ALTER destructif, aucun breaking change.
+-- Déployable à chaud (même pendant un event live).
+--
+-- A. ALTER events             - reaction_emojis_json pour configurer les emojis affichés
+--
+-- IMPORTANT - Console D1 :
+-- La console web ne supporte pas les commentaires -- entre statements.
+-- Soit retirer les commentaires intercalaires avant de coller,
+-- soit utiliser : wrangler d1 execute nomacast-events --remote --file=./migrations/0016_reactions_config.sql
+
+-- ============================================================
+-- A. ALTER events — reactions configurables (Tour 2.A-bis)
+-- ============================================================
+-- Colonne TEXT JSON array contenant 1 à 5 emojis choisis dans le pool de 15.
+-- Pool autorisé (côté backend de validation) : 👏 ❤️ 🔥 🎉 🙏 👍 😂 🤔 💡 🚀 ✨ 🤯 🥳 🤝 ⭐
+-- NULL = utilise le set par défaut des 8 originaux (rétro-compat).
+-- Configuré = array de 1 à 5 emojis du pool.
+ALTER TABLE events ADD COLUMN reaction_emojis_json TEXT;
