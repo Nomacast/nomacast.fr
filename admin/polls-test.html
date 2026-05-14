@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Test Sondages - Nomacast Admin</title>
+<style>
+  :root {
+    --primary: #5A98D6;
+    --bg: #f5f7fa;
+    --card: #fff;
+    --border: #e2e8f0;
+    --text: #1a202c;
+    --muted: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    line-height: 1.5;
+  }
+  header {
+    background: #0b1929;
+    color: #fff;
+    padding: 16px 24px;
+    margin: -24px -24px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header strong { font-size: 18px; }
+  header a { color: #94a3b8; font-size: 13px; text-decoration: none; margin-left: auto; }
+  header a:hover { color: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .header-block { margin-bottom: 24px; }
+  .header-block p { color: var(--muted); font-size: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+    background: #fff;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(90, 152, 214, 0.1);
+  }
+  button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button.primary { background: var(--primary); color: #fff; }
+  button.primary:hover { background: #4a87c5; }
+  button.secondary { background: #f1f5f9; color: var(--text); }
+  button.secondary:hover { background: #e2e8f0; }
+  button.success { background: var(--success); color: #fff; }
+  button.success:hover { background: #059669; }
+  button.warning { background: var(--warning); color: #fff; }
+  button.warning:hover { background: #d97706; }
+  button.danger { background: var(--danger); color: #fff; }
+  button.danger:hover { background: #dc2626; }
+  button.small { padding: 6px 12px; font-size: 13px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .options-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  .option-row { display: flex; gap: 8px; align-items: center; }
+  .option-row input { flex: 1; }
+  .poll-item {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .poll-item.live { border-color: var(--success); background: #f0fdf4; }
+  .poll-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .poll-header h3 { font-size: 15px; margin: 0; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge.draft { background: #f1f5f9; color: var(--muted); }
+  .badge.live { background: var(--success); color: #fff; }
+  .badge.closed { background: #cbd5e1; color: var(--text); }
+  .stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .stat strong { color: var(--text); }
+  .option-bar { margin: 8px 0; }
+  .option-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .option-bar-track { background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; }
+  .option-bar-fill { background: var(--primary); height: 100%; transition: width 0.3s ease; }
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 32px 16px;
+    font-size: 14px;
+  }
+  .log {
+    font-family: 'SF Mono', Monaco, 'Cascadia Mono', 'Roboto Mono', Consolas, monospace;
+    font-size: 12px;
+    background: #0b1929;
+    color: #94a3b8;
+    padding: 16px;
+    border-radius: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+  .log .ok { color: #6ee7b7; }
+  .log .err { color: #fca5a5; }
+  .log .info { color: #93c5fd; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .small { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <span style="width: 10px; height: 10px; background: var(--primary); border-radius: 50%; display: inline-block;"></span>
+  <strong>Nomacast</strong>
+  <span style="color: #94a3b8;">Test Sondages</span>
+  <a href="/admin/index.html">← Retour admin</a>
+</header>
+
+<div class="container">
+
+  <div class="header-block">
+    <h1>Page de test des sondages</h1>
+    <p class="small">Cette page permet de tester les endpoints Phase A (backend) sans coller de JS dans la console. Cliquez sur les boutons pour créer / lancer / clôturer des sondages.</p>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="card">
+    <h2>Configuration du test</h2>
+    <div class="config-row">
+      <div>
+        <label for="eventId">Event ID</label>
+        <input type="text" id="eventId" value="quk5qkuypjnz">
+      </div>
+      <div>
+        <label for="slug">Slug (pour test participant)</label>
+        <input type="text" id="slug" value="test-live">
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTE DES SONDAGES -->
+  <div class="card">
+    <div class="toolbar">
+      <h2>Sondages existants</h2>
+      <button class="secondary small" onclick="loadPolls()">↻ Rafraîchir</button>
+    </div>
+    <div id="pollsList">
+      <div class="empty">Cliquez sur Rafraîchir pour charger</div>
+    </div>
+  </div>
+
+  <!-- CRÉATION -->
+  <div class="card">
+    <h2>Créer un sondage</h2>
+    <div style="margin-bottom: 12px;">
+      <label for="question">Question</label>
+      <input type="text" id="question" placeholder="Ex : Quelle est votre couleur préférée ?" maxlength="300">
+    </div>
+    <div>
+      <label>Options (2 à 8)</label>
+      <div class="options-list" id="optionsList">
+        <div class="option-row">
+          <input type="text" class="option-input" placeholder="Option 1" maxlength="100">
+          <button class="secondary small" onclick="removeOption(this)" type="button">✕</button>
+        </div>
+        <div class="option-row">
+          <input type="text" class="option-input" placeholder="Option 2" maxlength="100">
+          <button class="secondary small" onclick="removeOption(this)" type="button">✕</button>
+        </div>
+      </div>
+      <button class="secondary small" onclick="addOption()" type="button" style="margin-top: 8px;">+ Ajouter une option</button>
+    </div>
+    <div style="margin-top: 16px;">
+      <button class="primary" onclick="createPoll()">Créer (status = draft)</button>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="card">
+    <div class="toolbar">
+      <h2>Console de log</h2>
+      <button class="secondary small" onclick="document.getElementById('log').innerHTML=''">Effacer</button>
+    </div>
+    <div class="log" id="log">En attente d'actions...</div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// Utilitaires
+// ============================================================
+function $(id) { return document.getElementById(id); }
+function getEventId() { return $('eventId').value.trim(); }
+function getSlug() { return $('slug').value.trim(); }
+
+function log(msg, type = 'info') {
+  const el = $('log');
+  const time = new Date().toLocaleTimeString();
+  const cls = type === 'ok' ? 'ok' : (type === 'err' ? 'err' : 'info');
+  el.innerHTML = `<span class="${cls}">[${time}] ${msg}</span>\n` + el.innerHTML;
+}
+
+async function api(url, options = {}) {
+  log(`→ ${options.method || 'GET'} ${url}`, 'info');
+  try {
+    const r = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    });
+    const body = await r.json().catch(() => null);
+    if (r.ok) {
+      log(`← ${r.status} OK`, 'ok');
+    } else {
+      log(`← ${r.status} ERROR : ${JSON.stringify(body)}`, 'err');
+    }
+    return { ok: r.ok, status: r.status, body };
+  } catch (err) {
+    log(`← FETCH ERROR : ${err.message}`, 'err');
+    return { ok: false, status: 0, body: { error: err.message } };
+  }
+}
+
+// ============================================================
+// Gestion options dans le formulaire de création
+// ============================================================
+function addOption() {
+  const list = $('optionsList');
+  const count = list.children.length;
+  if (count >= 8) {
+    log('Maximum 8 options', 'err');
+    return;
+  }
+  const row = document.createElement('div');
+  row.className = 'option-row';
+  row.innerHTML = `
+    <input type="text" class="option-input" placeholder="Option ${count + 1}" maxlength="100">
+    <button class="secondary small" onclick="removeOption(this)" type="button">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function removeOption(btn) {
+  const list = $('optionsList');
+  if (list.children.length <= 2) {
+    log('Minimum 2 options', 'err');
+    return;
+  }
+  btn.closest('.option-row').remove();
+}
+
+// ============================================================
+// Actions API
+// ============================================================
+async function loadPolls() {
+  const eventId = getEventId();
+  if (!eventId) { log('Event ID requis', 'err'); return; }
+  const res = await api(`/api/admin/events/${eventId}/polls`);
+  renderPolls(res.body && res.body.polls ? res.body.polls : []);
+}
+
+async function createPoll() {
+  const eventId = getEventId();
+  const question = $('question').value.trim();
+  if (!question) { log('Question requise', 'err'); return; }
+  const options = Array.from(document.querySelectorAll('.option-input'))
+    .map(i => i.value.trim())
+    .filter(v => v.length > 0);
+  if (options.length < 2) { log('Minimum 2 options', 'err'); return; }
+
+  const res = await api(`/api/admin/events/${eventId}/polls`, {
+    method: 'POST',
+    body: JSON.stringify({ question, options })
+  });
+  if (res.ok) {
+    log(`Sondage créé : ${res.body.poll.id}`, 'ok');
+    $('question').value = '';
+    document.querySelectorAll('.option-input').forEach(i => i.value = '');
+    loadPolls();
+  }
+}
+
+async function setStatus(pollId, status) {
+  const eventId = getEventId();
+  const res = await api(`/api/admin/events/${eventId}/polls/${pollId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status })
+  });
+  if (res.ok) {
+    log(`Sondage ${pollId.slice(0, 8)} → ${status}`, 'ok');
+    loadPolls();
+  }
+}
+
+async function deletePoll(pollId) {
+  if (!confirm('Supprimer ce sondage ? Les votes seront perdus.')) return;
+  const eventId = getEventId();
+  const res = await api(`/api/admin/events/${eventId}/polls/${pollId}`, {
+    method: 'DELETE'
+  });
+  if (res.ok) {
+    log(`Sondage ${pollId.slice(0, 8)} supprimé`, 'ok');
+    loadPolls();
+  }
+}
+
+async function loadActive() {
+  const slug = getSlug();
+  if (!slug) { log('Slug requis pour test participant', 'err'); return; }
+  const res = await api(`/api/chat/${slug}/polls/active`);
+  if (res.ok) {
+    if (res.body.poll) {
+      log(`Sondage actif côté participant : "${res.body.poll.question}" — total votes : ${res.body.poll.total_votes}`, 'ok');
+    } else {
+      log('Aucun sondage actif côté participant', 'info');
+    }
+  }
+}
+
+async function showDetail(pollId) {
+  const eventId = getEventId();
+  const res = await api(`/api/admin/events/${eventId}/polls/${pollId}`);
+  if (res.ok) {
+    log(`Détail sondage : ${JSON.stringify(res.body.poll, null, 2)}`, 'info');
+  }
+}
+
+// ============================================================
+// Rendu de la liste des sondages
+// ============================================================
+function renderPolls(polls) {
+  const container = $('pollsList');
+  if (!polls.length) {
+    container.innerHTML = '<div class="empty">Aucun sondage pour cet event.</div>';
+    return;
+  }
+  container.innerHTML = polls.map(p => {
+    const statusBadge = `<span class="badge ${p.status}">${p.status}</span>`;
+    let actions = '';
+    if (p.status === 'draft') {
+      actions = `
+        <button class="success small" onclick="setStatus('${p.id}', 'live')">▶ Lancer</button>
+        <button class="danger small" onclick="deletePoll('${p.id}')">Supprimer</button>
+      `;
+    } else if (p.status === 'live') {
+      actions = `
+        <button class="warning small" onclick="setStatus('${p.id}', 'closed')">■ Clôturer</button>
+        <button class="secondary small" onclick="showDetail('${p.id}')">Voir résultats</button>
+        <button class="danger small" onclick="deletePoll('${p.id}')">Supprimer</button>
+      `;
+    } else {
+      actions = `
+        <button class="secondary small" onclick="showDetail('${p.id}')">Voir résultats</button>
+        <button class="danger small" onclick="deletePoll('${p.id}')">Supprimer</button>
+      `;
+    }
+    return `
+      <div class="poll-item ${p.status}">
+        <div class="poll-header">
+          <h3>${escapeHtml(p.question)}</h3>
+          ${statusBadge}
+        </div>
+        <div class="stats">
+          <span class="stat">Options : <strong>${p.options_count || 0}</strong></span>
+          <span class="stat">Votes : <strong>${p.votes_count || 0}</strong></span>
+          <span class="stat">ID : <strong>${p.id.slice(0, 8)}…</strong></span>
+        </div>
+        <div class="row">${actions}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ============================================================
+// Auto-load au chargement
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  loadPolls();
+  log('Page de test prête. Event ID : ' + getEventId(), 'info');
+});
+</script>
+
+</body>
+</html>
