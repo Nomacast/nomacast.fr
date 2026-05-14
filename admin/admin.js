@@ -376,6 +376,47 @@
     }));
 
     if (event.stream_uid) {
+      // Lot 10 : preview iframe Cloudflare Stream
+      // Affichage permanent si stream_uid présent — le player CF Stream gère ses propres
+      // états (en attente / en direct / terminé / VOD generating). Utile pour tester le flux
+      // depuis vMix avant de passer l'event en live officiellement.
+      var preview = el('div', {
+        className: 'admin-stream-preview',
+        style: {
+          position: 'relative',
+          width: '100%',
+          maxWidth: '480px',
+          aspectRatio: '16/9',
+          background: '#0f172a',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          marginTop: '8px',
+          marginBottom: '8px'
+        }
+      });
+      var color = (event.primary_color || '#5A98D6').replace('#', '');
+      var previewSrc = (event.stream_playback_url || '')
+        + ((event.stream_playback_url || '').indexOf('?') >= 0 ? '&' : '?')
+        + 'primaryColor=' + encodeURIComponent(color)
+        + '&letterboxColor=transparent'
+        + '&muted=true';
+      var iframe = el('iframe', {
+        attrs: {
+          src: previewSrc,
+          allow: 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture',
+          allowfullscreen: 'true',
+          title: 'Preview Cloudflare Stream'
+        },
+        style: {
+          position: 'absolute',
+          top: '0', left: '0',
+          width: '100%', height: '100%',
+          border: '0'
+        }
+      });
+      preview.appendChild(iframe);
+      card.appendChild(preview);
+
       var details = el('div', { className: 'admin-stream-details' });
       details.appendChild(buildStreamFieldRow('Server (RTMPS)', event.stream_rtmps_url));
       details.appendChild(buildStreamFieldRow('Stream Key', event.stream_rtmps_key, { secret: true }));

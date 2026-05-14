@@ -12,7 +12,7 @@
 //   - stream_uid              : UID retourné par Cloudflare
 //   - stream_rtmps_url        : URL RTMPS à mettre dans OBS (rtmps://live.cloudflare.com:443/live/)
 //   - stream_rtmps_key        : streamKey à mettre dans OBS (SECRET — affiché uniquement dans /admin)
-//   - stream_playback_url     : URL iframe à embed côté participant (iframe.videodelivery.net/<uid>)
+//   - stream_playback_url     : URL iframe à embed côté participant (stream.nomacast.fr/<uid>/iframe)
 //   - stream_created_at       : timestamp de création
 
 const CF_API_BASE = 'https://api.cloudflare.com/client/v4';
@@ -85,7 +85,7 @@ export const onRequestPost = async ({ params, env }) => {
     return jsonResponse({ error: 'Réponse Cloudflare incomplète', cf_data: cfData }, 502);
   }
 
-  const playbackUrl = `https://iframe.videodelivery.net/${cfData.uid}`;
+  const playbackUrl = `https://stream.nomacast.fr/${cfData.uid}/iframe`;
   const createdAt = new Date().toISOString();
 
   // Stockage en D1
