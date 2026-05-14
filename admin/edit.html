@@ -6,6 +6,53 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Éditer · Admin Nomacast</title>
   <link rel="stylesheet" href="/admin/admin.css">
+  <style>
+    /* nomacast-url-panel-v1 — styles du panneau "Liens de l'événement" */
+    .url-row {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-light, #f1f5f9);
+    }
+    .url-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .url-row:first-of-type { padding-top: 0; }
+    .url-row-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-muted, #475569);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .url-row-mono {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      background: var(--off-white, #f8fafc);
+      border: 1px solid var(--border-light, #f1f5f9);
+      border-radius: 6px;
+      padding: 9px 11px;
+      margin-bottom: 8px;
+      color: var(--ink, #0f172a);
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    .url-row-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .url-row-hint {
+      font-size: 12px;
+      color: var(--ink-faint, #94a3b8);
+      margin-top: 8px;
+      font-style: italic;
+    }
+    .url-panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink, #0f172a);
+      margin-bottom: 4px;
+    }
+  </style>
 </head>
 <body>
 
@@ -32,7 +79,6 @@
       <div class="admin-page-head-sub" id="page-sub">Chargement…</div>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
-      <a class="admin-btn admin-btn-primary admin-btn-sm" id="regie-link" href="#" style="display:none;" title="Page de régie : preview vidéo + modération messages">🎛 Régie en direct ↗</a>
       <span class="admin-badge" id="status-badge" hidden></span>
     </div>
   </div>
@@ -91,6 +137,107 @@
     }
   }
 
+  // nomacast-url-panel-v1 : panneau unique avec tous les liens de l'événement
+  function renderUrlPanel(ev) {
+    var origin = location.origin;
+    var publicLink = (ev.access_mode === 'private' && ev.admin_preview_token)
+      ? origin + '/chat/' + ev.slug + '?preview=' + encodeURIComponent(ev.admin_preview_token)
+      : origin + '/chat/' + ev.slug;
+
+    var rows = [];
+
+    rows.push(buildUrlRow(
+      'Lien événement (participant)',
+      publicLink,
+      ev.access_mode === 'private'
+        ? 'URL privée — partagez plutôt les liens personnels via les invitations'
+        : 'URL publique du chat — à partager aux participants'
+    ));
+
+    if (ev.client_admin_token) {
+      rows.push(buildUrlRow(
+        'Lien admin client',
+        origin + '/event-admin/' + ev.client_admin_token,
+        'Le client gère ses invités sans login Nomacast'
+      ));
+    }
+
+    if (ev.stream_uid) {
+      rows.push(buildUrlRow(
+        'Lien régie en direct',
+        origin + '/admin/live.html?id=' + encodeURIComponent(ev.id),
+        'Modération chat, sondages, annonces, preview vidéo'
+      ));
+      rows.push(buildUrlRow(
+        'URL feed vMix',
+        origin + '/admin/vmix.html?id=' + encodeURIComponent(ev.id),
+        'Générer l\'URL signée pour Browser Input vMix'
+      ));
+    }
+
+    return A.el('div', {
+      className: 'admin-card',
+      children: [
+        A.el('div', {
+          className: 'admin-card-body',
+          children: [
+            A.el('div', { className: 'url-panel-title', text: 'Liens de l\'événement' })
+          ].concat(rows)
+        })
+      ]
+    });
+  }
+
+  function buildUrlRow(label, url, hint) {
+    return A.el('div', {
+      className: 'url-row',
+      children: [
+        A.el('div', { className: 'url-row-label', text: label }),
+        A.el('code', { className: 'url-row-mono', text: url }),
+        A.el('div', {
+          className: 'url-row-actions',
+          children: [
+            A.el('button', {
+              className: 'admin-btn admin-btn-secondary admin-btn-sm',
+              text: 'Copier',
+              attrs: { type: 'button' },
+              on: { click: function (e) { copyToClipboardUrl(url, e.currentTarget); } }
+            }),
+            A.el('a', {
+              className: 'admin-btn admin-btn-ghost admin-btn-sm',
+              text: 'Ouvrir ↗',
+              attrs: { href: url, target: '_blank', rel: 'noopener' }
+            })
+          ]
+        }),
+        hint ? A.el('div', { className: 'url-row-hint', text: hint }) : null
+      ].filter(Boolean)
+    });
+  }
+
+  function copyToClipboardUrl(text, btn) {
+    var origText = btn.textContent;
+    function flashOk() {
+      btn.textContent = 'Copié ✓';
+      setTimeout(function () { btn.textContent = origText; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(flashOk).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+    function fallbackCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); flashOk(); }
+      catch (e) { btn.textContent = 'Erreur'; setTimeout(function () { btn.textContent = origText; }, 1500); }
+      document.body.removeChild(ta);
+    }
+  }
+
   function renderForm(ev) {
       if (ev && ev.title) document.title = 'Éditer - ' + ev.title;
     pageSub.textContent = 'Slug : ' + ev.slug + ' · Créé le ' + A.formatDate(ev.created_at);
@@ -98,28 +245,14 @@
     statusBadge.className = 'admin-badge admin-badge-' + ev.status;
     statusBadge.hidden = false;
 
-    // Lien vers la page de régie (visible dès qu'on a un stream provisionné ;
-    // utile aussi en draft pour préparer / tester en amont)
-    var regieLink = document.getElementById('regie-link');
-    if (regieLink) {
-      if (ev.stream_uid) {
-        regieLink.href = '/admin/live.html?id=' + encodeURIComponent(ev.id);
-        regieLink.style.display = '';
-      } else {
-        regieLink.style.display = 'none';
-      }
-    }
+    // Lien régie : désormais géré dans le panneau URLs (renderUrlPanel)
 
     A.clearNode(container);
 
-    // Card "Page participant" avec URL publique cliquable + boutons Copier/Ouvrir
+    // Panneau unique avec tous les liens de l'événement (cf. nomacast-url-panel-v1)
     A.clearNode(publicLinkZone);
-    publicLinkZone.appendChild(A.renderPublicLink(ev));
-    // Card "Lien admin client" (le client peut gérer ses invités sans login Nomacast)
-    if (ev.client_admin_token) {
-      publicLinkZone.appendChild(A.renderClientAdminLink(ev));
-    }
-    // nomacast-stream-card-v1 : card Streaming live
+    publicLinkZone.appendChild(renderUrlPanel(ev));
+    // nomacast-stream-card-v1 : card Streaming live (rôle distinct : provisioning Cloudflare Stream)
     publicLinkZone.appendChild(A.renderStreamCard(ev, load));
 
     var body = A.el('div', { className: 'admin-card-body' });
@@ -636,12 +769,9 @@
       // Mettre à jour le badge statut
       statusBadge.textContent = A.statusLabel(result.event.status);
       statusBadge.className = 'admin-badge admin-badge-' + result.event.status;
-      // Re-render la card "Page participant" (pour refléter changement public↔privé)
+      // Re-render le panneau URLs (pour refléter changement public↔privé / slug changé)
       A.clearNode(publicLinkZone);
-      publicLinkZone.appendChild(A.renderPublicLink(result.event));
-      if (result.event.client_admin_token) {
-        publicLinkZone.appendChild(A.renderClientAdminLink(result.event));
-      }
+      publicLinkZone.appendChild(renderUrlPanel(result.event));
       // nomacast-stream-card-v1 : card Streaming live
       publicLinkZone.appendChild(A.renderStreamCard(result.event, load));
       if (slugChanged) {
