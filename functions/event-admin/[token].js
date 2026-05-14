@@ -4,7 +4,8 @@
 // Valide le token côté serveur, sert le HTML avec les infos event injectées.
 // Le JS embarqué appelle ensuite /api/event-admin/:token/* pour les ops CRUD.
 
-export const onRequestGet = async ({ params, env }) => {
+// Marqueur : nomacast-analytics-visits-tracking-v1
+export const onRequestGet = async ({ params, request, env }) => {
   if (!env.DB || !env.ADMIN_PASSWORD) {
     return htmlError('Service indisponible', 'Le service n\'est pas correctement configuré.', 500);
   }
@@ -31,6 +32,35 @@ export const onRequestGet = async ({ params, env }) => {
   // Calcul du token preview admin (HMAC du slug seul) pour permettre au client
   // de voir un aperçu de son event privé via /chat/<slug>?preview=<token>.
   const adminPreviewToken = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
+
+  // Tracking visits détaillé (analytics - chaque consultation du dashboard client)
+  // Permet de mesurer l'engagement client : fréquence de consultation, partage du lien
+  // dans l'équipe client (anon_key différent = autre personne), moments-clés (pré/pendant/post-event).
+  // Wrappé en try/catch indépendant : non-bloquant pour le rendu de la page.
+  try {
+    let anonKey = null;
+    let ipHashFull = null;
+    if (env.CHAT_IP_HASH_SECRET) {
+      const ip = request.headers.get('CF-Connecting-IP') || '';
+      ipHashFull = await hashIp(ip, env.CHAT_IP_HASH_SECRET);
+      anonKey = ipHashFull.slice(0, 32);
+    }
+    await env.DB.prepare(`
+      INSERT INTO visits (id, event_id, invitee_id, anon_key, visited_at, page_kind, user_agent, country_code, ip_hash, referrer)
+      VALUES (?, ?, NULL, ?, ?, 'event-admin', ?, ?, ?, ?)
+    `).bind(
+      crypto.randomUUID(),
+      event.id,
+      anonKey,
+      new Date().toISOString(),
+      request.headers.get('User-Agent') || null,
+      request.headers.get('CF-IPCountry') || null,
+      ipHashFull,
+      request.headers.get('Referer') || null
+    ).run();
+  } catch (err) {
+    console.error('[event-admin/token] visits track failed', err);
+  }
 
   return new Response(renderPage(event, params.token, adminPreviewToken), {
     status: 200,
@@ -67,6 +97,15 @@ async function computePreviewToken(slug, secret) {
   return btoa(String.fromCharCode(...new Uint8Array(sig)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     .slice(0, 24);
+}
+
+async function hashIp(ip, secret) {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 function htmlError(title, message, status) {
