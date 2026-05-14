@@ -143,13 +143,50 @@ export const onRequestPost = async ({ params, request, env }) => {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
+  // Rate limit (Lot H) : 10 msg / min / IP, sauf admin preview
+  // Hash IP avec env.CHAT_IP_HASH_SECRET pour éviter de stocker l'IP en clair (RGPD).
+  // No-op silencieux si CHAT_IP_HASH_SECRET pas configuré (mode dev / setup).
+  let ipHash = null;
+  if (authorKind !== 'admin' && env.CHAT_IP_HASH_SECRET) {
+    ipHash = await hashIp(request, env);
+    if (ipHash) {
+      const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+      try {
+        const recent = await env.DB.prepare(`
+          SELECT COUNT(*) AS n FROM chat_messages
+          WHERE ip_hash = ? AND created_at > ?
+        `).bind(ipHash, oneMinuteAgo).first();
+        if (recent && recent.n >= 10) {
+          return new Response(
+            JSON.stringify({
+              error: 'Trop de messages envoyés. Patiente une minute avant de réessayer.',
+              retry_after_seconds: 60
+            }),
+            {
+              status: 429,
+              headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Cache-Control': 'no-store',
+                'Retry-After': '60'
+              }
+            }
+          );
+        }
+      } catch (err) {
+        // On loggue mais on ne bloque pas le POST si la query rate limit fail
+        // (préfère un message qui passe quitte à dépasser plutôt qu'un faux 500)
+        console.error('[chat/messages rate-limit]', err);
+      }
+    }
+  }
+
   try {
     await env.DB.prepare(`
       INSERT INTO chat_messages
-        (id, event_id, invitee_id, author_name, author_kind, content, kind, status, created_at, approved_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, event_id, invitee_id, author_name, author_kind, content, kind, status, ip_hash, created_at, approved_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      id, event.id, inviteeId, authorName, authorKind, content, kind, status, now,
+      id, event.id, inviteeId, authorName, authorKind, content, kind, status, ipHash, now,
       status === 'approved' ? now : null
     ).run();
   } catch (err) {
@@ -217,6 +254,28 @@ async function computePreviewToken(slug, secret) {
   return btoa(String.fromCharCode(...new Uint8Array(sig)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     .slice(0, 24);
+}
+
+/**
+ * Hash HMAC-SHA-256 de l'IP du client avec env.CHAT_IP_HASH_SECRET comme clé.
+ * Utilisé pour le rate limit (Lot H) sans stocker d'IP en clair (RGPD compliance).
+ * Si le secret n'est pas configuré, retourne null → le rate limit est désactivé.
+ */
+async function hashIp(request, env) {
+  if (!env.CHAT_IP_HASH_SECRET) return null;
+  const ip = request.headers.get('CF-Connecting-IP')
+    || request.headers.get('X-Forwarded-For')
+    || 'unknown';
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(env.CHAT_IP_HASH_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(ip));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    .slice(0, 32);
 }
 
 function jsonResponse(body, status = 200) {
