@@ -87,6 +87,10 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 .nav-cta:hover{background:var(--cyan-hover)!important;color:#fff!important;text-decoration:none!important}
 .nav-links a, .nav-cta { white-space: nowrap; }
 .nav-cta { flex-shrink: 0; }
+/* nav-pill-v1 : cartouche bleu clair pour la prestation chat (différencie d'un support live générique).
+   Composant partagé entre toutes les pages du site. */
+.nav-pill { background: var(--cyan-light) !important; color: var(--cyan) !important; padding: 5px 14px !important; border-radius: 999px !important; font-weight: 500 !important; transition: background .2s, color .2s !important; }
+.nav-pill:hover { background: #d8e6f4 !important; color: var(--cyan-hover) !important; text-decoration: none !important; }
 @media (max-width: 1024px) and (min-width: 769px) { .nav-links { gap: 18px; } }
 
 /* HERO */
@@ -130,6 +134,98 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 /* ═══════ WIZARD · chat-interactif-v1 ═══════ */
 .wizard-section { padding: clamp(72px,9vw,120px) var(--h-pad); background: linear-gradient(180deg, var(--off-white) 0%, var(--white) 100%); }
 .wizard-header { max-width: 720px; margin: 0 auto 40px; text-align: center; }
+
+/* ═══════ WIZARD STEPPER · wizard-stepper-v1 ═══════
+   Stepper sticky de navigation entre les étapes. Composant partagé entre
+   chat-interactif et tarifs.html pour cohérence visuelle.
+   - Sticky sous la nav fixed du site (top: 64px)
+   - Barre de progression linéaire fine + pastilles numérotées
+   - Desktop : labels visibles inline
+   - Mobile : labels masqués, label dynamique "Étape N sur X · Titre" en dessous */
+.wizard-stepper {
+  position: sticky; top: 64px;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  margin: 0 calc(-1 * var(--h-pad)) 32px;
+  padding: 14px var(--h-pad) 12px;
+}
+.wizard-stepper-inner {
+  max-width: var(--max); margin: 0 auto;
+}
+.wizard-stepper-progress {
+  height: 3px;
+  background: var(--border-light);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.wizard-stepper-progress-bar {
+  height: 100%;
+  background: var(--cyan);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.wizard-stepper-list {
+  display: flex;
+  list-style: none;
+  padding: 0; margin: 0;
+}
+.wizard-stepper-item {
+  flex: 1; text-align: center;
+}
+.wizard-stepper-item a {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 10px;
+  padding: 6px 8px;
+  color: var(--ink-faint);
+  font-size: 14px; font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+  border-radius: 8px;
+}
+.wizard-stepper-item a:hover { color: var(--ink); text-decoration: none; background: var(--off-white); }
+.wizard-stepper-item.is-current a { color: var(--ink); }
+.wizard-stepper-item.is-completed a { color: var(--cyan); }
+.wizard-stepper-dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--off-white); color: var(--ink-muted);
+  font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.wizard-stepper-item.is-current .wizard-stepper-dot {
+  background: var(--cyan); color: #fff;
+  box-shadow: 0 0 0 4px rgba(90,152,214,0.18);
+}
+.wizard-stepper-item.is-completed .wizard-stepper-dot {
+  background: var(--cyan-light); color: var(--cyan);
+  border: 1.5px solid var(--cyan);
+}
+.wizard-stepper-current {
+  display: none;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.wizard-stepper-current strong { color: var(--ink); font-weight: 600; }
+@media (max-width: 720px) {
+  .wizard-stepper { padding: 10px var(--h-pad) 8px; }
+  .wizard-stepper-list { gap: 4px; }
+  .wizard-stepper-item a { padding: 4px; gap: 0; }
+  .wizard-stepper-label { display: none; }
+  .wizard-stepper-dot { width: 30px; height: 30px; font-size: 13px; }
+  .wizard-stepper-current { display: block; }
+}
+@media (max-width: 480px) {
+  .wizard-stepper { top: 56px; }
+}
+
 .review-banner {
   max-width: 720px; margin: 0 auto 32px;
   background: #fff8e1; border: 1px solid #ffd54f; border-radius: 10px;
@@ -478,35 +574,66 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 }
 
 /* Wizard numeric input · chat-interactif-v1 */
-.wizard-numeric {
-  display: flex; align-items: center; gap: 12px;
-  max-width: 180px; margin: 8px 0 12px;   /* chat-numeric-compact-v1 : container réduit de 320→180px (saisie d'un nombre, pas besoin de 320px) */
-}
-.wizard-numeric input[type="number"] {
-  flex: 0 0 100px; min-width: 0;          /* chat-numeric-compact-v2 : largeur fixe (100px) au lieu de flex:1, pour que la bulle d'input soit identique entre Durée et Audience (sinon le suffixe "participants" plus long que "heures" rétrécit la bulle audience) */
-  font-family: var(--font-body);
-  font-size: 17px; font-weight: 600;      /* chat-numeric-compact-v1 : 24→17px */
-  text-align: right;
-  background: var(--white); border: 1.5px solid var(--border);
-  border-radius: 10px; padding: 9px 12px; color: var(--ink);  /* chat-numeric-compact-v1 : padding 14px 16px → 9px 12px */
-  transition: border-color .2s;
-  -moz-appearance: textfield;
-}
-.wizard-numeric input[type="number"]::-webkit-outer-spin-button,
-.wizard-numeric input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none; margin: 0;
-}
-.wizard-numeric input[type="number"]:focus {
-  outline: none; border-color: var(--cyan);
-}
-.wizard-numeric-suffix {
-  font-size: 14px; color: var(--ink-muted);   /* chat-numeric-compact-v1 : 16→14px */
-  font-weight: 500; white-space: nowrap;
-}
 .wizard-numeric-hint {
   font-size: 13px; color: var(--ink-muted);
   font-weight: 300; margin-top: 4px;
   max-width: 480px;
+}
+
+/* ═══════ WIZARD CARDS · wizard-cards-v1 ═══════
+   Cartes cliquables pour sélection rapide d'une valeur tarifaire (durée, audience).
+   Pattern aligné sur .dur-card de tarifs.html pour cohérence visuelle entre les deux pages.
+   Sur mobile, passage en 2 colonnes pour conserver des cibles tactiles confortables (≥ 48px). */
+.wizard-cards {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  margin: 8px 0 12px;
+}
+@media (max-width: 720px) {
+  .wizard-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+.wizard-card {
+  position: relative;
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 12px 12px;
+  cursor: pointer;
+  transition: border-color .2s ease, background .2s ease, transform .15s ease, box-shadow .2s ease;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 64px;
+}
+.wizard-card:hover {
+  border-color: var(--cyan);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(90,152,214,.1);
+}
+.wizard-card:focus-visible {
+  outline: none; border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(90,152,214,.25);
+}
+.wizard-card.active {
+  border-color: var(--cyan);
+  background: var(--cyan-light);
+  box-shadow: 0 0 0 3px rgba(90,152,214,.12);
+}
+.wizard-card.active:hover { transform: none; }
+.wizard-card-label {
+  font-family: var(--font-head);
+  font-size: 17px; font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+.wizard-card-sublabel {
+  font-size: 12px; color: var(--ink-faint);
+  font-weight: 400; line-height: 1.3;
+}
+.wizard-cards.has-error .wizard-card {
+  border-color: #e23636;
 }
 
 /* Wizard subgroup (regroupements au sein d'une étape) · chat-interactif-v1 */
@@ -1205,7 +1332,7 @@ body.menu-open .float-call{display:none!important}
     <li><a href="tarifs.html">Tarifs</a></li>
     <li><a href="agences-partenaires.html">Agences</a></li>
     <li><a href="faq.html">FAQ</a></li>
-    <li><a href="#" aria-current="page" style="color:var(--cyan);cursor:default;">Chat interactif</a></li>
+    <li><a href="#" aria-current="page" class="nav-pill" style="cursor:default;">Engagement live</a></li>
     <li><a href="#wizard" class="nav-cta">Configurer mon chat</a></li>
   </ul>
   <ul class="nav-lang-mobile" aria-label="Choisir la langue">
@@ -1233,7 +1360,7 @@ body.menu-open .float-call{display:none!important}
     <li><a href="tarifs.html">Tarifs</a></li>
     <li><a href="agences-partenaires.html">Agences</a></li>
     <li><a href="faq.html">FAQ</a></li>
-    <li><a href="#" aria-current="page" style="color:var(--cyan,#5A98D6);">Chat interactif</a></li>
+    <li><a href="#" aria-current="page" class="nav-pill">Engagement live</a></li>
     <li><a href="#wizard" class="mobile-cta">Configurer mon chat</a></li>
   </ul>
   <div class="mobile-overlay-footer">
@@ -1249,7 +1376,7 @@ body.menu-open .float-call{display:none!important}
     <nav class="page-hero-breadcrumb" aria-label="Fil d'Ariane">
       <a href="index.html">Accueil</a> / Chat interactif
     </nav>
-    <p class="page-hero-eyebrow">Engagement audience</p>
+    <p class="page-hero-eyebrow">Solution chat interactif</p>
     <h1 class="page-hero-title">
       Chat personnalisé<br>
       et <span class="accent">interactif</span><br>
@@ -1284,40 +1411,111 @@ body.menu-open .float-call{display:none!important}
     </p>
   </div>
 
+  <!-- Stepper sticky de navigation rapide entre les étapes (wizard-stepper-v1).
+       Composant partagé entre chat-interactif et tarifs pour cohérence visuelle. -->
+  <nav class="wizard-stepper" aria-label="Progression du configurateur">
+    <div class="wizard-stepper-inner">
+      <div class="wizard-stepper-progress" aria-hidden="true">
+        <div class="wizard-stepper-progress-bar" id="wizard-stepper-bar" style="width:25%"></div>
+      </div>
+      <ol class="wizard-stepper-list">
+        <li class="wizard-stepper-item is-current" data-step="1">
+          <a href="#step-1">
+            <span class="wizard-stepper-dot">1</span>
+            <span class="wizard-stepper-label">Durée</span>
+          </a>
+        </li>
+        <li class="wizard-stepper-item" data-step="2">
+          <a href="#step-2">
+            <span class="wizard-stepper-dot">2</span>
+            <span class="wizard-stepper-label">Audience</span>
+          </a>
+        </li>
+        <li class="wizard-stepper-item" data-step="3">
+          <a href="#step-3">
+            <span class="wizard-stepper-dot">3</span>
+            <span class="wizard-stepper-label">Interaction</span>
+          </a>
+        </li>
+        <li class="wizard-stepper-item" data-step="4">
+          <a href="#step-4">
+            <span class="wizard-stepper-dot">4</span>
+            <span class="wizard-stepper-label">Personnalisation</span>
+          </a>
+        </li>
+      </ol>
+      <div class="wizard-stepper-current" id="wizard-stepper-current" aria-live="polite">
+        Étape <strong>1</strong> sur 4 · Durée prévue
+      </div>
+    </div>
+  </nav>
+
   <div class="wizard" id="wizard-form">
 
     <div class="wizard-layout">
     <div class="wizard-main">
 
     <!-- ÉTAPE 01 · Durée -->
-    <div class="wizard-step wizard-step-compact" data-step="1">
+    <div class="wizard-step wizard-step-compact" data-step="1" id="step-1">
       <div class="wizard-step-header">
         <span class="wizard-step-num">01</span>
         <h3 class="wizard-step-title">Durée prévue</h3>
       </div>
       <p class="wizard-step-desc">Durée totale de diffusion en direct, hors temps de mise en place. Le chat ouvre 15 minutes avant et ferme 5 minutes après.</p>
-      <div class="wizard-numeric">
-        <input type="number" name="duration" min="0.5" step="0.5" placeholder="3">
-        <span class="wizard-numeric-suffix">heures</span>
+      <!-- wizard-cards-v1 : cards cliquables alignées sur la grille tarifaire (2h/3h/4h/6h+) — pattern cohérent avec .dur-card de tarifs.html. L'input hidden conserve le nom "duration" pour que tout le JS existant (calcul, recap, validation, submit) continue à fonctionner sans modification. -->
+      <div class="wizard-cards" data-group="duration">
+        <button type="button" class="wizard-card" data-target="duration" data-value="2">
+          <div class="wizard-card-label">2 heures</div>
+          <div class="wizard-card-sublabel">événement court</div>
+        </button>
+        <button type="button" class="wizard-card" data-target="duration" data-value="3">
+          <div class="wizard-card-label">3 heures</div>
+          <div class="wizard-card-sublabel">conférence standard</div>
+        </button>
+        <button type="button" class="wizard-card" data-target="duration" data-value="4">
+          <div class="wizard-card-label">4 heures</div>
+          <div class="wizard-card-sublabel">demi-journée</div>
+        </button>
+        <button type="button" class="wizard-card" data-target="duration" data-value="6">
+          <div class="wizard-card-label">6 h et +</div>
+          <div class="wizard-card-sublabel">journée complète</div>
+        </button>
       </div>
-      <p class="wizard-numeric-hint">Au-delà de 6 heures, le tarif est calculé sur la base du forfait 6h. Le devis final est ajusté à la durée exacte.</p>
+      <input type="hidden" name="duration" value="">
+      <p class="wizard-numeric-hint">Au-delà de 6 heures, le devis est calculé sur la base du forfait 6h et ajusté à la durée exacte.</p>
     </div>
 
     <!-- ÉTAPE 02 · Audience -->
-    <div class="wizard-step wizard-step-compact" data-step="2">
+    <div class="wizard-step wizard-step-compact" data-step="2" id="step-2">
       <div class="wizard-step-header">
         <span class="wizard-step-num">02</span>
         <h3 class="wizard-step-title">Audience attendue</h3>
       </div>
       <p class="wizard-step-desc">Nombre approximatif de participants connectés simultanément en direct. Une estimation suffit.</p>
-      <div class="wizard-numeric">
-        <input type="number" name="audience" min="1" step="1" placeholder="120">
-        <span class="wizard-numeric-suffix">participants</span>
+      <!-- wizard-cards-v1 : tranches alignées sur la grille tarifaire (< 50 / 50-150 / 150-300 / 300+). Valeur représentative envoyée dans l'input hidden pour rester compatible avec mapAudienceToTier(). -->
+      <div class="wizard-cards" data-group="audience">
+        <button type="button" class="wizard-card" data-target="audience" data-value="30">
+          <div class="wizard-card-label">&lt; 50</div>
+          <div class="wizard-card-sublabel">petit comité</div>
+        </button>
+        <button type="button" class="wizard-card" data-target="audience" data-value="100">
+          <div class="wizard-card-label">50 à 150</div>
+          <div class="wizard-card-sublabel">audience standard</div>
+        </button>
+        <button type="button" class="wizard-card" data-target="audience" data-value="200">
+          <div class="wizard-card-label">150 à 300</div>
+          <div class="wizard-card-sublabel">grand événement</div>
+        </button>
+        <button type="button" class="wizard-card" data-target="audience" data-value="500">
+          <div class="wizard-card-label">300 et +</div>
+          <div class="wizard-card-sublabel">audience massive</div>
+        </button>
       </div>
+      <input type="hidden" name="audience" value="">
     </div>
 
     <!-- ÉTAPE 03 · Interaction et accès -->
-    <div class="wizard-step" data-step="3">
+    <div class="wizard-step" data-step="3" id="step-3">
       <div class="wizard-step-header">
         <span class="wizard-step-num">03</span>
         <h3 class="wizard-step-title">Interaction et accès</h3>
@@ -1331,6 +1529,11 @@ body.menu-open .float-call{display:none!important}
             <input type="checkbox" name="mode-qa" value="qa">
             Q&amp;A modéré
             <span class="wizard-option-tip">Questions validées avant publication</span>
+          </label>
+          <label class="wizard-option">
+            <input type="checkbox" name="mode-preqa" value="questions-preevent">
+            Questions en pré-événement
+            <span class="wizard-option-tip">Soumises avant le live, traitées par ordre de priorité</span>
           </label>
           <label class="wizard-option">
             <input type="checkbox" name="mode-libre" value="chat-libre">
@@ -1358,9 +1561,19 @@ body.menu-open .float-call{display:none!important}
             <span class="wizard-option-tip">Questions à choix multiples, résultats live</span>
           </label>
           <label class="wizard-option">
+            <input type="checkbox" name="mode-brainstorming" value="brainstorming">
+            Mur d'idées
+            <span class="wizard-option-tip">Brainstorming collaboratif, post-it regroupés par thème</span>
+          </label>
+          <label class="wizard-option">
             <input type="checkbox" name="mode-lecture" value="lecture-seule">
             Lecture seule
             <span class="wizard-option-tip">Annonces du modérateur uniquement</span>
+          </label>
+          <label class="wizard-option">
+            <input type="checkbox" name="mode-citations" value="citations">
+            Citations à retenir
+            <span class="wizard-option-tip">Moments clés transformés en cartes partageables sur LinkedIn</span>
           </label>
           <label class="wizard-option">
             <input type="checkbox" name="mode-subtitles" value="subtitles">
@@ -1388,7 +1601,7 @@ body.menu-open .float-call{display:none!important}
     </div>
 
     <!-- ÉTAPE 04 · Personnalisation -->
-    <div class="wizard-step" data-step="4">
+    <div class="wizard-step" data-step="4" id="step-4">
       <div class="wizard-step-header">
         <span class="wizard-step-num">04</span>
         <h3 class="wizard-step-title">Personnalisation</h3>
@@ -1842,7 +2055,7 @@ body.menu-open .float-call{display:none!important}
     <div class="footer-col">
       <h3 class="footer-col-title">Prestations</h3>
       <ul class="footer-links">
-        <li><a href="chat-interactif.html"><strong>Chat interactif →</strong></a></li>
+        <li><a href="chat-interactif.html" class="nav-pill">Solution chat interactif →</a></li>
         <li><a href="captation-conference-seminaire.html">Conférence &amp; séminaire</a></li>
         <li><a href="emission-live-corporate.html">Émission live corporate</a></li>
         <li><a href="streaming-multiplex-multi-sites.html">Multiplex multi-sites</a></li>
@@ -1976,6 +2189,95 @@ document.querySelectorAll('.faq-question').forEach(btn => {
 {"@type":"Question","name":"Que devient le contenu du chat après l'événement ?","acceptedAnswer":{"@type":"Answer","text":"L'intégralité des échanges est exportée au format CSV et vous est transmise dès la fin de l'événement. Les données sont conservées 90 jours puis automatiquement supprimées (conformité RGPD)."}},
 {"@type":"Question","name":"Quelle est la latence entre la vidéo et le chat ?","acceptedAnswer":{"@type":"Answer","text":"La diffusion vidéo a une latence de 3 à 8 secondes selon les conditions réseau. Le chat est instantané. Cet écart, standard sur ce type de diffusion, est imperceptible dans la grande majorité des contextes d'événements professionnels."}}
 ]}
+</script>
+
+<!-- Wizard stepper sticky (wizard-stepper-v1) · script partagé chat-interactif + tarifs -->
+<script>
+(function () {
+  var stepper = document.querySelector('.wizard-stepper');
+  if (!stepper) return;
+  var items = Array.prototype.slice.call(stepper.querySelectorAll('.wizard-stepper-item'));
+  var bar = stepper.querySelector('.wizard-stepper-progress-bar');
+  var current = stepper.querySelector('.wizard-stepper-current');
+  if (!items.length) return;
+
+  var total = items.length;
+  var stepSections = items
+    .map(function (it) {
+      var n = it.getAttribute('data-step');
+      var sec = document.getElementById('step-' + n);
+      return sec ? { item: it, section: sec, n: n } : null;
+    })
+    .filter(Boolean);
+  if (!stepSections.length) return;
+
+  function setCurrent(n) {
+    var idx = -1;
+    stepSections.forEach(function (s, i) {
+      var isCurrent = String(s.n) === String(n);
+      if (isCurrent) idx = i;
+      s.item.classList.toggle('is-current', isCurrent);
+      s.item.classList.toggle('is-completed', false);
+    });
+    if (idx > 0) {
+      for (var k = 0; k < idx; k++) {
+        stepSections[k].item.classList.add('is-completed');
+      }
+    }
+    if (bar) {
+      var pct = Math.max(((idx + 1) / total) * 100, (1 / total) * 100);
+      bar.style.width = pct.toFixed(1) + '%';
+    }
+    if (current) {
+      var titleEl = stepSections[idx].section.querySelector('.wizard-step-title, .step-title, h3');
+      var title = titleEl ? titleEl.textContent.trim() : ('Étape ' + (idx + 1));
+      current.innerHTML = 'Étape <strong>' + (idx + 1) + '</strong> sur ' + total + ' · ' + title;
+    }
+  }
+
+  // Sélection initiale = step 1
+  setCurrent(stepSections[0].n);
+
+  // IntersectionObserver : détecte l'étape la plus visible
+  if ('IntersectionObserver' in window) {
+    var visibility = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var n = e.target.id.replace('step-', '');
+        visibility[n] = e.intersectionRatio;
+      });
+      // Étape avec la plus forte visibilité = currente
+      var best = null;
+      var bestRatio = -1;
+      stepSections.forEach(function (s) {
+        var r = visibility[s.n] || 0;
+        if (r > bestRatio) { bestRatio = r; best = s.n; }
+      });
+      if (best !== null && bestRatio > 0.05) setCurrent(best);
+    }, {
+      // viewport rétréci du haut (sticky stepper) et du bas
+      rootMargin: '-120px 0px -45% 0px',
+      threshold: [0, 0.1, 0.25, 0.5, 0.75, 1]
+    });
+    stepSections.forEach(function (s) { io.observe(s.section); });
+  }
+
+  // Smooth scroll au clic
+  stepper.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#step-"]');
+    if (!a) return;
+    e.preventDefault();
+    var id = a.getAttribute('href').slice(1);
+    var target = document.getElementById(id);
+    if (!target) return;
+    // Offset pour ne pas que la section atterrisse sous le stepper
+    var stepperRect = stepper.getBoundingClientRect();
+    var navH = 64;
+    var offset = stepperRect.height + navH + 16;
+    var y = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  });
+})();
 </script>
 
 <!-- Wizard interactif · chat-interactif-v1 -->
