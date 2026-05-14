@@ -1178,15 +1178,82 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       el.addEventListener('change', function () { firstInteraction(); updateRecap(); });
     });
 
+    // Modes incompatibles avec "Lecture seule" : si Lecture seule activée, ces modes sont désactivés
+    // (et inversement, si l'un de ces modes est activé, Lecture seule est désactivée).
+    // Modes COMPATIBLES avec Lecture seule (non listés ici) : mode-preqa, mode-citations, mode-subtitles.
+    var LECTURE_INCOMPATIBLES = ['mode-qa', 'mode-libre', 'mode-sondages', 'mode-reactions', 'mode-nuage', 'mode-quiz', 'mode-brainstorming'];
+
+    // Met à jour la zone d'affichage des conflits entre modes (#mode-conflicts).
+    // Appelée à chaque change de mode.
+    function updateModeConflicts() {
+      var container = document.getElementById('mode-conflicts');
+      if (!container) return;
+      var conflicts = [];
+
+      // 1. Notification quand Lecture seule est active (rappel que les autres modes sont désactivés)
+      var lectureInput = wizard.querySelector('input[name="mode-lecture"]');
+      if (lectureInput && lectureInput.checked) {
+        conflicts.push({
+          type: 'info',
+          title: 'Mode "Lecture seule" actif',
+          text: 'Les modes interactifs (Q&A, sondages, chat, quiz, mur d\'idées…) sont désactivés automatiquement car incompatibles. Restent disponibles : pré-Q&A, citations à retenir et sous-titrage.'
+        });
+      }
+
+      // 2. Notification UX quand Q&A modéré + Chat libre sont cochés ensemble (complication UX, pas un bug)
+      var qaInput = wizard.querySelector('input[name="mode-qa"]');
+      var libreInput = wizard.querySelector('input[name="mode-libre"]');
+      if (qaInput && qaInput.checked && libreInput && libreInput.checked) {
+        conflicts.push({
+          type: 'info',
+          title: 'Q&A modéré + Chat libre activés',
+          text: 'Les questions importantes risquent de se perdre dans le flux du chat libre. Conseillé : privilégier l\'un des deux selon votre événement.'
+        });
+      }
+
+      // Render
+      container.innerHTML = '';
+      if (conflicts.length === 0) {
+        container.hidden = true;
+        return;
+      }
+      conflicts.forEach(function (c) {
+        var msg = document.createElement('div');
+        msg.className = 'mode-conflict-msg is-' + c.type;
+        msg.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+          '<div><strong>' + c.title + '</strong><br>' + c.text + '</div>';
+        container.appendChild(msg);
+      });
+      container.hidden = false;
+    }
+
     modeCheckboxes.forEach(function (c) {
       c.addEventListener('change', function () {
+        // SMART : si Lecture seule vient d'être cochée → décoche tous les modes incompatibles
+        // (Note : modifier .checked en JS NE déclenche PAS l'event change, donc pas de cascade infinie)
+        if (c.name === 'mode-lecture' && c.checked) {
+          LECTURE_INCOMPATIBLES.forEach(function (name) {
+            var input = wizard.querySelector('input[name="' + name + '"]');
+            if (input && input.checked) input.checked = false;
+          });
+        }
+        // SMART (inverse) : si un mode incompatible vient d'être coché → décoche Lecture seule
+        if (LECTURE_INCOMPATIBLES.indexOf(c.name) !== -1 && c.checked) {
+          var lectureInput = wizard.querySelector('input[name="mode-lecture"]');
+          if (lectureInput && lectureInput.checked) lectureInput.checked = false;
+        }
+
         firstInteraction();
         updateRecap();
+        updateModeConflicts();
         if (c.name === 'mode-subtitles') {
           track('chat_wizard_subtitles_toggled', { enabled: c.checked });
         }
       });
     });
+
+    // Init : afficher les conflits éventuels au chargement
+    updateModeConflicts();
 
     accessModeRadios.forEach(function (r) {
       r.addEventListener('change', function () {
