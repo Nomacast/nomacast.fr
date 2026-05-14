@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>URL vMix Alertes · Admin Nomacast</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+  <style>
+    .vmix-card { margin-bottom: 18px; }
+    .vmix-form-row {
+      display: flex; gap: 8px; align-items: stretch;
+      flex-wrap: wrap;
+    }
+    .vmix-form-row .admin-input { flex: 1; min-width: 240px; }
+    .vmix-event-info {
+      margin-top: 14px; padding: 10px 12px;
+      background: var(--cyan-light, #eaf2fa);
+      border: 1px solid #d4e3f2;
+      border-radius: 8px;
+      font-size: 13px; color: var(--ink-muted, #475569);
+    }
+    .vmix-event-info strong { color: var(--ink, #0f172a); }
+    .vmix-url-input {
+      width: 100%;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+      background: var(--off-white, #f8fafc);
+      color: var(--ink-muted, #475569);
+    }
+    .vmix-actions {
+      display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .vmix-help {
+      margin: 8px 0 0;
+      font-size: 12px; color: var(--ink-faint, #94a3b8);
+      line-height: 1.55;
+    }
+    .vmix-help code {
+      background: var(--off-white, #f8fafc);
+      padding: 1px 6px; border-radius: 4px;
+      font-size: 11px;
+    }
+    .vmix-recipe {
+      list-style: decimal inside;
+      padding: 0; margin: 0;
+      color: var(--ink-muted, #475569);
+      line-height: 1.8; font-size: 13px;
+    }
+    .vmix-recipe code {
+      background: var(--off-white, #f8fafc);
+      padding: 1px 6px; border-radius: 4px;
+      font-size: 12px; color: var(--ink, #0f172a);
+    }
+  </style>
+</head>
+<body class="admin-page">
+
+<header class="admin-header">
+  <a href="/admin/" class="admin-header-brand-link">
+    <span class="admin-header-brand">
+      <span class="admin-header-brand-dot"></span>
+      Nomacast
+    </span>
+  </a>
+  <div class="admin-header-title">Admin Chat interactif</div>
+  <div class="admin-header-actions">
+    <span class="admin-header-version" id="admin-version">build…</span>
+    <a class="admin-header-link" href="/admin/">Accueil admin</a>
+    <a class="admin-header-link" href="/" target="_blank" rel="noopener">Site public ↗</a>
+  </div>
+</header>
+
+<main class="admin-main">
+
+  <div class="admin-page-head">
+    <div>
+      <h1>URL vMix Alertes</h1>
+      <div class="admin-page-head-sub">Génère l'URL signée pour vMix Browser Input.</div>
+    </div>
+  </div>
+
+  <div id="message-zone"></div>
+
+  <section class="admin-card vmix-card">
+    <h2 class="admin-card-title">Générer l'URL</h2>
+    <div class="vmix-form-row">
+      <input type="text" id="event-id" class="admin-input" placeholder="event_id (UUID)" autocomplete="off">
+      <button type="button" class="admin-btn admin-btn-primary" id="btn-generate">Générer</button>
+    </div>
+    <p class="vmix-help">L'event_id se trouve dans l'URL de la régie : <code>/admin/live.html?id=<strong>UUID-ICI</strong></code></p>
+    <div class="vmix-event-info" id="event-info" style="display:none;"></div>
+  </section>
+
+  <section class="admin-card vmix-card" id="result-card" style="display:none;">
+    <h2 class="admin-card-title">URL vMix prête</h2>
+    <input type="text" id="result-url" class="admin-input vmix-url-input" readonly>
+    <div class="vmix-actions">
+      <button type="button" class="admin-btn admin-btn-primary" id="btn-copy">Copier l'URL</button>
+      <button type="button" class="admin-btn admin-btn-ghost" id="btn-preview">Aperçu navigateur</button>
+    </div>
+    <p class="vmix-help">
+      <strong>Dans vMix :</strong> Add Input → Web Browser → coller l'URL → OK. Taille recommandée : 480×270 ou 520×360.
+    </p>
+  </section>
+
+  <section class="admin-card vmix-card">
+    <h2 class="admin-card-title">Mode d'emploi</h2>
+    <ol class="vmix-recipe">
+      <li>Récupère l'<code>event_id</code> dans l'URL de la régie de l'event en cours</li>
+      <li>Colle-le ci-dessus et clique <code>Générer</code></li>
+      <li>Clique <code>Copier l'URL</code></li>
+      <li>Dans vMix : <code>Add Input</code> → <code>Web Browser</code> → colle l'URL → valider</li>
+      <li>Place ce Browser Input en overlay sur ton multiview ou en PIP</li>
+      <li>Au moment où un participant signale un problème, l'alerte apparaît dans vMix en ~2 sec</li>
+    </ol>
+  </section>
+
+</main>
+
+<script src="/admin/admin.js"></script>
+<script>
+(function () {
+  if (!window.A) return;
+
+  A.loadVersion();
+
+  var inputEventId = document.getElementById('event-id');
+  var btnGenerate  = document.getElementById('btn-generate');
+  var btnCopy      = document.getElementById('btn-copy');
+  var btnPreview   = document.getElementById('btn-preview');
+  var resultCard   = document.getElementById('result-card');
+  var resultUrl    = document.getElementById('result-url');
+  var eventInfo    = document.getElementById('event-info');
+  var messageZone  = document.getElementById('message-zone');
+
+  // Pré-remplir depuis ?event=<id> ou ?id=<id>
+  var urlParams = new URLSearchParams(location.search);
+  var preset = (urlParams.get('event') || urlParams.get('id') || '').trim();
+  if (preset) {
+    inputEventId.value = preset;
+  }
+
+  btnGenerate.addEventListener('click', generateUrl);
+  inputEventId.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); generateUrl(); }
+  });
+
+  async function generateUrl() {
+    resultCard.style.display = 'none';
+    eventInfo.style.display = 'none';
+
+    var eventId = inputEventId.value.trim();
+    if (!eventId) {
+      A.showMessage(messageZone, 'error', 'event_id requis');
+      return;
+    }
+
+    btnGenerate.disabled = true;
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/feed-token');
+      resultUrl.value = data.feed_url;
+      resultCard.style.display = '';
+      eventInfo.style.display = '';
+      eventInfo.innerHTML = '<strong>Event :</strong> ' + escapeHtml(data.event_title || '—');
+      A.showMessage(messageZone, 'success', 'URL générée. Tu peux la copier ci-dessous.');
+    } catch (err) {
+      A.showMessage(messageZone, 'error', 'Erreur : ' + err.message);
+    } finally {
+      btnGenerate.disabled = false;
+    }
+  }
+
+  btnCopy.addEventListener('click', async function () {
+    btnCopy.disabled = true;
+    try {
+      await navigator.clipboard.writeText(resultUrl.value);
+      btnCopy.textContent = 'Copié ✓';
+      setTimeout(function () { btnCopy.textContent = "Copier l'URL"; btnCopy.disabled = false; }, 1500);
+    } catch (e) {
+      resultUrl.select();
+      btnCopy.textContent = 'Sélectionné — Ctrl+C';
+      setTimeout(function () { btnCopy.textContent = "Copier l'URL"; btnCopy.disabled = false; }, 2000);
+    }
+  });
+
+  btnPreview.addEventListener('click', function () {
+    if (!resultUrl.value) return;
+    window.open(resultUrl.value, 'vmix-feed-preview', 'width=520,height=360,resizable=yes');
+  });
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // Auto-generate si event en query string
+  if (preset) {
+    generateUrl();
+  }
+})();
+</script>
+</body>
+</html>
