@@ -120,7 +120,7 @@
       field('Titre de l\'event', true, A.el('input', {
         className: 'admin-form-input',
         attrs: { type: 'text', name: 'title', required: true, maxlength: '200', value: ev.title }
-      }), 'Modifie le titre affiché aux participants. Le slug d\'URL reste « ' + ev.slug + ' ».'),
+      }), 'Modifie uniquement le titre affiché. ⚠ L\'URL publique reste figée sur « /chat/' + ev.slug + ' » (le slug ne peut plus être modifié après création — vos invités ont déjà ce lien).'),
       field('Client', false, A.el('input', {
         className: 'admin-form-input',
         attrs: { type: 'text', name: 'client_name', maxlength: '200', value: ev.client_name || '' }
@@ -223,6 +223,18 @@
     }
     logoUrlInput.addEventListener('input', function () { renderLogoPreview(this.value.trim()); });
     setTimeout(function () { renderLogoPreview(ev.logo_url || ''); }, 50);
+
+    // Fix 9 : live update du preview quand on change la couleur primaire
+    // (le preview affiche le logo sur fond de la couleur — sans listener, il fallait
+    //  retoucher l'URL du logo pour voir le changement de couleur)
+    setTimeout(function () {
+      var colorInput = form && form.primary_color;
+      if (colorInput) {
+        colorInput.addEventListener('input', function () {
+          renderLogoPreview(logoUrlInput.value.trim());
+        });
+      }
+    }, 50);
 
     // Upload handler
     hiddenFileInput.addEventListener('change', async function () {
