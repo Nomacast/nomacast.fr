@@ -7,7 +7,8 @@
 // - No-index (meta + header HTTP X-Robots-Tag)
 // - URL totalement opaque : pas de leak du slug
 
-export const onRequestGet = async ({ params, env }) => {
+// Marqueur : nomacast-analytics-visits-tracking-v1
+export const onRequestGet = async ({ params, request, env }) => {
   if (!env.DB) {
     return htmlResponse(renderErrorPage(
       'Service indisponible',
@@ -57,6 +58,26 @@ export const onRequestGet = async ({ params, env }) => {
       .bind(new Date().toISOString(), invitee.id).run();
   } catch (err) {
     console.error('[i/token] last_seen track failed', err);
+  }
+
+  // Tracking visits détaillé (analytics - chaque ouverture du lien)
+  // Wrappé en try/catch indépendant : si la table n'existe pas encore (migration 0015 pas appliquée)
+  // ou si autre erreur, on ne fait pas échouer le rendu de la page.
+  try {
+    await env.DB.prepare(`
+      INSERT INTO visits (id, event_id, invitee_id, anon_key, visited_at, page_kind, user_agent, country_code, ip_hash, referrer)
+      VALUES (?, ?, ?, NULL, ?, 'invite', ?, ?, NULL, ?)
+    `).bind(
+      crypto.randomUUID(),
+      event.id,
+      invitee.id,
+      new Date().toISOString(),
+      request.headers.get('User-Agent') || null,
+      request.headers.get('CF-IPCountry') || null,
+      request.headers.get('Referer') || null
+    ).run();
+  } catch (err) {
+    console.error('[i/token] visits track failed', err);
   }
 
   // Lot E : Auto-passage draft → live si l'heure prévue est dépassée
