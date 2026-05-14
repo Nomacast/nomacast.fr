@@ -43,7 +43,9 @@ export const onRequestPatch = async ({ request, params, env }) => {
   }
 
   // On accepte seulement un sous-ensemble de champs modifiables.
-  // (le slug, id, created_at sont immuables ; updated_at est régénéré ici)
+  // Le slug est traité séparément (cf. plus bas) car sa modification est
+  // soumise à condition (aucun invité ne doit déjà avoir reçu le lien).
+  // id, created_at sont immuables ; updated_at est régénéré ici.
   const allowed = [
     'title', 'client_name', 'scheduled_at', 'duration_minutes',
     'audience_estimate', 'status', 'primary_color', 'logo_url',
@@ -52,6 +54,47 @@ export const onRequestPatch = async ({ request, params, env }) => {
 
   const sets = [];
   const binds = [];
+
+  // Slug modifiable UNIQUEMENT si aucun invité n'a encore été ajouté (Fix 8 v2)
+  if (data.slug !== undefined) {
+    const newSlug = String(data.slug || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire accents
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    if (newSlug.length < 3 || newSlug.length > 80) {
+      return jsonResponse({ error: 'Le slug doit faire entre 3 et 80 caractères (lettres, chiffres, tirets uniquement).' }, 400);
+    }
+
+    // Charger l'event actuel pour comparer + vérifier les invités
+    const current = await env.DB.prepare(
+      `SELECT slug,
+              (SELECT COUNT(*) FROM invitees WHERE event_id = ?) AS invitees_count
+         FROM events WHERE id = ?`
+    ).bind(params.id, params.id).first();
+
+    if (!current) return jsonResponse({ error: 'Event introuvable' }, 404);
+
+    // No-op si identique à l'actuel
+    if (current.slug !== newSlug) {
+      // Refus si invités déjà présents
+      if (current.invitees_count > 0) {
+        return jsonResponse({
+          error: 'L\'URL ne peut plus être modifiée : ' + current.invitees_count + ' invité(s) ont déjà reçu le lien actuel. Pour changer le slug, il faudrait d\'abord supprimer ces invités (et leur renvoyer un nouveau lien après).'
+        }, 409);
+      }
+      // Vérifier unicité
+      const collision = await env.DB.prepare(
+        'SELECT id FROM events WHERE slug = ? AND id != ?'
+      ).bind(newSlug, params.id).first();
+      if (collision) {
+        return jsonResponse({ error: 'Ce slug est déjà utilisé par un autre event.' }, 409);
+      }
+      sets.push('slug = ?'); binds.push(newSlug);
+    }
+  }
 
   if (data.title !== undefined) {
     if (!data.title.trim()) return jsonResponse({ error: 'Titre requis' }, 400);

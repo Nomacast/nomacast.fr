@@ -115,17 +115,50 @@
       attrs: { autocomplete: 'off' }
     });
 
+    // Fix 8 v2 : slug modifiable uniquement si aucun invité n'a reçu le lien
+    var canChangeSlug = (ev.invitees_count || 0) === 0;
+
     // --- Title + Client ---
+    var titleHint = canChangeSlug
+      ? 'Modifie le titre affiché. L\'URL publique reste « /chat/' + ev.slug + ' » sauf si tu modifies le slug ci-dessous.'
+      : 'Modifie uniquement le titre affiché. \u26A0 L\'URL publique « /chat/' + ev.slug + ' » est figée (' + ev.invitees_count + ' invité(s) ont déjà reçu ce lien).';
+
     form.appendChild(formRow([
       field('Titre de l\'event', true, A.el('input', {
         className: 'admin-form-input',
         attrs: { type: 'text', name: 'title', required: true, maxlength: '200', value: ev.title }
-      }), 'Modifie uniquement le titre affiché. ⚠ L\'URL publique reste figée sur « /chat/' + ev.slug + ' » (le slug ne peut plus être modifié après création — vos invités ont déjà ce lien).'),
+      }), titleHint),
       field('Client', false, A.el('input', {
         className: 'admin-form-input',
         attrs: { type: 'text', name: 'client_name', maxlength: '200', value: ev.client_name || '' }
       }), 'Nom de l\'entreprise organisatrice.')
     ]));
+
+    // --- Slug d'URL (Fix 8 v2 : éditable uniquement si pas d'invités) ---
+    if (canChangeSlug) {
+      var slugInput = A.el('input', {
+        className: 'admin-form-input',
+        attrs: {
+          type: 'text', name: 'slug', maxlength: '80', value: ev.slug,
+          pattern: '[a-z0-9-]+',
+          title: 'Lettres minuscules, chiffres et tirets uniquement'
+        }
+      });
+      // Normalisation au blur : lowercase, accents -> ASCII, espaces/spéciaux -> -
+      slugInput.addEventListener('blur', function () {
+        var v = (this.value || '')
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9-]+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        this.value = v;
+      });
+      form.appendChild(formRow([
+        field('URL publique (slug)', false, slugInput,
+          'L\'URL sera « /chat/' + ev.slug + ' ». Modifiable tant qu\'aucun invité n\'a reçu le lien. Sera figée définitivement dès le 1er ajout d\'invité.')
+      ]));
+    }
 
     // --- Date + Durée ---
     form.appendChild(formRow([
@@ -225,8 +258,6 @@
     setTimeout(function () { renderLogoPreview(ev.logo_url || ''); }, 50);
 
     // Fix 9 : live update du preview quand on change la couleur primaire
-    // (le preview affiche le logo sur fond de la couleur — sans listener, il fallait
-    //  retoucher l'URL du logo pour voir le changement de couleur)
     setTimeout(function () {
       var colorInput = form && form.primary_color;
       if (colorInput) {
@@ -510,6 +541,10 @@
       modes: Array.prototype.slice.call(form.querySelectorAll('input[name="mode"]:checked')).map(function (c) { return c.value; }),
       access_mode: form.access_mode.value || 'public'
     };
+    // Fix 8 v2 : envoyer le slug si le champ est présent (= invitees_count === 0)
+    if (form.slug) {
+      data.slug = form.slug.value;
+    }
 
     try {
       var result = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), {
@@ -517,6 +552,8 @@
         body: data
       });
       A.showMessage(messageZone, 'success', 'Modifications enregistrées.');
+      // Si le slug a changé, on doit re-render tout le form (URL publique, pageSub, etc.)
+      var slugChanged = result.event.slug !== ev.slug;
       // Mettre à jour le badge statut
       statusBadge.textContent = A.statusLabel(result.event.status);
       statusBadge.className = 'admin-badge admin-badge-' + result.event.status;
@@ -528,6 +565,11 @@
       }
       // nomacast-stream-card-v1 : card Streaming live
       publicLinkZone.appendChild(A.renderStreamCard(result.event, load));
+      if (slugChanged) {
+        // Le slug a changé : re-render le form complet pour que le pageSub
+        // et le hint du titre reflètent le nouveau slug
+        renderForm(result.event);
+      }
     } catch (err) {
       A.showMessage(messageZone, 'error', 'Enregistrement échoué : ' + err.message);
     } finally {
