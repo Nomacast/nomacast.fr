@@ -19,7 +19,8 @@ export const onRequestGet = async ({ params, env, request }) => {
     SELECT
       id, slug, title, client_name, scheduled_at, duration_minutes,
       status, primary_color, logo_url, white_label, access_mode, modes_json,
-      stream_uid, stream_playback_url
+      stream_uid, stream_playback_url,
+      reaction_emojis_json
     FROM events WHERE slug = ?
   `).bind(params.slug).first();
 
@@ -33,6 +34,15 @@ export const onRequestGet = async ({ params, env, request }) => {
   let modes = [];
   if (row.modes_json) { try { modes = JSON.parse(row.modes_json); } catch (e) {} }
 
+  // nomacast-lot-2a-bis-l2-v1 : reactions emojis configurables (rétro-compat NULL → défaut 8)
+  let reactionEmojis = null;
+  if (row.reaction_emojis_json) {
+    try {
+      const parsed = JSON.parse(row.reaction_emojis_json);
+      if (Array.isArray(parsed) && parsed.length > 0) reactionEmojis = parsed;
+    } catch (e) {}
+  }
+
   const event = {
     id: row.id, slug: row.slug, title: row.title, client_name: row.client_name,
     scheduled_at: row.scheduled_at, duration_minutes: row.duration_minutes,
@@ -40,7 +50,8 @@ export const onRequestGet = async ({ params, env, request }) => {
     logo_url: row.logo_url, white_label: row.white_label === 1,
     access_mode: row.access_mode,
     modes,
-    stream_uid: row.stream_uid, stream_playback_url: row.stream_playback_url
+    stream_uid: row.stream_uid, stream_playback_url: row.stream_playback_url,
+    reaction_emojis: reactionEmojis
   };
 
   // Vérifier si c'est une preview admin (HMAC valide du slug)
@@ -244,6 +255,23 @@ function renderWaitingPage(event) {
   });
 }
 
+// nomacast-lot-2a-bis-l2-v1 : pool global des emojis de reaction (cohérent avec admin/live.html)
+// + labels FR pour aria-label + défaut 8 originaux (rétro-compat Lot 2.A si event.reaction_emojis NULL).
+const DEFAULT_REACTION_EMOJIS = ['👏', '❤️', '🔥', '🎉', '🙏', '👍', '😂', '🤔'];
+const REACTION_LABELS = {
+  '👏': 'Applaudir', '❤️': "J'aime", '🔥': 'Top', '🎉': 'Bravo',
+  '🙏': 'Merci', '👍': 'OK', '😂': 'Drôle', '🤔': 'Question',
+  '💡': 'Idée', '🚀': 'Décollage', '✨': 'Magique', '🤯': 'Bluffant',
+  '🥳': 'Fête', '🤝': "D'accord", '⭐': 'Excellent'
+};
+
+function buildReactionsBarHtml(emojis) {
+  return emojis.map(function (e) {
+    var label = REACTION_LABELS[e] || e;
+    return '<button type="button" class="reaction-btn" data-emoji="' + escapeHtml(e) + '" aria-label="' + escapeHtml(label) + '">' + escapeHtml(e) + '<span class="reaction-count" data-for="' + escapeHtml(e) + '">0</span></button>';
+  }).join('');
+}
+
 function renderLivePage(event) {
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
@@ -252,6 +280,11 @@ function renderLivePage(event) {
   const hasPresence = !!(event.modes && event.modes.includes('presence'));
   const hasReactions = !!(event.modes && event.modes.includes('reactions'));
   const hasCta = !!(event.modes && event.modes.includes('cta'));
+
+  // nomacast-lot-2a-bis-l2-v1 : liste effective d'emojis (config DB ou défaut 8)
+  const reactionEmojis = (Array.isArray(event.reaction_emojis) && event.reaction_emojis.length > 0)
+    ? event.reaction_emojis
+    : DEFAULT_REACTION_EMOJIS;
 
   const heroBody = `
     <div class="hero-badges">
@@ -286,18 +319,9 @@ function renderLivePage(event) {
       <div class="live-poll-zone" id="live-poll-zone" style="display:none;"></div>
       <div class="live-video">
         ${playerHtml}
-        ${hasReactions ? `<!-- nomacast-lot-2a-v1 : C1 reactions -->
+        ${hasReactions ? `<!-- nomacast-lot-2a-v1 : C1 reactions (Lot 2.A-bis L2 v1 : emojis dynamiques) -->
         <div class="reactions-overlay" id="reactions-overlay" aria-hidden="true"></div>
-        <div class="reactions-bar" id="reactions-bar">
-          <button type="button" class="reaction-btn" data-emoji="👏" aria-label="Applaudir">👏<span class="reaction-count" data-for="👏">0</span></button>
-          <button type="button" class="reaction-btn" data-emoji="❤️" aria-label="J'aime">❤️<span class="reaction-count" data-for="❤️">0</span></button>
-          <button type="button" class="reaction-btn" data-emoji="🔥" aria-label="Top">🔥<span class="reaction-count" data-for="🔥">0</span></button>
-          <button type="button" class="reaction-btn" data-emoji="🎉" aria-label="Bravo">🎉<span class="reaction-count" data-for="🎉">0</span></button>
-          <button type="button" class="reaction-btn" data-emoji="🙏" aria-label="Merci">🙏<span class="reaction-count" data-for="🙏">0</span></button>
-          <button type="button" class="reaction-btn" data-emoji="👍" aria-label="OK">👍<span class="reaction-count" data-for="👍">0</span></button>
-          <button type="button" class="reaction-btn" data-emoji="😂" aria-label="Drôle">😂<span class="reaction-count" data-for="😂">0</span></button>
-          <button type="button" class="reaction-btn" data-emoji="🤔" aria-label="Question">🤔<span class="reaction-count" data-for="🤔">0</span></button>
-        </div>` : ''}
+        <div class="reactions-bar" id="reactions-bar">${buildReactionsBarHtml(reactionEmojis)}</div>` : ''}
         <div class="report-issue-bar">
           <button type="button" class="report-issue-trigger" id="report-issue-trigger">
             Signaler un problème technique
@@ -359,6 +383,9 @@ function renderLivePage(event) {
       presenceStatsUrl: hasPresence ? `/api/chat/${encodeURIComponent(event.slug)}/presence/stats` : null,
       reactionsUrl: hasReactions ? `/api/chat/${encodeURIComponent(event.slug)}/reactions` : null,
       reactionsRecentUrl: hasReactions ? `/api/chat/${encodeURIComponent(event.slug)}/reactions/recent` : null,
+      // nomacast-lot-2a-bis-l2-v1 : URL config emojis + liste initiale pour SSR<->client cohérence
+      reactionsConfigUrl: hasReactions ? `/api/chat/${encodeURIComponent(event.slug)}/reactions/config` : null,
+      reactionEmojis: hasReactions ? reactionEmojis : null,
       ctaActiveUrl: hasCta ? `/api/chat/${encodeURIComponent(event.slug)}/cta/active` : null,
       accessMode: event.access_mode,
       magicToken: null, // pas de token sur la page publique
@@ -1152,6 +1179,8 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     background: #f8fafc;
     border-top: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
+    /* nomacast-lot-2a-bis-l2-v1 : fade 200ms lors d'un rebuild (changement config emojis en live) */
+    transition: opacity 0.2s ease;
   }
   .reaction-btn {
     display: inline-flex;
@@ -1352,7 +1381,7 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
 // Script JS de la page live (polling chat + polling status pour live→ended).
 // Concaténation + (pas de template strings) pour éviter les conflits ${...}
 // avec le template serveur.
-function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, presenceHeartbeatUrl, presenceStatsUrl, reactionsUrl, reactionsRecentUrl, ctaActiveUrl, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, hasPresence, hasReactions, hasCta, authorPlaceholder }) {
+function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, presenceHeartbeatUrl, presenceStatsUrl, reactionsUrl, reactionsRecentUrl, reactionsConfigUrl, reactionEmojis, ctaActiveUrl, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, hasPresence, hasReactions, hasCta, authorPlaceholder }) {
   return `<script>
 (function () {
   var STATUS_URL = ${JSON.stringify(statusUrl)};
@@ -1365,6 +1394,10 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
   var PRESENCE_STATS_URL = ${JSON.stringify(presenceStatsUrl || null)};
   var REACTIONS_URL = ${JSON.stringify(reactionsUrl || null)};
   var REACTIONS_RECENT_URL = ${JSON.stringify(reactionsRecentUrl || null)};
+  // nomacast-lot-2a-bis-l2-v1 : config dynamique emojis (polling 15s + rebuild fade 200ms)
+  var REACTIONS_CONFIG_URL = ${JSON.stringify(reactionsConfigUrl || null)};
+  var REACTION_EMOJIS = ${JSON.stringify(reactionEmojis || [])};
+  var REACTION_LABELS = ${JSON.stringify(REACTION_LABELS)};
   var CTA_ACTIVE_URL = ${JSON.stringify(ctaActiveUrl || null)};
   var ACCESS_MODE = ${JSON.stringify(accessMode)};
   var MAGIC_TOKEN = ${JSON.stringify(magicToken || null)};
@@ -1980,6 +2013,7 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
   // nomacast-lot-2a-v1 : C1 Reactions (envoi + polling + overlay éphémère)
   // Pas de spawn optimiste : l'API /recent ne renvoie pas l'invitee_id/anon_key,
   // donc impossible de dédupliquer. On attend le polling pour spawn (~2s de latence).
+  // nomacast-lot-2a-bis-l2-v1 : + polling 15s sur /reactions/config pour barre dynamique en live
   // ============================================================
   if (HAS_REACTIONS && REACTIONS_URL && REACTIONS_RECENT_URL && !IS_ENDED) {
     (function setupReactions() {
@@ -1989,7 +2023,12 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
 
       var lastSince = new Date().toISOString();
       var pollTimer = null;
+      var configTimer = null;
       var sendCooldown = false;
+      // État courant de la barre : référence pour détecter un changement via polling config
+      var currentEmojis = (Array.isArray(REACTION_EMOJIS) && REACTION_EMOJIS.length > 0)
+        ? REACTION_EMOJIS.slice()
+        : [];
 
       // Click → POST reaction (feedback visuel via :active CSS, transform scale 0.92)
       bar.addEventListener('click', function (e) {
@@ -2027,7 +2066,7 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
                 lastSince = data.server_time;
               }
             }
-            // Totaux 5min
+            // Totaux 5min : on n'écrase QUE les compteurs des emojis présents dans la barre actuelle
             if (data.totals && typeof data.totals === 'object') {
               Object.keys(data.totals).forEach(function (emoji) {
                 var span = bar.querySelector('.reaction-count[data-for="' + cssEscape(emoji) + '"]');
@@ -2054,13 +2093,79 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         return String(s).replace(/(["\\\\\\[\\]])/g, '\\\\$1');
       }
 
+      // nomacast-lot-2a-bis-l2-v1 : escape attribut HTML minimal (pour les emojis dans les data-attrs)
+      function escAttr(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      // nomacast-lot-2a-bis-l2-v1 : génère le HTML d'un bouton (miroir client du buildReactionsBarHtml serveur)
+      function buildBtnHtml(emoji) {
+        var label = REACTION_LABELS[emoji] || emoji;
+        return '<button type="button" class="reaction-btn" data-emoji="' + escAttr(emoji) + '" aria-label="' + escAttr(label) + '">'
+          + escAttr(emoji) + '<span class="reaction-count" data-for="' + escAttr(emoji) + '">0</span></button>';
+      }
+
+      // nomacast-lot-2a-bis-l2-v1 : compare 2 listes d'emojis (order-sensitive)
+      function sameList(a, b) {
+        if (!Array.isArray(a) || !Array.isArray(b)) return false;
+        if (a.length !== b.length) return false;
+        for (var i = 0; i < a.length; i++) { if (a[i] !== b[i]) return false; }
+        return true;
+      }
+
+      // nomacast-lot-2a-bis-l2-v1 : rebuild de la barre avec fade 200ms et préservation des compteurs
+      function rebuildBar(newEmojis) {
+        // Snapshot des compteurs actuels avant swap (on les remettra pour les emojis conservés)
+        var counts = {};
+        var spans = bar.querySelectorAll('.reaction-count');
+        for (var i = 0; i < spans.length; i++) {
+          var e = spans[i].getAttribute('data-for');
+          if (e) counts[e] = spans[i].textContent;
+        }
+        // Fade out via opacity (CSS transition 0.2s déjà déclarée sur .reactions-bar)
+        bar.style.opacity = '0';
+        setTimeout(function () {
+          bar.innerHTML = newEmojis.map(buildBtnHtml).join('');
+          // Restauration des compteurs pour les emojis encore présents
+          newEmojis.forEach(function (em) {
+            if (counts[em] != null) {
+              var s = bar.querySelector('.reaction-count[data-for="' + cssEscape(em) + '"]');
+              if (s) s.textContent = counts[em];
+            }
+          });
+          // Fade in
+          bar.style.opacity = '1';
+          currentEmojis = newEmojis.slice();
+        }, 200);
+      }
+
+      // nomacast-lot-2a-bis-l2-v1 : polling 15s sur /reactions/config pour propagation live
+      function fetchConfig() {
+        if (!REACTIONS_CONFIG_URL) return;
+        fetch(REACTIONS_CONFIG_URL, { cache: 'no-store', credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data || !Array.isArray(data.emojis) || data.emojis.length === 0) return;
+            if (!sameList(data.emojis, currentEmojis)) {
+              rebuildBar(data.emojis);
+            }
+          })
+          .catch(function () {});
+      }
+
       fetchRecent();
       pollTimer = setInterval(fetchRecent, 2000);
+      if (REACTIONS_CONFIG_URL) {
+        configTimer = setInterval(fetchConfig, 15000);
+      }
       document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible') {
           // Reset le curseur pour ne pas spawn 50 reactions d'un coup au retour
           lastSince = new Date().toISOString();
           fetchRecent();
+          // Resync immédiat de la config aussi (au cas où l'admin l'a changée pendant l'absence)
+          fetchConfig();
         }
       });
     })();
