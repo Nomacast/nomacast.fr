@@ -222,8 +222,9 @@
     try {
       var eventData = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId));
       state.event = eventData.event;
+      if (state.event && state.event.title) document.title = 'Invités - ' + state.event.title;
 
-      pageTitle.textContent = 'Invités · ' + state.event.title;
+      pageTitle.textContent = 'Invités - ' + state.event.title;
       pageSub.textContent = A.formatDateTime(state.event.scheduled_at);
 
       // Lien public vers la page participant (cliquable + copier)
@@ -710,5 +711,6 @@
 })();
 </script>
 
+<!-- nomacast-page-title-v1 -->
 </body>
 </html>

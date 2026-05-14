@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Éditer event · Admin Nomacast</title>
+  <title>Éditer · Admin Nomacast</title>
   <link rel="stylesheet" href="/admin/admin.css">
 </head>
 <body>
@@ -92,6 +92,7 @@
   }
 
   function renderForm(ev) {
+      if (ev && ev.title) document.title = 'Éditer - ' + ev.title;
     pageSub.textContent = 'Slug : ' + ev.slug + ' · Créé le ' + A.formatDate(ev.created_at);
     statusBadge.textContent = A.statusLabel(ev.status);
     statusBadge.className = 'admin-badge admin-badge-' + ev.status;
@@ -695,5 +696,6 @@
 })();
 </script>
 
+<!-- nomacast-page-title-v1 -->
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>URL vMix Alertes · Admin Nomacast</title>
+  <title>vMix · Admin Nomacast</title>
   <link rel="stylesheet" href="/admin/admin.css">
   <style>
     .vmix-card { margin-bottom: 18px; }
@@ -171,6 +171,7 @@
       resultCard.style.display = '';
       eventInfo.style.display = '';
       eventInfo.innerHTML = '<strong>Event :</strong> ' + escapeHtml(data.event_title || '—');
+      if (data.event_title) document.title = 'vMix - ' + data.event_title;
       A.showMessage(messageZone, 'success', 'URL générée. Tu peux la copier ci-dessous.');
     } catch (err) {
       A.showMessage(messageZone, 'error', 'Erreur : ' + err.message);
@@ -209,5 +210,6 @@
   }
 })();
 </script>
+<!-- nomacast-page-title-v1 -->
 </body>
 </html>

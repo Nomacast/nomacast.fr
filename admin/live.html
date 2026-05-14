@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Régie en direct · Admin Nomacast</title>
+  <title>Régie · Admin Nomacast</title>
   <link rel="stylesheet" href="/admin/admin.css">
   <style>
     /* ============ Toolbar sélection outils ============ */
@@ -701,7 +701,7 @@
   }
 
   function renderEvent(ev) {
-    document.title = 'Régie · ' + ev.title + ' · Admin Nomacast';
+    document.title = 'Régie - ' + ev.title;
     pageSub.textContent = ev.title + (ev.client_name ? ' · ' + ev.client_name : '') + ' · slug : ' + ev.slug;
     statusBadge.textContent = A.statusLabel(ev.status);
     statusBadge.className = 'admin-badge admin-badge-' + ev.status;
@@ -1347,5 +1347,6 @@
 })();
 </script>
 
+<!-- nomacast-page-title-v1 -->
 </body>
 </html>
