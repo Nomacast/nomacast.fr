@@ -59,6 +59,21 @@ export const onRequestGet = async ({ params, env }) => {
     console.error('[i/token] last_seen track failed', err);
   }
 
+  // Lot E : Auto-passage draft → live si l'heure prévue est dépassée
+  // (lazy : déclenché par le 1er GET après scheduled_at, pas besoin de cron)
+  if (event.status === 'draft' && event.scheduled_at) {
+    const scheduledMs = new Date(event.scheduled_at).getTime();
+    if (!isNaN(scheduledMs) && scheduledMs <= Date.now()) {
+      try {
+        await env.DB.prepare('UPDATE events SET status = ?, updated_at = ? WHERE id = ?')
+          .bind('live', new Date().toISOString(), event.id).run();
+        event.status = 'live';
+      } catch (err) {
+        console.error('[i/token] auto go-live failed', err);
+      }
+    }
+  }
+
   let html;
   if (event.status === 'draft') {
     html = renderWaitingPage(event, invitee, params.token);
@@ -500,7 +515,7 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
 
   /* ============ LIVE LAYOUT (C4 player + C5 chat) ============ */
   /* Sur la page live, on élargit le container pour avoir un player confortable */
-  body.live-page .container { max-width: 1140px; }
+  body.live-page .container { max-width: 1280px; }
   body.live-page .tip { max-width: 680px; margin-left: auto; margin-right: auto; }
 
   .live-layout {
@@ -515,6 +530,11 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
       grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
       align-items: stretch;
     }
+    /* aspect-ratio 32/27 sur .live-chat matche exactement la hauteur du player :
+       player_width = container * 3/5, player_height = player_width * 9/16
+       chat_width = container * 2/5, chat_height (cible) = player_height
+       → chat_aspect = chat_width / chat_height = (2/5) / (3/5 * 9/16) = 32/27 */
+    .live-chat { aspect-ratio: 32 / 27; }
   }
 
   .live-video { min-width: 0; display: flex; }
@@ -539,12 +559,12 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    /* Mobile : auto + max-height 70vh */
+    width: 100%;
+    /* Mobile : hauteur libre bornée */
     min-height: 360px;
     max-height: 70vh;
-    width: 100%;
   }
-  /* Desktop ≥900px : le chat prend toute la hauteur du grid item (aligné sur le player) */
+  /* Desktop : prend toute la hauteur du grid item (qui est définie par aspect-ratio) */
   @media (min-width: 900px) {
     .chat-panel {
       max-height: none;
@@ -557,20 +577,35 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   .chat-header {
     padding: 12px 14px; border-bottom: 1px solid #f1f5f9;
     background: #fafbfc;
+    display: flex; align-items: flex-start; gap: 10px;
   }
+  .chat-header-main { flex: 1; min-width: 0; }
   .chat-title {
     font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.2;
   }
   .chat-sub {
     font-size: 11px; color: #94a3b8; margin-top: 2px; line-height: 1.3;
   }
+  .chat-pseudo-btn {
+    font-size: 11px; padding: 4px 8px;
+    background: transparent; color: #475569;
+    border: 1px solid #e2e8f0; border-radius: 5px;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .chat-pseudo-btn:hover { background: ${color}; color: #ffffff; border-color: ${color}; }
 
   .chat-messages {
-    flex: 1; min-height: 200px;
+    flex: 1 1 0;
+    min-height: 0; /* Bug fix : sans ça, flex item refuse de shrink → panel grandit avec les messages */
     overflow-y: auto; overflow-x: hidden;
     padding: 12px 14px;
     display: flex; flex-direction: column; gap: 10px;
     background: #fafbfc;
+  }
+  /* Mobile : un peu de min-height visuel pour ne pas avoir un chat ridiculement petit */
+  @media (max-width: 899px) {
+    .chat-messages { min-height: 200px; }
   }
   .chat-empty {
     color: #94a3b8; font-size: 12px; font-style: italic;
@@ -740,8 +775,11 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode }) {
   return `
     <div class="chat-panel">
       <div class="chat-header">
-        <div class="chat-title">${isQaMode ? 'Questions' : 'Chat'}</div>
-        <div class="chat-sub">${isQaMode ? 'Vos questions sont modérées avant diffusion.' : 'Échangez en direct.'}</div>
+        <div class="chat-header-main">
+          <div class="chat-title">${isQaMode ? 'Questions' : 'Chat'}</div>
+          <div class="chat-sub">${isQaMode ? 'Vos questions sont modérées avant diffusion.' : 'Échangez en direct.'}</div>
+        </div>
+        <button type="button" class="chat-pseudo-btn" id="chat-pseudo-btn" style="display:none;" title="Changer mon pseudo">Pseudo</button>
       </div>
       <div class="chat-messages" id="chat-messages">
         <div class="chat-empty" id="chat-empty">Aucun message pour le moment. Soyez le premier !</div>
@@ -871,20 +909,12 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (data && data.messages && data.messages.length) {
-          console.log('[Nomacast chat] Reçu', data.messages.length, 'message(s)');
           var atBottom = (elMessages.scrollHeight - elMessages.scrollTop - elMessages.clientHeight) < 80;
           data.messages.forEach(function (m) {
             renderMessage(m);
             if (m.created_at) lastTimestamp = m.created_at;
           });
           if (atBottom) scrollToBottom(true);
-        } else if (data) {
-          // Premier appel : si rien, c'est probablement normal
-          if (lastTimestamp === null) {
-            console.log('[Nomacast chat] Aucun message historique reçu');
-          }
-        } else {
-          console.warn('[Nomacast chat] Fetch sans data (réponse non-JSON ou erreur)');
         }
       })
       .catch(function () {})
@@ -910,6 +940,21 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
         } else {
           elForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
         }
+      }
+    });
+  }
+
+  // Bouton "Changer pseudo" — visible uniquement sur event public (sans magic_token)
+  var elPseudoBtn = document.getElementById('chat-pseudo-btn');
+  if (elPseudoBtn && !MAGIC_TOKEN) {
+    elPseudoBtn.style.display = 'inline-block';
+    elPseudoBtn.addEventListener('click', function () {
+      var current = '';
+      try { current = localStorage.getItem('nomacast-chat-author') || ''; } catch (e) {}
+      var newName = (window.prompt('Choisissez un pseudo (utilisé pour tous vos chats Nomacast) :', current) || '').trim();
+      if (newName) {
+        if (newName.length > 60) newName = newName.slice(0, 60);
+        try { localStorage.setItem('nomacast-chat-author', newName); } catch (e) {}
       }
     });
   }
@@ -987,8 +1032,6 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
   });
 
   // Démarrage du polling chat
-  // Bug 14 debug : log discret pour diagnostiquer l'historique au reload
-  console.log('[Nomacast chat] Démarrage polling. CHAT_URL=', CHAT_URL, 'ACCESS_MODE=', ACCESS_MODE, 'MAGIC_TOKEN=', MAGIC_TOKEN ? '(set)' : '(null)');
   pollChat();
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') {
@@ -1016,7 +1059,7 @@ function buildCountdownHtml(scheduledAt) {
         <div class="countdown-unit"><span class="countdown-value" data-cd-unit="seconds">--</span><span class="countdown-unit-label">sec</span></div>
       </div>
       <div class="countdown-overdue" id="nomacast-cd-overdue" style="display:none">
-        L'événement devrait avoir commencé. En attente du démarrage par l'organisateur…
+        L'événement va bientôt commencer.
       </div>
     </section>
   `;
