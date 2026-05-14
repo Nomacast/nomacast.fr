@@ -178,10 +178,31 @@
         className: 'admin-form-input',
         attrs: { type: 'number', name: 'audience_estimate', min: '1', step: '1', value: ev.audience_estimate || '' }
       })),
-      field('Couleur primaire', false, A.el('input', {
-        className: 'admin-form-input',
-        attrs: { type: 'color', name: 'primary_color', value: ev.primary_color || '#5A98D6' }
-      }))
+      field('Couleur primaire', false, (function () {
+        var colorInput = A.el('input', {
+          className: 'admin-form-input',
+          attrs: { type: 'color', name: 'primary_color', value: ev.primary_color || '#5A98D6' }
+        });
+        var resetColorBtn = A.el('button', {
+          className: 'admin-btn admin-btn-secondary admin-btn-sm',
+          attrs: { type: 'button', title: 'Remettre la couleur Nomacast (#5A98D6)' },
+          text: '↺ Nomacast',
+          style: { whiteSpace: 'nowrap' },
+          on: {
+            click: function () {
+              colorInput.value = '#5A98D6';
+              // Déclencher l'event "input" pour propager au listener Fix 9 (live update preview)
+              colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+        });
+        var wrap = A.el('div', {
+          style: { display: 'flex', gap: '8px', alignItems: 'center' }
+        });
+        wrap.appendChild(colorInput);
+        wrap.appendChild(resetColorBtn);
+        return wrap;
+      })())
     ]));
 
     // --- Logo client (URL + Upload + preview) ---
@@ -209,13 +230,26 @@
       style: { whiteSpace: 'nowrap' },
       on: { click: function () { hiddenFileInput.click(); } }
     });
+    var removeLogoBtn = A.el('button', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { type: 'button', title: 'Vider le champ logo (le logo Nomacast sera utilisé par défaut)' },
+      text: '🗑 Supprimer',
+      style: { whiteSpace: 'nowrap' },
+      on: {
+        click: function () {
+          logoUrlInput.value = '';
+          renderLogoPreview('');
+        }
+      }
+    });
 
-    // Wrapper input + bouton sur la même ligne
+    // Wrapper input + boutons sur la même ligne
     var logoInputWrap = A.el('div', {
       style: { display: 'flex', gap: '8px', alignItems: 'center' }
     });
     logoInputWrap.appendChild(logoUrlInput);
     logoInputWrap.appendChild(uploadBtn);
+    logoInputWrap.appendChild(removeLogoBtn);
     logoInputWrap.appendChild(hiddenFileInput);
 
     var logoPreview = A.el('div', {
