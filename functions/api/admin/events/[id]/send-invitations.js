@@ -200,9 +200,13 @@ function escapeHtml(s) {
 
 function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel, agendaUrls }) {
   const lines = [
+    'INVITATION ÉVÉNEMENT LIVE',
+    '',
     greeting,
     '',
-    `Vous êtes invité(e) à participer au chat live de l'événement « ${event.title} »` + (orgLine ? `, ${orgLine}` : '') + '.',
+    `Vous êtes invité(e) à participer à notre événement live « ${event.title} »` + (orgLine ? `, ${orgLine}` : '') + '.',
+    'Posez vos questions à l\'oral, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur.',
+    'Aucune installation nécessaire.',
     '',
     'DÉTAILS DE L\'ÉVÉNEMENT',
     dateLabel ? `Date    : ${dateLabel}` : '',
@@ -217,8 +221,6 @@ function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel, agen
     `Google  : ${agendaUrls.google}`,
     `Outlook : ${agendaUrls.outlook}`,
     `Apple / autre : ${agendaUrls.ics}`,
-    '',
-    'Le chat ouvrira automatiquement le jour J.',
     ''
   ];
   if (!whiteLabel) {
@@ -341,7 +343,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
       <tr>
         <td style="background:${color};padding:32px 36px 28px;font-family:Arial,Helvetica,sans-serif;">
           <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#ffffff;opacity:0.85;margin-bottom:10px;">
-            Invitation chat live
+            Invitation événement live
           </div>
           <h1 style="margin:0;font-size:24px;font-weight:700;line-height:1.3;color:#ffffff;">
             ${safeTitle}
@@ -355,8 +357,9 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
         <td style="padding:32px 36px 8px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-size:15px;line-height:1.65;">
           <p style="margin:0 0 14px;font-size:16px;">${safeGreeting}</p>
           <p style="margin:0 0 8px;color:#334155;">
-            Vous êtes invité(e) à participer au chat live de l'événement.
-            Posez vos questions à l'oral, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur — aucune installation nécessaire.
+            Vous êtes invité(e) à participer à notre événement live.
+            Posez vos questions à l'oral, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur.
+            Aucune installation nécessaire.
           </p>
         </td>
       </tr>
@@ -402,14 +405,14 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
 
       ${agendaBlock}
 
-      <!-- AGENDA TIP -->
+      ${event.access_mode === 'private' ? `<!-- LIEN PERSONNEL TIP (privé seulement) -->
       <tr>
         <td style="padding:0 36px 30px;">
           <div style="border-top:1px dashed #e6ecf3;padding-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;line-height:1.6;">
-            Le chat ouvrira automatiquement le jour J.${event.access_mode === 'private' ? '<br><span style="color:#94a3b8;">Ce lien est personnel — merci de ne pas le partager.</span>' : ''}
+            <span style="color:#94a3b8;">Ce lien est personnel — merci de ne pas le partager.</span>
           </div>
         </td>
-      </tr>
+      </tr>` : ''}
 
       ${footerHtml}
 
