@@ -1,0 +1,6 @@
++ script pour modifier footer et header sur toutes les pages 
++ modification sitemap 
++ modification page prestations
++ modifications page plan du site
+
++ mettre en avant l'outil chat sur l'index 
