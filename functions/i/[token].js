@@ -80,7 +80,7 @@ export const onRequestGet = async ({ params, env }) => {
   } else if (event.status === 'live') {
     html = renderLivePage(event, invitee, params.token);
   } else if (event.status === 'ended') {
-    html = renderEndedPage(event, invitee);
+    html = renderEndedPage(event, invitee, params.token);
   } else {
     html = renderErrorPage('État inconnu', 'L\'état de cet événement n\'est pas reconnu.');
   }
@@ -154,12 +154,12 @@ function renderWaitingPage(event, invitee, token) {
 
     <section class="tip">
       <p>Vous pouvez fermer cette page. <strong>Revenez sur ce même lien</strong> à la date prévue pour rejoindre le chat live.</p>
-      ${event.access_mode === 'private' ? '<p class="muted">Ce lien est personnel — merci de ne pas le partager.</p>' : ''}
+      ${event.access_mode === 'private' ? '<p class="muted">Ce lien est personnel - merci de ne pas le partager.</p>' : ''}
     </section>
   `;
 
   return htmlShell({
-    title: event.title + ' — En attente',
+    title: event.title + ' - En attente',
     color: event.primary_color,
     logoUrl: event.logo_url,
     whiteLabel: event.white_label,
@@ -216,7 +216,7 @@ function renderLivePage(event, invitee, token) {
   `;
 
   return htmlShell({
-    title: event.title + ' — En direct',
+    title: event.title + ' - En direct',
     color: event.primary_color,
     logoUrl: event.logo_url,
     whiteLabel: event.white_label,
@@ -236,7 +236,11 @@ function renderLivePage(event, invitee, token) {
   });
 }
 
-function renderEndedPage(event, invitee) {
+function renderEndedPage(event, invitee, token) {
+  const isLectureSeule = event.modes && event.modes.includes('lecture');
+  const isQaMode = event.modes && event.modes.includes('qa');
+  const hasStream = !!event.stream_playback_url;
+
   const heroBody = `
     <span class="state-badge state-ended">
       <span class="state-dot"></span>
@@ -246,20 +250,55 @@ function renderEndedPage(event, invitee) {
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
   `;
 
+  // Player replay : le Stream Player Cloudflare détecte automatiquement
+  // qu'on est en VOD (≈60s après la fin du live le temps que la VOD soit générée).
+  // Le player affiche son propre placeholder "Stream has not started yet" pendant ce délai.
+  const playerHtml = hasStream
+    ? buildPlayerHtml(event.stream_playback_url, event.primary_color)
+    : `
+      <section class="placeholder-viewer">
+        <div class="placeholder-icon" style="background:#94a3b8;">✓</div>
+        <h2 class="placeholder-title">Aucun replay disponible</h2>
+        <p class="placeholder-text">
+          Cet événement s'est tenu sans diffusion enregistrée.
+        </p>
+      </section>
+    `;
+
   const mainBody = `
-    <section class="message">
-      <p>Cet événement est terminé. Merci d'y avoir participé !</p>
-      <p class="muted">Un replay sera peut-être mis à disposition prochainement. Contactez l'organisateur pour plus d'informations.</p>
+    <div class="live-layout">
+      <div class="live-video">
+        ${playerHtml}
+      </div>
+      <aside class="live-chat">
+        ${buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded: true })}
+      </aside>
+    </div>
+
+    <section class="tip tip-ended">
+      <p><strong>Cet événement est terminé.</strong>${hasStream ? ' Vous pouvez visionner le replay ci-dessus.' : ''}</p>
+      ${hasStream ? `<p class="muted">Si le replay ne s'affiche pas immédiatement, il peut prendre jusqu'à 1 minute à apparaître après la fin du live. Rafraîchissez la page si besoin.</p>` : ''}
     </section>
   `;
 
   return htmlShell({
-    title: event.title + ' — Terminé',
+    title: event.title + ' - Terminé',
     color: event.primary_color,
     logoUrl: event.logo_url,
     whiteLabel: event.white_label,
     heroBody,
-    mainBody
+    mainBody,
+    bodyClass: 'live-page',
+    bodyScript: buildLivePageScript({
+      statusUrl: null, // pas de polling status en mode ended
+      chatMessagesUrl: `/api/chat/${encodeURIComponent(event.slug)}/messages`,
+      accessMode: event.access_mode,
+      magicToken: token,
+      isLectureSeule,
+      isQaMode,
+      isEnded: true,
+      authorPlaceholder: null
+    })
   });
 }
 
@@ -758,13 +797,32 @@ function buildPlayerHtml(playbackUrl, primaryColor) {
   `;
 }
 
-function buildChatPanelHtml({ isLectureSeule, isQaMode }) {
+function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
+  // Mode ended : afficher l'historique des messages mais pas de form d'envoi
+  if (isEnded) {
+    return `
+      <div class="chat-panel chat-panel-ended">
+        <div class="chat-header">
+          <div class="chat-header-main">
+            <div class="chat-title">${isQaMode ? 'Questions' : 'Chat'} - terminé</div>
+            <div class="chat-sub">Historique des échanges pendant l'événement.</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-empty" id="chat-empty">Aucun message échangé pendant cet événement.</div>
+        </div>
+      </div>
+    `;
+  }
+  // Mode lecture seule pendant le live : pas de chat actif
   if (isLectureSeule) {
     return `
       <div class="chat-panel chat-panel-readonly">
         <div class="chat-header">
-          <div class="chat-title">Chat</div>
-          <div class="chat-sub">Lecture seule</div>
+          <div class="chat-header-main">
+            <div class="chat-title">Chat</div>
+            <div class="chat-sub">Lecture seule</div>
+          </div>
         </div>
         <div class="chat-messages" id="chat-messages">
           <div class="chat-empty">Le chat est désactivé pour cet événement.</div>
@@ -772,6 +830,7 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode }) {
       </div>
     `;
   }
+  // Mode normal : chat actif avec form
   return `
     <div class="chat-panel">
       <div class="chat-header">
@@ -805,7 +864,7 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode }) {
 // Script JS de la page live (polling chat + polling status pour live→ended).
 // Concaténation + (pas de template strings) pour éviter les conflits ${...}
 // avec le template serveur.
-function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToken, isLectureSeule, isQaMode, authorPlaceholder }) {
+function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, authorPlaceholder }) {
   return `<script>
 (function () {
   var STATUS_URL = ${JSON.stringify(statusUrl)};
@@ -814,35 +873,41 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
   var MAGIC_TOKEN = ${JSON.stringify(magicToken || null)};
   var IS_LECTURE_SEULE = ${JSON.stringify(!!isLectureSeule)};
   var IS_QA = ${JSON.stringify(!!isQaMode)};
+  var IS_ENDED = ${JSON.stringify(!!isEnded)};
   var AUTHOR_NAME = ${JSON.stringify(authorPlaceholder)};
 
   // ============ Polling status (live -> ended) ============
-  var statusTimer = null;
-  function pollStatus() {
-    var qs = window.location.search || '';
-    fetch(STATUS_URL + qs, { cache: 'no-store', credentials: 'same-origin' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) {
-        if (data && data.status && data.status !== 'live') {
-          window.location.reload();
-          return;
-        }
-        statusTimer = setTimeout(pollStatus, 30000);
-      })
-      .catch(function () {
-        statusTimer = setTimeout(pollStatus, 30000);
-      });
-  }
-  statusTimer = setTimeout(pollStatus, 30000);
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') {
-      clearTimeout(statusTimer);
-      pollStatus();
+  // Pas de polling status en mode ended (l'event est déjà terminé)
+  if (!IS_ENDED && STATUS_URL) {
+    var statusTimer = null;
+    function pollStatus() {
+      var qs = window.location.search || '';
+      fetch(STATUS_URL + qs, { cache: 'no-store', credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (data && data.status && data.status !== 'live') {
+            window.location.reload();
+            return;
+          }
+          statusTimer = setTimeout(pollStatus, 30000);
+        })
+        .catch(function () {
+          statusTimer = setTimeout(pollStatus, 30000);
+        });
     }
-  });
+    statusTimer = setTimeout(pollStatus, 30000);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        clearTimeout(statusTimer);
+        pollStatus();
+      }
+    });
+  }
 
   // ============ Chat ============
-  if (IS_LECTURE_SEULE) return;
+  // Lecture seule pendant le live : pas de chat actif du tout
+  // Lecture seule + ended : on charge l'historique des messages (pour le replay)
+  if (IS_LECTURE_SEULE && !IS_ENDED) return;
 
   var elMessages = document.getElementById('chat-messages');
   var elEmpty = document.getElementById('chat-empty');
@@ -852,7 +917,8 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
   var elSendBtn = document.getElementById('chat-send-btn');
   var elError = document.getElementById('chat-error');
 
-  if (!elMessages || !elForm) return;
+  // En mode ended, elForm est absent (HTML sans form). Ne PAS bail si pas de form.
+  if (!elMessages) return;
 
   var lastTimestamp = null;
   var seenIds = Object.create(null);
@@ -890,7 +956,6 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
   }
 
   function scrollToBottom(force) {
-    // Auto-scroll uniquement si déjà près du bas (l'utilisateur peut scroll up)
     var nearBottom = (elMessages.scrollHeight - elMessages.scrollTop - elMessages.clientHeight) < 80;
     if (force || nearBottom) {
       elMessages.scrollTop = elMessages.scrollHeight;
@@ -919,19 +984,21 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
       })
       .catch(function () {})
       .then(function () {
-        chatTimer = setTimeout(pollChat, 4000);
+        // En mode ended, poll moins fréquent (historique stable, juste rattraper les approbations tardives)
+        chatTimer = setTimeout(pollChat, IS_ENDED ? 15000 : 4000);
       });
   }
 
-  // Counter input
-  if (elInput && elCounter) {
-    elInput.addEventListener('input', function () {
-      elCounter.textContent = elInput.value.length + ' / 500';
-    });
-  }
+  // ============ Form handlers (UNIQUEMENT si form présent : pas en lecture seule, pas en ended) ============
+  if (elForm && elInput && !IS_LECTURE_SEULE && !IS_ENDED) {
+    // Counter input
+    if (elCounter) {
+      elInput.addEventListener('input', function () {
+        elCounter.textContent = elInput.value.length + ' / 500';
+      });
+    }
 
-  // Lot A5 : Entrée → submit ; Shift+Entrée → nouvelle ligne
-  if (elInput) {
+    // Lot A5 : Entrée → submit ; Shift+Entrée → nouvelle ligne
     elInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -942,96 +1009,96 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
         }
       }
     });
-  }
 
-  // Bouton "Changer pseudo" — visible uniquement sur event public (sans magic_token)
-  var elPseudoBtn = document.getElementById('chat-pseudo-btn');
-  if (elPseudoBtn && !MAGIC_TOKEN) {
-    elPseudoBtn.style.display = 'inline-block';
-    elPseudoBtn.addEventListener('click', function () {
-      var current = '';
-      try { current = localStorage.getItem('nomacast-chat-author') || ''; } catch (e) {}
-      var newName = (window.prompt('Choisissez un pseudo (utilisé pour tous vos chats Nomacast) :', current) || '').trim();
-      if (newName) {
-        if (newName.length > 60) newName = newName.slice(0, 60);
-        try { localStorage.setItem('nomacast-chat-author', newName); } catch (e) {}
-      }
-    });
-  }
-
-  // Submit handler
-  elForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var content = elInput.value.trim();
-    if (!content) return;
-
-    // Pour event public : demander un pseudo si non encore défini (localStorage)
-    var authorName = AUTHOR_NAME;
-    if (ACCESS_MODE !== 'private') {
-      var stored = '';
-      try { stored = localStorage.getItem('nomacast-chat-author') || ''; } catch (e) {}
-      if (!authorName) authorName = stored;
-      if (!authorName) {
-        var input = (window.prompt('Choisissez un pseudo pour participer au chat :', '') || '').trim();
-        if (!input) return;
-        if (input.length > 60) input = input.slice(0, 60);
-        authorName = input;
-        try { localStorage.setItem('nomacast-chat-author', authorName); } catch (e) {}
-      }
+    // Bouton "Changer pseudo" - visible uniquement sur event public (sans magic_token)
+    var elPseudoBtn = document.getElementById('chat-pseudo-btn');
+    if (elPseudoBtn && !MAGIC_TOKEN) {
+      elPseudoBtn.style.display = 'inline-block';
+      elPseudoBtn.addEventListener('click', function () {
+        var current = '';
+        try { current = localStorage.getItem('nomacast-chat-author') || ''; } catch (e) {}
+        var newName = (window.prompt('Choisissez un pseudo (utilisé pour tous vos chats Nomacast) :', current) || '').trim();
+        if (newName) {
+          if (newName.length > 60) newName = newName.slice(0, 60);
+          try { localStorage.setItem('nomacast-chat-author', newName); } catch (e) {}
+        }
+      });
     }
 
-    elSendBtn.disabled = true;
-    elError.style.display = 'none';
+    // Submit handler
+    elForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var content = elInput.value.trim();
+      if (!content) return;
 
-    var body = { content: content };
-    if (IS_QA) body.kind = 'question';
-    if (ACCESS_MODE !== 'private') body.author_name = authorName;
-
-    var headers = { 'Content-Type': 'application/json' };
-    if (MAGIC_TOKEN) headers['X-Magic-Token'] = MAGIC_TOKEN;
-
-    var url = CHAT_URL + (window.location.search || '');
-
-    fetch(url, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(body),
-      credentials: 'same-origin'
-    })
-      .then(function (r) {
-        return r.json().then(function (data) { return { ok: r.ok, status: r.status, data: data }; })
-          .catch(function () { return { ok: r.ok, status: r.status, data: {} }; });
-      })
-      .then(function (res) {
-        if (!res.ok) {
-          elError.textContent = (res.data && res.data.error) || ('Erreur ' + res.status);
-          elError.style.display = 'block';
-        } else {
-          elInput.value = '';
-          if (elCounter) elCounter.textContent = '0 / 500';
-          // Si Q&A modéré, le message est en pending → on affiche un toast local mais on ne le rend pas
-          if (res.data && res.data.message && res.data.message.status === 'approved') {
-            renderMessage(res.data.message);
-            if (res.data.message.created_at) lastTimestamp = res.data.message.created_at;
-            scrollToBottom(true);
-          } else {
-            elError.textContent = 'Question envoyée. Elle sera diffusée après modération.';
-            elError.style.display = 'block';
-            elError.classList.add('chat-info');
-            setTimeout(function () { elError.style.display = 'none'; elError.classList.remove('chat-info'); }, 4000);
-          }
+      // Pour event public : demander un pseudo si non encore défini (localStorage)
+      var authorName = AUTHOR_NAME;
+      if (ACCESS_MODE !== 'private') {
+        var stored = '';
+        try { stored = localStorage.getItem('nomacast-chat-author') || ''; } catch (e) {}
+        if (!authorName) authorName = stored;
+        if (!authorName) {
+          var input = (window.prompt('Choisissez un pseudo pour participer au chat :', '') || '').trim();
+          if (!input) return;
+          if (input.length > 60) input = input.slice(0, 60);
+          authorName = input;
+          try { localStorage.setItem('nomacast-chat-author', authorName); } catch (e) {}
         }
-      })
-      .catch(function (err) {
-        elError.textContent = 'Réseau indisponible : ' + err.message;
-        elError.style.display = 'block';
-      })
-      .then(function () {
-        elSendBtn.disabled = false;
-      });
-  });
+      }
 
-  // Démarrage du polling chat
+      elSendBtn.disabled = true;
+      elError.style.display = 'none';
+
+      var body = { content: content };
+      if (IS_QA) body.kind = 'question';
+      if (ACCESS_MODE !== 'private') body.author_name = authorName;
+
+      var headers = { 'Content-Type': 'application/json' };
+      if (MAGIC_TOKEN) headers['X-Magic-Token'] = MAGIC_TOKEN;
+
+      var url = CHAT_URL + (window.location.search || '');
+
+      fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body),
+        credentials: 'same-origin'
+      })
+        .then(function (r) {
+          return r.json().then(function (data) { return { ok: r.ok, status: r.status, data: data }; })
+            .catch(function () { return { ok: r.ok, status: r.status, data: {} }; });
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            elError.textContent = (res.data && res.data.error) || ('Erreur ' + res.status);
+            elError.style.display = 'block';
+          } else {
+            elInput.value = '';
+            if (elCounter) elCounter.textContent = '0 / 500';
+            // Si Q&A modéré, le message est en pending → on affiche un toast local mais on ne le rend pas
+            if (res.data && res.data.message && res.data.message.status === 'approved') {
+              renderMessage(res.data.message);
+              if (res.data.message.created_at) lastTimestamp = res.data.message.created_at;
+              scrollToBottom(true);
+            } else {
+              elError.textContent = 'Question envoyée. Elle sera diffusée après modération.';
+              elError.style.display = 'block';
+              elError.classList.add('chat-info');
+              setTimeout(function () { elError.style.display = 'none'; elError.classList.remove('chat-info'); }, 4000);
+            }
+          }
+        })
+        .catch(function (err) {
+          elError.textContent = 'Réseau indisponible : ' + err.message;
+          elError.style.display = 'block';
+        })
+        .then(function () {
+          elSendBtn.disabled = false;
+        });
+    });
+  } // fin if (elForm && elInput && !IS_LECTURE_SEULE && !IS_ENDED)
+
+  // Démarrage du polling chat (actif aussi en mode ended pour l'historique)
   pollChat();
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') {
@@ -1045,7 +1112,7 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToke
 
 // ============================================================
 // Helpers Countdown + polling (page draft)
-// Duplication assumée avec functions/chat/[slug].js — pas d'import croisé.
+// Duplication assumée avec functions/chat/[slug].js - pas d'import croisé.
 // ============================================================
 function buildCountdownHtml(scheduledAt) {
   if (!scheduledAt) return '';
@@ -1197,7 +1264,7 @@ function buildAgendaUrls(event, token) {
   const end = event.scheduled_at ? toCalDate(addMinutes(event.scheduled_at, event.duration_minutes || 90)) : '';
   const details = `Chat live de l'événement « ${event.title} »` +
     (event.client_name ? `, organisé par ${event.client_name}.` : '.') +
-    `\n\nPour rejoindre : ${chatLink}\n\nPropulsé par Nomacast — https://nomacast.fr`;
+    `\n\nPour rejoindre : ${chatLink}\n\nPropulsé par Nomacast - https://nomacast.fr`;
 
   const googleParams = new URLSearchParams({
     action: 'TEMPLATE', text: event.title, details, location: chatLink,
@@ -1241,7 +1308,7 @@ function formatFrenchDateTime(iso) {
 }
 
 function formatDuration(mins) {
-  if (!mins) return '—';
+  if (!mins) return '-';
   if (mins < 60) return mins + ' min';
   const h = Math.floor(mins / 60);
   const m = mins % 60;
