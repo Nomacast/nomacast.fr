@@ -52,6 +52,175 @@
       color: var(--ink, #0f172a);
       margin-bottom: 4px;
     }
+
+    /* nomacast-stats-card-v1 — styles dashboard statistiques */
+    .stats-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .stats-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink, #0f172a);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stats-card-title-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--ink-faint, #94a3b8);
+      display: inline-block;
+    }
+    .stats-card-title-dot.live {
+      background: var(--red, #ef4444);
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+      animation: stats-pulse 1.8s infinite;
+    }
+    @keyframes stats-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .stats-card-meta {
+      font-size: 11px;
+      color: var(--ink-faint, #94a3b8);
+    }
+    .stats-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .stats-tile {
+      background: var(--off-white, #f8fafc);
+      border: 1px solid var(--border-light, #f1f5f9);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .stats-tile-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--ink-muted, #475569);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .stats-tile-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink, #0f172a);
+      line-height: 1;
+    }
+    .stats-tile-sub {
+      font-size: 11px;
+      color: var(--ink-faint, #94a3b8);
+      margin-top: 4px;
+    }
+    .stats-tile.highlight .stats-tile-value {
+      color: var(--cyan, #5A98D6);
+    }
+    .stats-tile.live-now {
+      background: rgba(239, 68, 68, 0.05);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+    .stats-tile.live-now .stats-tile-value {
+      color: var(--red, #ef4444);
+    }
+    .stats-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-muted, #475569);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+    .stats-chart-wrap {
+      background: var(--off-white, #f8fafc);
+      border: 1px solid var(--border-light, #f1f5f9);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 18px;
+    }
+    .stats-chart-svg {
+      width: 100%;
+      height: 180px;
+      display: block;
+    }
+    .stats-chart-empty {
+      padding: 30px 12px;
+      text-align: center;
+      color: var(--ink-faint, #94a3b8);
+      font-size: 13px;
+      font-style: italic;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .stats-table th {
+      text-align: left;
+      padding: 8px 10px;
+      background: var(--off-white, #f8fafc);
+      color: var(--ink-muted, #475569);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-light, #f1f5f9);
+    }
+    .stats-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-light, #f1f5f9);
+      color: var(--ink, #0f172a);
+    }
+    .stats-table tr:last-child td { border-bottom: none; }
+    .stats-table td.muted { color: var(--ink-faint, #94a3b8); }
+    .stats-table-empty {
+      padding: 18px;
+      text-align: center;
+      color: var(--ink-faint, #94a3b8);
+      font-size: 13px;
+      font-style: italic;
+    }
+    .stats-present-dot {
+      display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green, #10b981);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .stats-source-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--border-light, #f1f5f9);
+      color: var(--ink-muted, #475569);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .stats-source-badge.self { background: var(--cyan-light, rgba(90, 152, 214, 0.08)); color: var(--cyan, #5A98D6); }
+    .stats-error {
+      padding: 12px 14px;
+      background: var(--red-light, rgba(239, 68, 68, 0.1));
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--red, #ef4444);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .stats-loading {
+      padding: 18px;
+      text-align: center;
+      color: var(--ink-faint, #94a3b8);
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -85,6 +254,7 @@
 
   <div id="message-zone"></div>
   <div id="public-link-zone"></div>
+  <div id="stats-zone"></div>
 
   <div class="admin-card" id="form-container">
     <div class="admin-card-body admin-text-muted">
@@ -101,6 +271,7 @@
   var A = window.NomacastAdmin;
   var container = document.getElementById('form-container');
   var publicLinkZone = document.getElementById('public-link-zone');
+  var statsZone = document.getElementById('stats-zone');
   var pageSub = document.getElementById('page-sub');
   var statusBadge = document.getElementById('status-badge');
   var messageZone = document.getElementById('message-zone');
@@ -254,6 +425,9 @@
     publicLinkZone.appendChild(renderUrlPanel(ev));
     // nomacast-stream-card-v1 : card Streaming live (rôle distinct : provisioning Cloudflare Stream)
     publicLinkZone.appendChild(A.renderStreamCard(ev, load));
+
+    // nomacast-stats-card-v1 : card Statistiques (mount avec polling 5s si live)
+    mountStats(ev);
 
     var body = A.el('div', { className: 'admin-card-body' });
 
@@ -777,6 +951,8 @@
       publicLinkZone.appendChild(renderUrlPanel(result.event));
       // nomacast-stream-card-v1 : card Streaming live
       publicLinkZone.appendChild(A.renderStreamCard(result.event, load));
+      // nomacast-stats-card-v1 : re-mount stats avec le nouvel event (status a pu changer)
+      mountStats(result.event);
       if (slugChanged) {
         // Le slug a changé : re-render le form complet pour que le pageSub
         // et le hint du titre reflètent le nouveau slug
@@ -823,6 +999,410 @@
       // Si 409 → des invités sont présents, on bloque
       A.showMessage(messageZone, 'error', err.message);
     }
+  }
+
+  // ============================================================
+  // nomacast-stats-card-v1 — Module Statistiques
+  // ============================================================
+  var statsPollTimer = null;
+  var statsCurrentEventId = null;
+  var statsLastFetchAt = 0;
+  var statsInFlight = false;
+
+  function mountStats(ev) {
+    // Cleanup polling existant
+    if (statsPollTimer) { clearTimeout(statsPollTimer); statsPollTimer = null; }
+    statsCurrentEventId = ev.id;
+
+    A.clearNode(statsZone);
+    statsZone.appendChild(A.el('div', {
+      className: 'admin-card',
+      children: [A.el('div', {
+        className: 'admin-card-body',
+        children: [A.el('div', { className: 'stats-loading', text: 'Chargement des statistiques…' })]
+      })]
+    }));
+
+    fetchAndRenderStats(ev);
+
+    // Polling 5s uniquement quand l'event est en direct
+    if (ev.status === 'live') {
+      scheduleStatsPoll(ev);
+      // Pause polling si l'onglet n'est pas visible (économise les requêtes)
+      if (!statsZone._visListener) {
+        statsZone._visListener = function () {
+          if (document.visibilityState === 'visible' && statsCurrentEventId === ev.id) {
+            // Re-fetch immédiat au retour, puis poll régulier
+            if (statsPollTimer) { clearTimeout(statsPollTimer); statsPollTimer = null; }
+            fetchAndRenderStats(ev);
+            scheduleStatsPoll(ev);
+          }
+        };
+        document.addEventListener('visibilitychange', statsZone._visListener);
+      }
+    }
+  }
+
+  function scheduleStatsPoll(ev) {
+    statsPollTimer = setTimeout(function () {
+      if (statsCurrentEventId !== ev.id) return; // event a changé entre temps
+      if (document.visibilityState !== 'visible') {
+        scheduleStatsPoll(ev); // skip le tick mais reprogramme
+        return;
+      }
+      fetchAndRenderStats(ev).then(function () {
+        if (statsCurrentEventId === ev.id) scheduleStatsPoll(ev);
+      });
+    }, 5000);
+  }
+
+  async function fetchAndRenderStats(ev) {
+    if (statsInFlight) return;
+    statsInFlight = true;
+    try {
+      var stats = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/stats');
+      statsLastFetchAt = Date.now();
+      // Si entre-temps l'utilisateur a quitté/changé d'event, on n'écrase pas
+      if (statsCurrentEventId !== ev.id) return;
+      renderStatsCard(ev, stats);
+    } catch (err) {
+      if (statsCurrentEventId !== ev.id) return;
+      A.clearNode(statsZone);
+      statsZone.appendChild(A.el('div', {
+        className: 'admin-card',
+        children: [A.el('div', {
+          className: 'admin-card-body',
+          children: [A.el('div', { className: 'stats-error', text: 'Erreur statistiques : ' + err.message })]
+        })]
+      }));
+    } finally {
+      statsInFlight = false;
+    }
+  }
+
+  function renderStatsCard(ev, stats) {
+    var s = stats.summary || {};
+    var status = ev.status;
+
+    var titleDot = A.el('span', {
+      className: 'stats-card-title-dot' + (status === 'live' ? ' live' : '')
+    });
+    var titleText;
+    if (status === 'draft') titleText = 'Statistiques — pré-événement';
+    else if (status === 'live') titleText = 'Statistiques — en direct';
+    else if (status === 'ended') titleText = 'Bilan de l\'événement';
+    else titleText = 'Statistiques';
+
+    var header = A.el('div', {
+      className: 'stats-card-header',
+      children: [
+        A.el('div', {
+          className: 'stats-card-title',
+          children: [titleDot, A.el('span', { text: titleText })]
+        }),
+        A.el('div', {
+          className: 'stats-card-meta',
+          text: status === 'live'
+            ? 'Mis à jour automatiquement toutes les 5s'
+            : ('Calculé le ' + new Date(statsLastFetchAt || Date.now()).toLocaleTimeString('fr-FR'))
+        })
+      ]
+    });
+
+    var body = A.el('div', { className: 'admin-card-body' });
+    body.appendChild(header);
+
+    if (status === 'draft') {
+      renderTilesDraft(body, s);
+      renderPerInviteeTable(body, stats.per_invitee || [], status);
+    } else if (status === 'live') {
+      renderTilesLive(body, s);
+      renderTimelineChart(body, stats.timeline || [], s.peak_concurrent || 0);
+      renderTopChatters(body, stats.top_chatters || []);
+      renderPerInviteeTable(body, stats.per_invitee || [], status);
+    } else if (status === 'ended') {
+      renderTilesEnded(body, s, ev);
+      renderTimelineChart(body, stats.timeline || [], s.peak_concurrent || 0);
+      renderTopChatters(body, stats.top_chatters || []);
+      renderPerInviteeTable(body, stats.per_invitee || [], status);
+      renderGeoAndSources(body, stats.geography || [], stats.traffic_sources || []);
+    }
+
+    A.clearNode(statsZone);
+    statsZone.appendChild(A.el('div', { className: 'admin-card', children: [body] }));
+  }
+
+  function renderTilesDraft(parent, s) {
+    var clickPct = s.invitations_sent > 0
+      ? Math.round((s.invitees_clicked / s.invitations_sent) * 100)
+      : 0;
+    var tiles = A.el('div', { className: 'stats-tiles' });
+    tiles.appendChild(tile('Invitations envoyées', s.invitations_sent + ' / ' + s.invitees_total));
+    tiles.appendChild(tile('Clics uniques sur lien', String(s.invitees_clicked), clickPct + '% d\'engagement', true));
+    if (s.invitees_self_registered > 0) {
+      tiles.appendChild(tile('Inscriptions publiques', String(s.invitees_self_registered)));
+    }
+    parent.appendChild(tiles);
+  }
+
+  function renderTilesLive(parent, s) {
+    var tiles = A.el('div', { className: 'stats-tiles' });
+    var liveTile = A.el('div', { className: 'stats-tile live-now' });
+    liveTile.appendChild(A.el('div', { className: 'stats-tile-label', text: 'En ligne maintenant' }));
+    liveTile.appendChild(A.el('div', { className: 'stats-tile-value', text: String(s.concurrent_now) }));
+    liveTile.appendChild(A.el('div', { className: 'stats-tile-sub', text: 'spectateurs connectés' }));
+    tiles.appendChild(liveTile);
+    tiles.appendChild(tile('Pic concurrents', String(s.peak_concurrent), s.peak_concurrent_at ? formatRelativeTime(s.peak_concurrent_at) : null, true));
+    tiles.appendChild(tile('Présents au total', String(s.invitees_attended + s.public_unique_viewers)));
+    tiles.appendChild(tile('Messages approuvés', String(s.messages_approved)));
+    if (s.messages_pending > 0) tiles.appendChild(tile('À modérer', String(s.messages_pending), 'messages en attente'));
+    if (s.reactions_total > 0) tiles.appendChild(tile('Réactions', String(s.reactions_total)));
+    parent.appendChild(tiles);
+  }
+
+  function renderTilesEnded(parent, s, ev) {
+    var totalAttendees = (s.invitees_attended || 0) + (s.public_unique_viewers || 0);
+    var attendPct = s.invitees_total > 0
+      ? Math.round((s.invitees_attended / s.invitees_total) * 100)
+      : null;
+    var avgPct = ev.duration_minutes && s.avg_duration_seconds
+      ? Math.round((s.avg_duration_seconds / (ev.duration_minutes * 60)) * 100)
+      : 0;
+
+    var tiles = A.el('div', { className: 'stats-tiles' });
+    tiles.appendChild(tile('Présents au total', String(totalAttendees), attendPct !== null ? attendPct + '% des invités' : null, true));
+    tiles.appendChild(tile('Pic concurrents', String(s.peak_concurrent)));
+    tiles.appendChild(tile('Durée moyenne', formatSeconds(s.avg_duration_seconds), avgPct + '% du live'));
+    tiles.appendChild(tile('Messages chat', String(s.messages_approved + s.qa_approved)));
+    if (s.reactions_total > 0) tiles.appendChild(tile('Réactions', String(s.reactions_total)));
+    if (s.polls_total > 0) tiles.appendChild(tile('Sondages', String(s.polls_total)));
+    if (s.quotes_total > 0) tiles.appendChild(tile('Citations', String(s.quotes_total)));
+    parent.appendChild(tiles);
+  }
+
+  function tile(label, value, sub, highlight) {
+    var t = A.el('div', { className: 'stats-tile' + (highlight ? ' highlight' : '') });
+    t.appendChild(A.el('div', { className: 'stats-tile-label', text: label }));
+    t.appendChild(A.el('div', { className: 'stats-tile-value', text: value }));
+    if (sub) t.appendChild(A.el('div', { className: 'stats-tile-sub', text: sub }));
+    return t;
+  }
+
+  function renderTimelineChart(parent, timeline, peak) {
+    parent.appendChild(A.el('div', { className: 'stats-section-title', text: 'Courbe de présence' }));
+    var wrap = A.el('div', { className: 'stats-chart-wrap' });
+    if (!timeline.length) {
+      wrap.appendChild(A.el('div', { className: 'stats-chart-empty', text: 'Aucune donnée de présence pour le moment.' }));
+      parent.appendChild(wrap);
+      return;
+    }
+    // SVG construit avec setAttribute pour respecter le namespace XML
+    var w = 800, h = 180, padL = 40, padR = 12, padT = 12, padB = 26;
+    var iw = w - padL - padR, ih = h - padT - padB;
+    var maxY = Math.max(peak || 0, Math.max.apply(null, timeline.map(function (p) { return p.viewers; })), 1);
+    // Petite marge en haut pour ne pas coller la courbe
+    var topY = Math.ceil(maxY * 1.1);
+
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.setAttribute('class', 'stats-chart-svg');
+    svg.setAttribute('preserveAspectRatio', 'none');
+
+    // Grid horizontal (3 lignes)
+    [0.25, 0.5, 0.75].forEach(function (frac) {
+      var y = padT + ih * (1 - frac);
+      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', padL); line.setAttribute('y1', y);
+      line.setAttribute('x2', w - padR); line.setAttribute('y2', y);
+      line.setAttribute('stroke', '#e2e8f0');
+      line.setAttribute('stroke-dasharray', '2 4');
+      svg.appendChild(line);
+    });
+
+    // Y axis labels (0, max/2, max)
+    [0, Math.round(topY / 2), topY].forEach(function (val, i) {
+      var y = padT + ih * (1 - (val / topY));
+      var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', padL - 6); t.setAttribute('y', y + 3);
+      t.setAttribute('text-anchor', 'end');
+      t.setAttribute('font-size', '10');
+      t.setAttribute('fill', '#94a3b8');
+      t.textContent = String(val);
+      svg.appendChild(t);
+    });
+
+    // Polyline de la courbe
+    var n = timeline.length;
+    var points = timeline.map(function (p, i) {
+      var x = padL + (n > 1 ? (i / (n - 1)) * iw : iw / 2);
+      var y = padT + ih * (1 - p.viewers / topY);
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+
+    // Aire sous la courbe
+    var areaPoints = points + ' ' + (padL + iw).toFixed(1) + ',' + (padT + ih) + ' ' + padL + ',' + (padT + ih);
+    var area = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    area.setAttribute('points', areaPoints);
+    area.setAttribute('fill', '#5A98D6');
+    area.setAttribute('fill-opacity', '0.12');
+    svg.appendChild(area);
+
+    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', points);
+    poly.setAttribute('fill', 'none');
+    poly.setAttribute('stroke', '#5A98D6');
+    poly.setAttribute('stroke-width', '2');
+    poly.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(poly);
+
+    // Labels axe X : début, milieu, fin
+    [0, Math.floor(n / 2), n - 1].forEach(function (i) {
+      if (i < 0 || i >= n) return;
+      var x = padL + (n > 1 ? (i / (n - 1)) * iw : iw / 2);
+      var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', x); t.setAttribute('y', h - 8);
+      t.setAttribute('text-anchor', i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle'));
+      t.setAttribute('font-size', '10');
+      t.setAttribute('fill', '#94a3b8');
+      t.textContent = formatTimeOnly(timeline[i].ts);
+      svg.appendChild(t);
+    });
+
+    wrap.appendChild(svg);
+    parent.appendChild(wrap);
+  }
+
+  function renderTopChatters(parent, top) {
+    if (!top.length) return;
+    parent.appendChild(A.el('div', { className: 'stats-section-title', text: 'Participants les plus actifs (chat)' }));
+    var table = A.el('table', { className: 'stats-table' });
+    var thead = A.el('thead');
+    thead.appendChild(A.el('tr', { children: [
+      A.el('th', { text: 'Nom' }),
+      A.el('th', { text: 'Messages', style: { textAlign: 'right' } })
+    ]}));
+    table.appendChild(thead);
+    var tbody = A.el('tbody');
+    top.slice(0, 5).forEach(function (r) {
+      tbody.appendChild(A.el('tr', { children: [
+        A.el('td', { text: r.name || '—' }),
+        A.el('td', { text: String(r.messages_count), style: { textAlign: 'right' } })
+      ]}));
+    });
+    table.appendChild(tbody);
+    var wrap = A.el('div', { style: { marginBottom: '18px' }, children: [table] });
+    parent.appendChild(wrap);
+  }
+
+  function renderPerInviteeTable(parent, perInvitee, status) {
+    parent.appendChild(A.el('div', { className: 'stats-section-title', text: 'Détail par invité' }));
+    if (!perInvitee.length) {
+      parent.appendChild(A.el('div', { className: 'stats-table-empty', text: 'Aucun invité n\'a encore été ajouté à cet événement.' }));
+      return;
+    }
+    var table = A.el('table', { className: 'stats-table' });
+    var headers = ['Invité', 'Source'];
+    if (status === 'draft') headers.push('Vu le lien', 'Visites');
+    else { headers.push('Vu le lien', 'Présence', 'Durée', 'Messages'); }
+    var thead = A.el('thead');
+    thead.appendChild(A.el('tr', { children: headers.map(function (h) { return A.el('th', { text: h }); }) }));
+    table.appendChild(thead);
+    var tbody = A.el('tbody');
+    perInvitee.slice(0, 50).forEach(function (r) {
+      var cells = [];
+      var nameCell = A.el('td');
+      if (r.is_present_now) nameCell.appendChild(A.el('span', { className: 'stats-present-dot', attrs: { title: 'Connecté maintenant' } }));
+      nameCell.appendChild(document.createTextNode(r.name || r.email || '—'));
+      if (r.email && r.name) {
+        nameCell.appendChild(A.el('div', { className: 'stats-tile-sub', style: { marginTop: '2px' }, text: r.email }));
+      }
+      cells.push(nameCell);
+      cells.push(A.el('td', { children: [A.el('span', {
+        className: 'stats-source-badge' + (r.source === 'self_registered' ? ' self' : ''),
+        text: r.source === 'self_registered' ? 'inscrit' : 'invité'
+      })]}));
+      cells.push(A.el('td', { className: r.first_visit_at ? '' : 'muted', text: r.first_visit_at ? '✓' : '—' }));
+      if (status !== 'draft') {
+        cells.push(A.el('td', { className: r.total_duration_sec > 0 ? '' : 'muted', text: r.total_duration_sec > 0 ? '✓' : '—' }));
+        cells.push(A.el('td', { className: r.total_duration_sec > 0 ? '' : 'muted', text: r.total_duration_sec > 0 ? formatSeconds(r.total_duration_sec) : '—' }));
+        cells.push(A.el('td', { className: r.messages_count > 0 ? '' : 'muted', text: String(r.messages_count || 0) }));
+      } else {
+        cells.push(A.el('td', { className: r.visits_count > 0 ? '' : 'muted', text: String(r.visits_count || 0) }));
+      }
+      tbody.appendChild(A.el('tr', { children: cells }));
+    });
+    table.appendChild(tbody);
+    parent.appendChild(table);
+    if (perInvitee.length > 50) {
+      parent.appendChild(A.el('div', { className: 'stats-tile-sub', style: { marginTop: '8px', textAlign: 'center' }, text: 'Affichage limité aux 50 premiers (' + perInvitee.length + ' au total).' }));
+    }
+  }
+
+  function renderGeoAndSources(parent, geography, sources) {
+    if (!geography.length && !sources.length) return;
+    var row = A.el('div', { style: { display: 'flex', gap: '18px', marginTop: '18px', flexWrap: 'wrap' } });
+    if (geography.length) {
+      var geoBlock = A.el('div', { style: { flex: '1', minWidth: '200px' } });
+      geoBlock.appendChild(A.el('div', { className: 'stats-section-title', text: 'Origine géographique' }));
+      var table = A.el('table', { className: 'stats-table' });
+      var tbody = A.el('tbody');
+      geography.slice(0, 6).forEach(function (g) {
+        tbody.appendChild(A.el('tr', { children: [
+          A.el('td', { text: g.country_code }),
+          A.el('td', { text: String(g.count), style: { textAlign: 'right' } })
+        ]}));
+      });
+      table.appendChild(tbody);
+      geoBlock.appendChild(table);
+      row.appendChild(geoBlock);
+    }
+    if (sources.length) {
+      var srcBlock = A.el('div', { style: { flex: '1', minWidth: '200px' } });
+      srcBlock.appendChild(A.el('div', { className: 'stats-section-title', text: 'Sources de trafic' }));
+      var table2 = A.el('table', { className: 'stats-table' });
+      var tbody2 = A.el('tbody');
+      sources.slice(0, 6).forEach(function (s) {
+        tbody2.appendChild(A.el('tr', { children: [
+          A.el('td', { text: s.referrer_domain }),
+          A.el('td', { text: String(s.count), style: { textAlign: 'right' } })
+        ]}));
+      });
+      table2.appendChild(tbody2);
+      srcBlock.appendChild(table2);
+      row.appendChild(srcBlock);
+    }
+    parent.appendChild(row);
+  }
+
+  // ============ Helpers de formatage stats ============
+  function formatSeconds(s) {
+    s = parseInt(s, 10) || 0;
+    if (s < 60) return s + 's';
+    if (s < 3600) {
+      var m = Math.floor(s / 60);
+      var rs = s % 60;
+      return rs > 0 ? m + 'min ' + rs + 's' : m + 'min';
+    }
+    var h = Math.floor(s / 3600);
+    var mm = Math.floor((s % 3600) / 60);
+    return mm > 0 ? h + 'h ' + mm + 'min' : h + 'h';
+  }
+
+  function formatTimeOnly(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  function formatRelativeTime(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    var diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (diffSec < 60) return 'il y a ' + diffSec + 's';
+    if (diffSec < 3600) return 'il y a ' + Math.floor(diffSec / 60) + 'min';
+    if (diffSec < 86400) return 'il y a ' + Math.floor(diffSec / 3600) + 'h';
+    return formatTimeOnly(iso);
   }
 
   load();
