@@ -367,7 +367,32 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
         { tag: 'line', attrs: { x1: '2', y1: '12', x2: '6', y2: '12' } },
         { tag: 'line', attrs: { x1: '18', y1: '12', x2: '22', y2: '12' } }
       ]); } }
-    ]
+    ],
+    // Pré-Q&A : questions soumises AVANT l'événement, triées par votes
+    preqa: [
+      { author: 'Élodie V.', role: 'Direction Marketing', time: 'soumise hier', text: 'Quels indicateurs allez-vous présenter pour mesurer le succès du lancement ?', upvotes: 42 },
+      { author: 'Karim B.', role: 'Product', time: 'soumise il y a 2 jours', text: 'Le calendrier annoncé en kick-off est-il maintenu malgré les arbitrages récents ?', upvotes: 31 },
+      { author: 'Léa M.', role: 'Sales Enablement', time: 'soumise il y a 3 jours', text: 'Une grille de pricing sera-t-elle partagée à l\'équipe avant le go-live ?', upvotes: 28 }
+    ],
+    // Mur d'idées : post-its collaboratifs, regroupés par thème
+    brainstorm: {
+      question: 'Comment améliorer l\'expérience client en 2027 ?',
+      ideas: [
+        { author: 'Antoine R.', text: 'Onboarding en visio personnalisé', color: 'yellow' },
+        { author: 'Camille D.', text: 'Communauté Slack clients VIP', color: 'pink' },
+        { author: 'Hugo P.', text: 'Centre d\'aide vidéo en libre-service', color: 'blue' },
+        { author: 'Sarah K.', text: 'Newsletter mensuelle insights produit', color: 'green' },
+        { author: 'Marc T.', text: 'Live mensuel avec le CEO', color: 'yellow' },
+        { author: 'Inès L.', text: 'Programme ambassadeurs avec récompenses', color: 'blue' }
+      ]
+    },
+    // Citations à retenir : moments clés transformés en cartes partageables
+    citation: {
+      text: 'L\'engagement ne se mesure pas au nombre de vues, mais au nombre de personnes qui repartent avec une idée actionnable.',
+      author: 'Hélène Vasseur',
+      role: 'Directrice Innovation, Keynote',
+      timestamp: 'il y a 4 min'
+    }
   };
 
   // -------------------- RENDERERS (retournent des DOM nodes) --------------------
@@ -501,6 +526,92 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     });
   }
 
+  // Pré-Q&A : variante de Q&A avec badge "Pré-événement" et compteurs de votes plus élevés.
+  // Visuellement très proche du Q&A modéré (réutilise le pattern .pm), avec un badge distinctif.
+  function renderPreQA(item) {
+    return $el('div', {
+      className: 'pm pm-preqa',
+      children: [
+        $el('div', {
+          className: 'pm-head',
+          children: [
+            $el('span', { className: 'pm-author', text: item.author }),
+            $el('span', { className: 'pm-time', text: item.time })
+          ]
+        }),
+        $el('div', { className: 'pm-text', text: item.text }),
+        $el('div', {
+          className: 'pm-actions',
+          children: [
+            $el('span', { className: 'pm-upvote', text: '▲ ' + item.upvotes }),
+            $el('span', { className: 'pm-badge pm-badge-preqa', text: 'Pré-événement' })
+          ]
+        })
+      ]
+    });
+  }
+
+  // Mur d'idées : grille de post-its colorés, regroupés sous une question commune.
+  // Évoque le format brainstorming collaboratif (style Miro/Mural).
+  function renderBrainstorm(b) {
+    var postits = b.ideas.map(function (idea) {
+      return $el('div', {
+        className: 'pm-postit pm-postit-' + idea.color,
+        children: [
+          $el('div', { className: 'pm-postit-text', text: idea.text }),
+          $el('div', { className: 'pm-postit-author', text: idea.author })
+        ]
+      });
+    });
+    return $el('div', {
+      className: 'pm pm-brainstorm',
+      children: [
+        $el('div', {
+          className: 'pm-poll-head',
+          children: [
+            $el('span', { className: 'pm-poll-label', text: 'Mur d\'idées' }),
+            $el('span', {
+              text: b.ideas.length + ' idées',
+              style: { fontSize: '10px', color: 'var(--ink-faint)' }
+            })
+          ]
+        }),
+        $el('div', { className: 'pm-brainstorm-q', text: b.question }),
+        $el('div', { className: 'pm-brainstorm-grid', children: postits })
+      ]
+    });
+  }
+
+  // Citation à retenir : carte type "carte partageable LinkedIn".
+  // Guillemets décoratifs + citation centrale + attribution + indicateur partage.
+  function renderCitation(c) {
+    return $el('div', {
+      className: 'pm pm-citation',
+      children: [
+        $el('div', {
+          className: 'pm-poll-head',
+          children: [
+            $el('span', { className: 'pm-poll-label', text: 'Citation à retenir' }),
+            $el('span', {
+              text: c.timestamp,
+              style: { fontSize: '10px', color: 'var(--ink-faint)' }
+            })
+          ]
+        }),
+        $el('div', { className: 'pm-citation-mark', text: '\u201C' }),
+        $el('div', { className: 'pm-citation-text', text: c.text }),
+        $el('div', {
+          className: 'pm-citation-author',
+          children: [
+            $el('strong', { text: c.author }),
+            $el('span', { text: c.role })
+          ]
+        }),
+        $el('div', { className: 'pm-citation-share', text: 'Carte prête à partager sur LinkedIn ↗' })
+      ]
+    });
+  }
+
   function renderEmpty() {
     var svg = $svg('svg', {
       width: '40', height: '40', viewBox: '0 0 24 24',
@@ -577,11 +688,14 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
 
     // 4. Compose les slides selon les modes cochés
     var hasQA = wizard.querySelector('input[name="mode-qa"]');
+    var hasPreQA = wizard.querySelector('input[name="mode-preqa"]');
     var hasLibre = wizard.querySelector('input[name="mode-libre"]');
     var hasSondages = wizard.querySelector('input[name="mode-sondages"]');
     var hasReactions = wizard.querySelector('input[name="mode-reactions"]');
     var hasNuage = wizard.querySelector('input[name="mode-nuage"]');
     var hasQuiz = wizard.querySelector('input[name="mode-quiz"]');
+    var hasBrainstorm = wizard.querySelector('input[name="mode-brainstorming"]');
+    var hasCitations = wizard.querySelector('input[name="mode-citations"]');
     var hasLectureSeule = wizard.querySelector('input[name="mode-lecture"]');
     var hasSubtitles = subtitlesCheckbox && subtitlesCheckbox.checked;
 
@@ -592,6 +706,11 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       var qaContainer = $el('div', { className: 'preview-slide preview-slide-qa' });
       PREVIEW_TEMPLATES.qa.forEach(function (m) { qaContainer.appendChild(renderQA(m)); });
       slides.push({ label: 'Q&A modéré', node: qaContainer });
+    }
+    if (hasPreQA && hasPreQA.checked) {
+      var preqaContainer = $el('div', { className: 'preview-slide preview-slide-preqa' });
+      PREVIEW_TEMPLATES.preqa.forEach(function (m) { preqaContainer.appendChild(renderPreQA(m)); });
+      slides.push({ label: 'Questions pré-événement', node: preqaContainer });
     }
     if (hasLibre && hasLibre.checked) {
       var libreContainer = $el('div', { className: 'preview-slide preview-slide-libre' });
@@ -609,6 +728,12 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
     }
     if (hasReactions && hasReactions.checked) {
       slides.push({ label: 'Réactions rapides', node: renderReactions(PREVIEW_TEMPLATES.reactions) });
+    }
+    if (hasBrainstorm && hasBrainstorm.checked) {
+      slides.push({ label: 'Mur d\'idées', node: renderBrainstorm(PREVIEW_TEMPLATES.brainstorm) });
+    }
+    if (hasCitations && hasCitations.checked) {
+      slides.push({ label: 'Citation à retenir', node: renderCitation(PREVIEW_TEMPLATES.citation) });
     }
     // Messages "Vous" : slide bonus si l'utilisateur en a envoyé
     if (state.youMessages && state.youMessages.length) {

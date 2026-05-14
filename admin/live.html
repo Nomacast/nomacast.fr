@@ -7,20 +7,88 @@
   <title>Régie en direct · Admin Nomacast</title>
   <link rel="stylesheet" href="/admin/admin.css">
   <style>
-    /* ============ Layout régie 3 colonnes ============ */
+    /* ============ Toolbar sélection outils ============ */
+    .regie-tools-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-top: 16px;
+      margin-bottom: 0;
+    }
+    .regie-tools-bar-label {
+      font-size: 11px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-right: 4px;
+    }
+    .regie-tool-toggle {
+      padding: 7px 14px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      border-radius: 6px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .regie-tool-toggle:hover {
+      border-color: #5A98D6;
+      color: #5A98D6;
+    }
+    .regie-tool-toggle.is-active {
+      background: #5A98D6;
+      color: #ffffff;
+      border-color: #5A98D6;
+    }
+    .regie-tool-toggle-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      transition: background 0.15s;
+    }
+    .regie-tool-toggle.is-active .regie-tool-toggle-dot {
+      background: #ffffff;
+    }
+    .regie-tool-toggle-count {
+      font-size: 11px; font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #ef4444; color: #ffffff;
+      margin-left: 4px;
+      display: none;
+    }
+    .regie-tool-toggle-count.is-visible { display: inline-block; }
+
+    /* ============ Layout régie (colonnes adaptatives) ============ */
     .regie-layout {
       display: grid;
       grid-template-columns: 1fr;
       gap: 16px;
       margin-top: 16px;
     }
+    /* Par défaut (aucun outil) : aperçu vidéo seul, full width */
     @media (min-width: 1100px) {
-      .regie-layout {
+      .regie-layout { grid-template-columns: minmax(0, 1fr); }
+      /* 1 outil actif → aperçu + outil côte à côte */
+      .regie-layout.has-1 {
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr);
+        align-items: start;
+      }
+      /* 2 outils actifs → layout 3 colonnes classique */
+      .regie-layout.has-2 {
         grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr) minmax(0, 1fr);
         align-items: start;
       }
     }
     .regie-col { min-width: 0; }
+    .regie-col[hidden] { display: none; }
     .regie-card {
       background: #fff;
       border: 1px solid #e2e8f0;
@@ -515,6 +583,19 @@
 
   <div id="message-zone"></div>
 
+  <div class="regie-tools-bar" id="regie-tools-bar" style="display:none;">
+    <span class="regie-tools-bar-label">Outils :</span>
+    <button type="button" class="regie-tool-toggle" data-toggle-tool="moderation" id="toggle-moderation">
+      <span class="regie-tool-toggle-dot"></span>
+      <span>Modération messages</span>
+      <span class="regie-tool-toggle-count" id="toggle-moderation-count">0</span>
+    </button>
+    <button type="button" class="regie-tool-toggle" data-toggle-tool="polls" id="toggle-polls">
+      <span class="regie-tool-toggle-dot"></span>
+      <span>Sondages</span>
+    </button>
+  </div>
+
   <div class="regie-layout" id="regie-layout" style="display:none;">
 
     <!-- Colonne 1 : aperçu vidéo -->
@@ -550,7 +631,7 @@
     </section>
 
     <!-- Colonne 2 : modération messages -->
-    <section class="regie-col">
+    <section class="regie-col" data-tool="moderation" hidden>
       <div class="regie-card">
         <div class="regie-card-header">
           <div>
@@ -590,7 +671,7 @@
     </section>
 
     <!-- Colonne 3 : sondages (Phase B) -->
-    <section class="regie-col">
+    <section class="regie-col" data-tool="polls" hidden>
       <div class="regie-card">
         <div class="regie-card-header">
           <div>
@@ -625,6 +706,7 @@
   var statusBadge  = document.getElementById('status-badge');
   var editLink     = document.getElementById('edit-link');
   var messageZone  = document.getElementById('message-zone');
+  var toolsBar     = document.getElementById('regie-tools-bar');
   var layout       = document.getElementById('regie-layout');
   var videoWrap    = document.getElementById('regie-video-wrap');
   var msgList      = document.getElementById('regie-msg-list');
@@ -653,12 +735,22 @@
       currentEvent = data.event;
       renderEvent(data.event);
       renderVideo(data.event);
+      toolsBar.style.display = '';
       layout.style.display = '';
+      updateLayoutGrid();
       startPolling();
     } catch (err) {
       pageSub.textContent = 'Erreur de chargement';
       A.showMessage(messageZone, 'error', 'Chargement échoué : ' + err.message);
     }
+  }
+
+  // Met à jour la classe du grid selon nombre d'outils visibles
+  function updateLayoutGrid() {
+    var visible = layout.querySelectorAll('.regie-col[data-tool]:not([hidden])').length;
+    layout.classList.remove('has-1', 'has-2');
+    if (visible === 1) layout.classList.add('has-1');
+    else if (visible >= 2) layout.classList.add('has-2');
   }
 
   function renderEvent(ev) {
@@ -1312,6 +1404,67 @@
       vmixShowUrlBtn.disabled = false;
     }
   });
+
+  // ============================================================
+  // TOGGLE OUTILS — sélectionner quels outils afficher
+  // ============================================================
+  // État sauvegardé en localStorage (par event_id pour ne pas mélanger)
+  var TOGGLE_STORAGE_KEY = 'nomacast-regie-tools-' + eventId;
+
+  function getToolsState() {
+    try {
+      var raw = localStorage.getItem(TOGGLE_STORAGE_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw) || {};
+    } catch (e) { return {}; }
+  }
+  function saveToolsState(state) {
+    try { localStorage.setItem(TOGGLE_STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function setupToolToggle(toolId) {
+    var btn = document.querySelector('[data-toggle-tool="' + toolId + '"]');
+    var col = document.querySelector('.regie-col[data-tool="' + toolId + '"]');
+    if (!btn || !col) return;
+
+    // Charger état persisté
+    var state = getToolsState();
+    var active = !!state[toolId];
+    if (active) {
+      btn.classList.add('is-active');
+      col.hidden = false;
+    } else {
+      col.hidden = true;
+    }
+
+    btn.addEventListener('click', function () {
+      var isActive = btn.classList.toggle('is-active');
+      col.hidden = !isActive;
+      var s = getToolsState();
+      s[toolId] = isActive;
+      saveToolsState(s);
+      updateLayoutGrid();
+    });
+  }
+
+  setupToolToggle('moderation');
+  setupToolToggle('polls');
+  updateLayoutGrid();
+
+  // Badge compteur sur le bouton modération
+  // (mis à jour à chaque polling messages — on hook sur pendingCount via MutationObserver)
+  var moderationCountBadge = document.getElementById('toggle-moderation-count');
+  if (moderationCountBadge && pendingCount) {
+    var updateModerationBadge = function () {
+      var n = parseInt(pendingCount.textContent, 10) || 0;
+      moderationCountBadge.textContent = n;
+      moderationCountBadge.classList.toggle('is-visible', n > 0);
+    };
+    new MutationObserver(updateModerationBadge).observe(pendingCount, {
+      childList: true, characterData: true, subtree: true
+    });
+    updateModerationBadge();
+  }
 })();
 </script>
 
