@@ -655,7 +655,8 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   }
   .live-poll-zone { grid-area: poll; }
   .live-video { grid-area: video; min-width: 0; display: flex; flex-direction: column; }
-  .live-chat  { grid-area: chat;  min-width: 0; display: flex; }
+  /* nomacast-cta-banner-fix-v1 : flex-direction: column pour empiler la bannière CTA au-dessus du chat panel */
+  .live-chat  { grid-area: chat;  min-width: 0; display: flex; flex-direction: column; }
   .player-wrap {
     position: relative;
     width: 100%;
