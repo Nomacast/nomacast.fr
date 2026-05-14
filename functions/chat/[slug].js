@@ -229,9 +229,10 @@ function renderLivePage(event) {
     `;
 
   const mainBody = `
+    <div class="live-poll-zone" id="live-poll-zone" style="display:none;"></div>
+
     <div class="live-layout">
       <div class="live-video">
-        <div class="live-poll-zone" id="live-poll-zone" style="display:none;"></div>
         ${playerHtml}
       </div>
       <aside class="live-chat">
@@ -664,7 +665,7 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
 
   /* ============ Sondage participant (Phase C) ============ */
   .live-poll-zone {
-    margin-bottom: 14px;
+    margin-bottom: 24px;
     animation: poll-slide-in 0.4s ease;
   }
   @keyframes poll-slide-in {
@@ -672,6 +673,8 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     to   { opacity: 1; transform: translateY(0); }
   }
   .live-poll-card {
+    max-width: 720px;
+    margin: 0 auto;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-left: 4px solid ${color};
