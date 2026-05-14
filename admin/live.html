@@ -326,6 +326,57 @@
     .regie-poll-form-actions {
       display: flex; gap: 6px; margin-top: 10px;
     }
+
+    /* Carrousel sondages passés (>= 2) */
+    .regie-poll-carousel {
+      margin-top: 14px;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 14px;
+    }
+    .regie-poll-carousel-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .regie-poll-carousel-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .regie-poll-carousel-nav {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .regie-poll-carousel-nav-btn {
+      width: 22px; height: 22px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 13px; color: #475569;
+      padding: 0; line-height: 1;
+      font-family: inherit;
+    }
+    .regie-poll-carousel-nav-btn:hover:not(:disabled) {
+      border-color: #5A98D6;
+      color: #5A98D6;
+    }
+    .regie-poll-carousel-nav-btn:disabled {
+      opacity: 0.3; cursor: not-allowed;
+    }
+    .regie-poll-carousel-count {
+      font-variant-numeric: tabular-nums;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 600;
+      min-width: 28px;
+      text-align: center;
+    }
+    .regie-poll-carousel-divider {
+      border-top: 1px solid #f1f5f9;
+      margin: 14px 0;
+    }
   </style>
 </head>
 <body>
@@ -645,6 +696,7 @@
   var pollsText     = document.getElementById('polls-status-text');
   var pollsTimer    = null;
   var pollsCreateOpen = false;
+  var carouselIndex = 0; // index dans le carrousel des sondages passés/drafts
 
   function renderPollCreateZone() {
     A.clearNode(pollsCreateZ);
@@ -799,9 +851,91 @@
       pollsList.appendChild(A.el('div', { className: 'regie-polls-empty', text: 'Aucun sondage pour cet event.' }));
       return;
     }
+
+    // Séparer le sondage live des autres (drafts + closed)
+    var livePoll = null;
+    var others = [];
     polls.forEach(function (p) {
-      pollsList.appendChild(renderOnePoll(p));
+      if (p.status === 'live') livePoll = p;
+      else others.push(p);
     });
+
+    // Trier les autres : drafts d'abord (à lancer), puis closed (les + récents en tête)
+    others.sort(function (a, b) {
+      if (a.status === 'draft' && b.status !== 'draft') return -1;
+      if (a.status !== 'draft' && b.status === 'draft') return 1;
+      // Même statut : par created_at décroissant
+      return (b.created_at || '').localeCompare(a.created_at || '');
+    });
+
+    // 1. Sondage live en haut (toujours visible)
+    if (livePoll) {
+      pollsList.appendChild(renderOnePoll(livePoll));
+    }
+
+    // 2. Autres sondages
+    if (others.length === 0) {
+      // Rien à afficher en plus
+    } else if (others.length === 1) {
+      // 1 seul : affiché normalement (séparateur si live au-dessus)
+      if (livePoll) {
+        pollsList.appendChild(A.el('div', { className: 'regie-poll-carousel-divider' }));
+      }
+      pollsList.appendChild(renderOnePoll(others[0]));
+    } else {
+      // 2+ : carrousel
+      // Clamp l'index courant
+      if (carouselIndex >= others.length) carouselIndex = 0;
+      if (carouselIndex < 0) carouselIndex = 0;
+
+      var wrap = A.el('div', { className: 'regie-poll-carousel' });
+
+      // Header avec titre + flèches + compteur
+      var header = A.el('div', { className: 'regie-poll-carousel-header' });
+      var anyDraft = others.some(function (p) { return p.status === 'draft'; });
+      var anyClosed = others.some(function (p) { return p.status === 'closed'; });
+      var titleText;
+      if (anyDraft && anyClosed) titleText = 'Brouillons & précédents (' + others.length + ')';
+      else if (anyDraft) titleText = 'Brouillons (' + others.length + ')';
+      else titleText = 'Précédents (' + others.length + ')';
+      header.appendChild(A.el('span', { className: 'regie-poll-carousel-title', text: titleText }));
+
+      var nav = A.el('div', { className: 'regie-poll-carousel-nav' });
+      var prevBtn = A.el('button', {
+        className: 'regie-poll-carousel-nav-btn',
+        attrs: { type: 'button', title: 'Précédent' },
+        text: '‹',
+        on: { click: function () {
+          carouselIndex = (carouselIndex - 1 + others.length) % others.length;
+          clearTimeout(pollsTimer);
+          loadPolls();
+        }}
+      });
+      var counter = A.el('span', {
+        className: 'regie-poll-carousel-count',
+        text: (carouselIndex + 1) + ' / ' + others.length
+      });
+      var nextBtn = A.el('button', {
+        className: 'regie-poll-carousel-nav-btn',
+        attrs: { type: 'button', title: 'Suivant' },
+        text: '›',
+        on: { click: function () {
+          carouselIndex = (carouselIndex + 1) % others.length;
+          clearTimeout(pollsTimer);
+          loadPolls();
+        }}
+      });
+      nav.appendChild(prevBtn);
+      nav.appendChild(counter);
+      nav.appendChild(nextBtn);
+      header.appendChild(nav);
+      wrap.appendChild(header);
+
+      // Card du sondage à l'index courant
+      wrap.appendChild(renderOnePoll(others[carouselIndex]));
+
+      pollsList.appendChild(wrap);
+    }
   }
 
   function renderOnePoll(p) {
