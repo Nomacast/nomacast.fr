@@ -201,9 +201,8 @@ function renderLivePage(event, invitee, token) {
     `;
 
   const mainBody = `
-    <div class="live-poll-zone" id="live-poll-zone" style="display:none;"></div>
-
     <div class="live-layout">
+      <div class="live-poll-zone" id="live-poll-zone" style="display:none;"></div>
       <div class="live-video">
         ${playerHtml}
         <div class="report-issue-bar">
@@ -593,32 +592,39 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   .live-layout {
     display: grid;
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'poll'
+      'video'
+      'chat';
     gap: 16px;
     margin: 0 auto 24px;
-    max-width: 1280px;
+    max-width: 1400px;
   }
   /* Empilé en mobile/tablette jusqu'à 900px (lisibilité du chat trop étroit en-dessous) */
   @media (min-width: 900px) {
     .live-layout {
-      grid-template-columns: minmax(0, 1.5fr) minmax(360px, 1fr);
-      grid-template-areas: 'video chat';
+      grid-template-columns: minmax(0, 1.5fr) minmax(380px, 1fr);
+      grid-template-areas:
+        'poll  poll'
+        'video chat';
       align-items: stretch;
     }
-    .live-video { grid-area: video; }
-    .live-chat  { grid-area: chat; }
   }
-  /* Sur grand écran (≥ 1500px) : vidéo centrée + chat à droite (décentré).
-     Une 3e colonne fantôme à gauche, symétrique au chat, force la vidéo au centre. */
-  @media (min-width: 1500px) {
+  /* Sur grand écran (≥ 1600px) : vidéo centrée + chat à droite (décentré).
+     3e colonne fantôme à gauche, symétrique au chat, force la vidéo au centre.
+     Le sondage span les colonnes 2 et 3 (= largeur exacte de video+chat). */
+  @media (min-width: 1600px) {
     .live-layout {
-      grid-template-columns: minmax(360px, 1fr) minmax(0, 760px) minmax(360px, 1fr);
-      grid-template-areas: '. video chat';
-      max-width: 1600px;
+      grid-template-columns: minmax(320px, 1fr) minmax(0, 900px) minmax(320px, 1fr);
+      grid-template-areas:
+        '.    poll  poll'
+        '.    video chat';
+      max-width: 1800px;
     }
   }
-
-  .live-video { min-width: 0; display: flex; flex-direction: column; }
-  .live-chat  { min-width: 0; display: flex; }
+  .live-poll-zone { grid-area: poll; }
+  .live-video { grid-area: video; min-width: 0; display: flex; flex-direction: column; }
+  .live-chat  { grid-area: chat;  min-width: 0; display: flex; }
 
   .player-wrap {
     position: relative;
@@ -893,7 +899,6 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
 
   /* ============ Sondage participant (Phase C) ============ */
   .live-poll-zone {
-    margin-bottom: 24px;
     animation: poll-slide-in 0.4s ease;
   }
   @keyframes poll-slide-in {
@@ -901,8 +906,7 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     to   { opacity: 1; transform: translateY(0); }
   }
   .live-poll-card {
-    max-width: 720px;
-    margin: 0 auto;
+    width: 100%;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-left: 4px solid ${color};
