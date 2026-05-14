@@ -162,6 +162,12 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   overflow: hidden;
   margin-bottom: 10px;
 }
+/* wizard-stepper-v2-mobile-only-progress : barre de progression cachée sur desktop
+   (les dots numérotés + labels textuels suffisent à indiquer l'étape courante).
+   Conservée sur mobile où les labels sont masqués → la barre est utile. */
+@media (min-width: 721px) {
+  .wizard-stepper-progress { display: none; }
+}
 .wizard-stepper-progress-bar {
   height: 100%;
   background: var(--cyan);
@@ -260,8 +266,8 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
 /* Récap sticky à droite · chat-interactif-v2 */
 .wizard-summary {
   position: sticky;
-  top: 92px;
-  max-height: calc(100vh - 108px);
+  top: 137px;        /* sticky-recap-under-stepper-v1 : 64px nav + 65px stepper + 8px air */
+  max-height: calc(100vh - 153px);
   overflow-y: auto;
   background: var(--navy);
   color: var(--white);
@@ -1405,7 +1411,7 @@ body.menu-open .float-call{display:none!important}
 <section class="wizard-section" id="wizard">
   <div class="wizard-header">
     <p class="section-eyebrow" style="justify-content:center;display:flex;">Configurateur</p>
-    <h2 class="section-title" style="margin-bottom:14px;">Configurez votre chat<br>en deux minutes.</h2>
+    <h2 class="section-title" style="margin-bottom:14px;">Configurez votre chat<br>en trente secondes, <span style="color:var(--ink-muted);font-weight:400;">pas deux minutes</span>.</h2>
     <p class="section-desc" style="margin-left:auto;margin-right:auto;text-align:center;">
       Vos choix génèrent automatiquement un devis personnalisé. Aucune information n'est partagée tant que vous n'avez pas soumis le formulaire.
     </p>
@@ -2036,7 +2042,7 @@ body.menu-open .float-call{display:none!important}
         Configurer mon chat
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
-      <a href="index.html#contact" class="btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.3);">Parler à un humain</a>
+      <a href="index.html#contact" class="btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.3);">Formulaire de contact</a>
     </div>
   </div>
 </section>
