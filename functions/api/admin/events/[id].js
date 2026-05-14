@@ -42,6 +42,17 @@ export const onRequestPatch = async ({ request, params, env }) => {
     return jsonResponse({ error: 'JSON invalide' }, 400);
   }
 
+  // nomacast-logo-reset-v1 : effet de bord — quand l'admin Nomacast désactive
+  // explicitement white_label, on force le reset des customs client (logo + couleur).
+  // Évite que d'anciennes customs persistent en DB et soient ré-appliquées si le
+  // mode marque blanche est ré-activé plus tard. Le caller peut quand même renvoyer
+  // ses propres logo_url/primary_color dans le même PATCH, mais ces overrides client
+  // sont écrasés par le default ici (sécurité positive).
+  if (data.white_label !== undefined && !data.white_label) {
+    data.logo_url = null;
+    data.primary_color = '#5A98D6';
+  }
+
   // On accepte seulement un sous-ensemble de champs modifiables.
   // Le slug est traité séparément (cf. plus bas) car sa modification est
   // soumise à condition (aucun invité ne doit déjà avoir reçu le lien).

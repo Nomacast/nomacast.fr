@@ -1123,9 +1123,12 @@
 
   // nomacast-regie-branding-v1 : construit l'overlay logo selon l'état white_label / logo_url
   // Logique cohérente avec le mail d'invitation (functions/api/admin/events/[id]/send-invitations.js)
+  // nomacast-logo-reset-v1 : règle unifiée — le logo client n'apparaît QUE si
+  // white_label === true ET logo_url est rempli. Sinon, badge Nomacast par défaut.
   function buildBrandingOverlay(ev) {
-    // 1. Logo client uploadé → l'afficher (priorité, peu importe white_label)
-    if (ev.logo_url) {
+    var showClientLogo = !!(ev.white_label && ev.logo_url);
+    // 1. Logo client uploadé ET event en marque blanche → afficher le logo client
+    if (showClientLogo) {
       return A.el('div', {
         className: 'regie-video-overlay-logo',
         children: [
@@ -1133,18 +1136,14 @@
         ]
       });
     }
-    // 2. Pas de logo client mais pas white-label → badge Nomacast
-    if (!ev.white_label) {
-      return A.el('div', {
-        className: 'regie-video-overlay-logo',
-        children: [
-          A.el('span', { className: 'regie-video-overlay-logo-dot' }),
-          A.el('span', { text: 'Nomacast' })
-        ]
-      });
-    }
-    // 3. white_label sans logo → pas d'overlay (mais la border accent reste visible)
-    return null;
+    // 2. Sinon → badge Nomacast (white_label sans logo OU pas white_label)
+    return A.el('div', {
+      className: 'regie-video-overlay-logo',
+      children: [
+        A.el('span', { className: 'regie-video-overlay-logo-dot' }),
+        A.el('span', { text: 'Nomacast' })
+      ]
+    });
   }
 
   refreshVideoBtn.addEventListener('click', function () {

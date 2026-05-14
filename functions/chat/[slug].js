@@ -484,18 +484,19 @@ function renderErrorPage(title, message) {
 // HTML shell (identique à /i/[token].js - duplication assumée)
 // ============================================================
 function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, bodyScript, bodyClass }) {
-  const hasEventLogo = !!logoUrl;
+  // nomacast-logo-reset-v1 : règle unifiée — le logo client n'apparaît QUE si
+  // whiteLabel === true ET logoUrl est rempli. Sinon, on retombe sur le logo Nomacast.
+  // Le footer Nomacast (blurb commercial) reste piloté par whiteLabel seul.
+  const showClientLogo = !!(whiteLabel && logoUrl);
   let headerHtml;
-  if (hasEventLogo) {
+  if (showClientLogo) {
     headerHtml = `<a href="https://www.nomacast.fr/" target="_blank" rel="noopener" class="header-logo">
       <img src="${escapeHtml(logoUrl)}" alt="Logo" class="header-logo-img">
     </a>`;
-  } else if (!whiteLabel) {
+  } else {
     headerHtml = `<a href="https://www.nomacast.fr/" target="_blank" rel="noopener" class="header-logo header-logo-text">
       <span class="logo-dot">&bull;</span><span class="logo-text">&nbsp;Nomacast</span>
     </a>`;
-  } else {
-    headerHtml = '';
   }
 
   const footerHtml = whiteLabel ? '' : `
