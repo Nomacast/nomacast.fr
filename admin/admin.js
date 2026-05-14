@@ -437,21 +437,25 @@
   }
 
   function buildStreamFieldRow(label, value, opts) {
+    // nomacast-stream-emptyvalue-fix-v1
     opts = opts || {};
     var isSecret = !!opts.secret;
+    var hasValue = value != null && value !== '';
     var row = el('div', { className: 'admin-stream-row' });
 
     row.appendChild(el('div', { className: 'admin-stream-row-label', text: label }));
 
     var valueWrap = el('div', { className: 'admin-stream-row-value' });
-    var valueText = isSecret ? '••••••••••••••••••' : (value || '—');
+    // Si pas de valeur, on affiche '—' même en mode secret (pas de dots trompeurs)
+    var valueText = !hasValue ? '—' : (isSecret ? '••••••••••••••••••' : value);
     var valueEl = el('code', { className: 'admin-stream-row-code', text: valueText });
+    if (!hasValue) valueEl.style.color = '#94a3b8';
     valueWrap.appendChild(valueEl);
     row.appendChild(valueWrap);
 
     var actions = el('div', { className: 'admin-stream-row-actions' });
 
-    if (isSecret) {
+    if (isSecret && hasValue) {
       var revealed = false;
       var revealBtn = el('button', {
         className: 'admin-btn admin-btn-ghost admin-btn-sm',
@@ -459,28 +463,30 @@
         text: 'Afficher',
         on: { click: function () {
           revealed = !revealed;
-          valueEl.textContent = revealed ? (value || '—') : '••••••••••••••••••';
+          valueEl.textContent = revealed ? value : '••••••••••••••••••';
           this.textContent = revealed ? 'Masquer' : 'Afficher';
         }}
       });
       actions.appendChild(revealBtn);
     }
 
-    actions.appendChild(el('button', {
-      className: 'admin-btn admin-btn-ghost admin-btn-sm',
-      attrs: { type: 'button' },
-      text: 'Copier',
-      on: { click: function () {
-        var btn = this;
-        navigator.clipboard.writeText(value || '').then(
-          function () {
-            btn.textContent = 'Copié ✓';
-            setTimeout(function () { btn.textContent = 'Copier'; }, 1500);
-          },
-          function () { window.prompt('Copie :', value); }
-        );
-      }}
-    }));
+    if (hasValue) {
+      actions.appendChild(el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Copier',
+        on: { click: function () {
+          var btn = this;
+          navigator.clipboard.writeText(value).then(
+            function () {
+              btn.textContent = 'Copié ✓';
+              setTimeout(function () { btn.textContent = 'Copier'; }, 1500);
+            },
+            function () { window.prompt('Copie :', value); }
+          );
+        }}
+      }));
+    }
 
     row.appendChild(actions);
     return row;
