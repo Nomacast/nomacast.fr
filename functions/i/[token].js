@@ -197,12 +197,22 @@ function renderLivePage(event, invitee, token) {
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
   const hasStream = !!event.stream_playback_url;
+  // nomacast-lot-2a-v1 : nouveaux flags Tour 2.A (présence, reactions, CTA)
+  const hasPresence = !!(event.modes && event.modes.includes('presence'));
+  const hasReactions = !!(event.modes && event.modes.includes('reactions'));
+  const hasCta = !!(event.modes && event.modes.includes('cta'));
 
   const heroBody = `
-    <span class="state-badge state-live">
-      <span class="state-dot state-dot-pulse"></span>
-      En direct
-    </span>
+    <div class="hero-badges">
+      <span class="state-badge state-live">
+        <span class="state-dot state-dot-pulse"></span>
+        En direct
+      </span>
+      ${hasPresence ? `<span class="state-badge presence-badge" id="presence-badge" style="display:none;">
+        <span class="state-dot"></span>
+        <span id="presence-count">—</span> en ligne
+      </span>` : ''}
+    </div>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
   `;
@@ -226,6 +236,18 @@ function renderLivePage(event, invitee, token) {
       <div class="live-poll-zone" id="live-poll-zone" style="display:none;"></div>
       <div class="live-video">
         ${playerHtml}
+        ${hasReactions ? `<!-- nomacast-lot-2a-v1 : C1 reactions -->
+        <div class="reactions-overlay" id="reactions-overlay" aria-hidden="true"></div>
+        <div class="reactions-bar" id="reactions-bar">
+          <button type="button" class="reaction-btn" data-emoji="👏" aria-label="Applaudir">👏<span class="reaction-count" data-for="👏">0</span></button>
+          <button type="button" class="reaction-btn" data-emoji="❤️" aria-label="J'aime">❤️<span class="reaction-count" data-for="❤️">0</span></button>
+          <button type="button" class="reaction-btn" data-emoji="🔥" aria-label="Top">🔥<span class="reaction-count" data-for="🔥">0</span></button>
+          <button type="button" class="reaction-btn" data-emoji="🎉" aria-label="Bravo">🎉<span class="reaction-count" data-for="🎉">0</span></button>
+          <button type="button" class="reaction-btn" data-emoji="🙏" aria-label="Merci">🙏<span class="reaction-count" data-for="🙏">0</span></button>
+          <button type="button" class="reaction-btn" data-emoji="👍" aria-label="OK">👍<span class="reaction-count" data-for="👍">0</span></button>
+          <button type="button" class="reaction-btn" data-emoji="😂" aria-label="Drôle">😂<span class="reaction-count" data-for="😂">0</span></button>
+          <button type="button" class="reaction-btn" data-emoji="🤔" aria-label="Question">🤔<span class="reaction-count" data-for="🤔">0</span></button>
+        </div>` : ''}
         <div class="report-issue-bar">
           <button type="button" class="report-issue-trigger" id="report-issue-trigger">
             Signaler un problème technique
@@ -233,6 +255,14 @@ function renderLivePage(event, invitee, token) {
         </div>
       </div>
       <aside class="live-chat">
+        ${hasCta ? `<!-- nomacast-lot-2a-v1 : C4 CTA -->
+        <div class="cta-banner" id="cta-banner" style="display:none;">
+          <div class="cta-banner-content">
+            <span class="cta-banner-label" id="cta-banner-label"></span>
+            <a class="cta-banner-button" id="cta-banner-button" target="_blank" rel="noopener"></a>
+          </div>
+          <button type="button" class="cta-banner-close" id="cta-banner-close" aria-label="Fermer">×</button>
+        </div>` : ''}
         ${buildChatPanelHtml({ isLectureSeule, isQaMode })}
       </aside>
     </div>
@@ -278,11 +308,20 @@ function renderLivePage(event, invitee, token) {
       pollsActiveUrl: `/api/chat/${encodeURIComponent(event.slug)}/polls/active`,
       voteUrlBase: `/api/chat/${encodeURIComponent(event.slug)}/polls`,
       reportIssueUrl: `/api/chat/${encodeURIComponent(event.slug)}/report-issue`,
+      // nomacast-lot-2a-v1 : URLs API pour les 3 nouvelles features
+      presenceHeartbeatUrl: hasPresence ? `/api/chat/${encodeURIComponent(event.slug)}/presence/heartbeat` : null,
+      presenceStatsUrl: hasPresence ? `/api/chat/${encodeURIComponent(event.slug)}/presence/stats` : null,
+      reactionsUrl: hasReactions ? `/api/chat/${encodeURIComponent(event.slug)}/reactions` : null,
+      reactionsRecentUrl: hasReactions ? `/api/chat/${encodeURIComponent(event.slug)}/reactions/recent` : null,
+      ctaActiveUrl: hasCta ? `/api/chat/${encodeURIComponent(event.slug)}/cta/active` : null,
       inviteeId: invitee.id,
       accessMode: event.access_mode,
       magicToken: token,
       isLectureSeule,
       isQaMode,
+      hasPresence,
+      hasReactions,
+      hasCta,
       // L'invitee est connu côté serveur, pas besoin de demander un pseudo
       authorPlaceholder: invitee.name || (invitee.email ? invitee.email.split('@')[0] : 'Invité')
     })
@@ -1117,6 +1156,159 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     border-radius: 6px;
     margin-top: 8px;
   }
+
+  /* ============ nomacast-lot-2a-v1 : C2 Présence ============ */
+  .hero-badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .hero-badges .state-badge { margin-bottom: 0; }
+  .presence-badge {
+    background: rgba(255,255,255,0.10);
+  }
+  .presence-badge .state-dot { background: #4ade80; }
+
+  /* ============ nomacast-lot-2a-v1 : C1 Reactions ============ */
+  .live-video { position: relative; }
+  .reactions-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 60px;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 5;
+  }
+  .reaction-float {
+    position: absolute;
+    bottom: 0;
+    font-size: 32px;
+    line-height: 1;
+    user-select: none;
+    animation: reaction-rise 1.8s ease-out forwards;
+    will-change: transform, opacity;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  @keyframes reaction-rise {
+    0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+    15%  { transform: translateY(-15px) scale(1.15); opacity: 1; }
+    100% { transform: translateY(-180px) scale(0.95); opacity: 0; }
+  }
+  .reactions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 18px;
+    font-family: inherit;
+    color: #0f172a;
+    transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+    user-select: none;
+  }
+  .reaction-btn:hover {
+    border-color: ${color};
+    background: #f1f5f9;
+  }
+  .reaction-btn:active {
+    transform: scale(0.92);
+  }
+  .reaction-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .reaction-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+  }
+  .reaction-btn:hover .reaction-count {
+    color: ${color};
+  }
+
+  /* ============ nomacast-lot-2a-v1 : C4 CTA banner ============ */
+  .cta-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: ${color};
+    color: #ffffff;
+    border-radius: 10px 10px 0 0;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 6px rgba(15,23,42,0.05);
+    animation: cta-slide-in 0.35s ease-out;
+  }
+  @keyframes cta-slide-in {
+    0%   { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .cta-banner-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .cta-banner-label {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #ffffff;
+  }
+  .cta-banner-button {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 7px 14px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  .cta-banner-button:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+  }
+  .cta-banner-button:active {
+    transform: scale(0.96);
+  }
+  .cta-banner-close {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    padding: 0;
+    background: rgba(255,255,255,0.18);
+    color: #ffffff;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    font-family: inherit;
+    transition: background 0.15s ease;
+  }
+  .cta-banner-close:hover {
+    background: rgba(255,255,255,0.32);
+  }
 </style>
 </head>
 <body${bodyClass ? ' class="' + escapeHtml(bodyClass) + '"' : ''}>
@@ -1237,7 +1429,7 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
 // Script JS de la page live (polling chat + polling status pour live→ended).
 // Concaténation + (pas de template strings) pour éviter les conflits ${...}
 // avec le template serveur.
-function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, inviteeId, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, authorPlaceholder }) {
+function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, presenceHeartbeatUrl, presenceStatsUrl, reactionsUrl, reactionsRecentUrl, ctaActiveUrl, inviteeId, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, hasPresence, hasReactions, hasCta, authorPlaceholder }) {
   return `<script>
 (function () {
   var STATUS_URL = ${JSON.stringify(statusUrl)};
@@ -1245,12 +1437,21 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
   var POLLS_ACTIVE_URL = ${JSON.stringify(pollsActiveUrl || null)};
   var VOTE_URL_BASE = ${JSON.stringify(voteUrlBase || null)};
   var REPORT_ISSUE_URL = ${JSON.stringify(reportIssueUrl || null)};
+  // nomacast-lot-2a-v1 : URLs des 3 nouvelles features
+  var PRESENCE_HEARTBEAT_URL = ${JSON.stringify(presenceHeartbeatUrl || null)};
+  var PRESENCE_STATS_URL = ${JSON.stringify(presenceStatsUrl || null)};
+  var REACTIONS_URL = ${JSON.stringify(reactionsUrl || null)};
+  var REACTIONS_RECENT_URL = ${JSON.stringify(reactionsRecentUrl || null)};
+  var CTA_ACTIVE_URL = ${JSON.stringify(ctaActiveUrl || null)};
   var INVITEE_ID = ${JSON.stringify(inviteeId || null)};
   var ACCESS_MODE = ${JSON.stringify(accessMode)};
   var MAGIC_TOKEN = ${JSON.stringify(magicToken || null)};
   var IS_LECTURE_SEULE = ${JSON.stringify(!!isLectureSeule)};
   var IS_QA = ${JSON.stringify(!!isQaMode)};
   var IS_ENDED = ${JSON.stringify(!!isEnded)};
+  var HAS_PRESENCE = ${JSON.stringify(!!hasPresence)};
+  var HAS_REACTIONS = ${JSON.stringify(!!hasReactions)};
+  var HAS_CTA = ${JSON.stringify(!!hasCta)};
   var AUTHOR_NAME = ${JSON.stringify(authorPlaceholder)};
 
   // ============ Polling status (live -> ended) ============
@@ -1773,6 +1974,217 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeModal();
     });
   })();
+
+  // ============================================================
+  // nomacast-lot-2a-v1 : C2 Présence (heartbeat + compteur)
+  // ============================================================
+  if (HAS_PRESENCE && PRESENCE_HEARTBEAT_URL && PRESENCE_STATS_URL && !IS_ENDED) {
+    (function setupPresence() {
+      var presenceBadge = document.getElementById('presence-badge');
+      var presenceCount = document.getElementById('presence-count');
+      var heartbeatTimer = null;
+      var statsTimer = null;
+
+      function sendHeartbeat() {
+        var body = { invitee_id: INVITEE_ID, full_name: AUTHOR_NAME };
+        fetch(PRESENCE_HEARTBEAT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          credentials: 'same-origin',
+          cache: 'no-store',
+          keepalive: true
+        }).catch(function () {});
+      }
+
+      function fetchStats() {
+        fetch(PRESENCE_STATS_URL, { cache: 'no-store', credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (data && typeof data.count === 'number') {
+              if (presenceCount) presenceCount.textContent = data.count;
+              if (presenceBadge) presenceBadge.style.display = '';
+            }
+          })
+          .catch(function () {});
+      }
+
+      // Premier appel immédiat puis intervalles
+      sendHeartbeat();
+      fetchStats();
+      heartbeatTimer = setInterval(sendHeartbeat, 30000);
+      statsTimer = setInterval(fetchStats, 20000);
+
+      // Re-pinger immédiatement quand l'onglet redevient visible
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+          sendHeartbeat();
+          fetchStats();
+        }
+      });
+
+      // Heartbeat final sur unload
+      window.addEventListener('pagehide', function () {
+        try {
+          var blob = new Blob([JSON.stringify({ invitee_id: INVITEE_ID, full_name: AUTHOR_NAME })], { type: 'application/json' });
+          navigator.sendBeacon && navigator.sendBeacon(PRESENCE_HEARTBEAT_URL, blob);
+        } catch (e) {}
+      });
+    })();
+  }
+
+  // ============================================================
+  // nomacast-lot-2a-v1 : C1 Reactions (envoi + polling + overlay éphémère)
+  // ============================================================
+  if (HAS_REACTIONS && REACTIONS_URL && REACTIONS_RECENT_URL && !IS_ENDED) {
+    (function setupReactions() {
+      var bar = document.getElementById('reactions-bar');
+      var overlay = document.getElementById('reactions-overlay');
+      if (!bar || !overlay) return;
+
+      var lastSince = new Date().toISOString();
+      var pollTimer = null;
+      var sendCooldown = false;
+
+      // Click → POST reaction
+      bar.addEventListener('click', function (e) {
+        var btn = e.target.closest('.reaction-btn');
+        if (!btn || sendCooldown) return;
+        var emoji = btn.getAttribute('data-emoji');
+        if (!emoji) return;
+        // Throttling local 250ms pour éviter spam de clics
+        sendCooldown = true;
+        setTimeout(function () { sendCooldown = false; }, 250);
+        // Floating immédiat (UX optimiste, le serveur confirmera via /recent)
+        spawnFloat(emoji);
+        fetch(REACTIONS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji: emoji, invitee_id: INVITEE_ID }),
+          credentials: 'same-origin',
+          cache: 'no-store'
+        }).catch(function () {});
+      });
+
+      function fetchRecent() {
+        var url = REACTIONS_RECENT_URL + (REACTIONS_RECENT_URL.indexOf('?') >= 0 ? '&' : '?') + 'since=' + encodeURIComponent(lastSince);
+        fetch(url, { cache: 'no-store', credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            // Récents : array d'objets {emoji, created_at, invitee_id?}
+            if (Array.isArray(data.recent)) {
+              data.recent.forEach(function (r) {
+                // Ne pas re-spawn ses propres reactions (déjà spawn en optimiste)
+                if (r.invitee_id && r.invitee_id === INVITEE_ID) return;
+                if (r.emoji) spawnFloat(r.emoji);
+              });
+              // Mise à jour du curseur "since"
+              if (data.recent.length > 0) {
+                lastSince = data.recent[data.recent.length - 1].created_at || lastSince;
+              } else if (data.now) {
+                lastSince = data.now;
+              }
+            }
+            // Totaux 5min : { totals: { '👏': 23, '❤️': 18, ... } }
+            if (data.totals && typeof data.totals === 'object') {
+              Object.keys(data.totals).forEach(function (emoji) {
+                var span = bar.querySelector('.reaction-count[data-for="' + cssEscape(emoji) + '"]');
+                if (span) span.textContent = data.totals[emoji] || 0;
+              });
+            }
+          })
+          .catch(function () {});
+      }
+
+      function spawnFloat(emoji) {
+        var f = document.createElement('div');
+        f.className = 'reaction-float';
+        f.textContent = emoji;
+        // Position X randomisée sur 70% de la largeur de l'overlay (10% à 80%)
+        f.style.left = (10 + Math.random() * 70) + '%';
+        overlay.appendChild(f);
+        // Cleanup après l'animation (1.8s + marge)
+        setTimeout(function () {
+          if (f.parentNode) f.parentNode.removeChild(f);
+        }, 2000);
+      }
+
+      // CSS.escape polyfill simple (pour data-for="❤️" avec selector)
+      function cssEscape(s) {
+        if (window.CSS && CSS.escape) return CSS.escape(s);
+        return String(s).replace(/(["\\\\\\[\\]])/g, '\\\\$1');
+      }
+
+      // Premier fetch puis polling
+      fetchRecent();
+      pollTimer = setInterval(fetchRecent, 2000);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+          // Reset le curseur pour ne pas spawn 50 reactions d'un coup au retour
+          lastSince = new Date().toISOString();
+          fetchRecent();
+        }
+      });
+    })();
+  }
+
+  // ============================================================
+  // nomacast-lot-2a-v1 : C4 CTA banner (polling + dismiss)
+  // ============================================================
+  if (HAS_CTA && CTA_ACTIVE_URL && !IS_ENDED) {
+    (function setupCta() {
+      var banner = document.getElementById('cta-banner');
+      var labelEl = document.getElementById('cta-banner-label');
+      var btnEl = document.getElementById('cta-banner-button');
+      var closeEl = document.getElementById('cta-banner-close');
+      if (!banner || !labelEl || !btnEl || !closeEl) return;
+
+      var DISMISSED_PREFIX = 'nomacast-cta-dismissed-';
+      var currentCtaId = null;
+      var pollTimer = null;
+
+      function isDismissed(ctaId) {
+        try { return !!localStorage.getItem(DISMISSED_PREFIX + ctaId); }
+        catch (e) { return false; }
+      }
+      function markDismissed(ctaId) {
+        try { localStorage.setItem(DISMISSED_PREFIX + ctaId, '1'); } catch (e) {}
+      }
+
+      closeEl.addEventListener('click', function () {
+        if (currentCtaId) markDismissed(currentCtaId);
+        banner.style.display = 'none';
+      });
+
+      function fetchActive() {
+        fetch(CTA_ACTIVE_URL, { cache: 'no-store', credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            var cta = data && data.cta ? data.cta : null;
+            if (!cta || !cta.id || isDismissed(cta.id)) {
+              banner.style.display = 'none';
+              currentCtaId = null;
+              return;
+            }
+            if (cta.id === currentCtaId) return; // Pas de changement
+            currentCtaId = cta.id;
+            labelEl.textContent = cta.label || cta.title || 'Action';
+            btnEl.textContent = cta.button_label || cta.cta_label || 'Découvrir';
+            btnEl.setAttribute('href', cta.url || '#');
+            banner.style.display = '';
+          })
+          .catch(function () {});
+      }
+
+      fetchActive();
+      pollTimer = setInterval(fetchActive, 10000);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') fetchActive();
+      });
+    })();
+  }
+
 })();
 <\/script>`;
 }
