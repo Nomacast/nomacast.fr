@@ -523,9 +523,6 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   /* ============ LIVE LAYOUT (C4 player + C5 chat) ============ */
   /* Sur la page live, on élargit le container pour avoir un player confortable */
   body.live-page .container { max-width: 1400px; }
-  @media (min-width: 1600px) {
-    body.live-page .container { max-width: 1800px; }
-  }
   body.live-page .tip { max-width: 680px; margin-left: auto; margin-right: auto; }
 
   .live-layout {
@@ -547,18 +544,6 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
         'poll  poll'
         'video chat';
       align-items: stretch;
-    }
-  }
-  /* Sur grand écran (≥ 1600px) : vidéo centrée + chat à droite (décentré).
-     3e colonne fantôme à gauche, symétrique au chat, force la vidéo au centre.
-     Le sondage span les colonnes 2 et 3 (= largeur exacte de video+chat). */
-  @media (min-width: 1600px) {
-    .live-layout {
-      grid-template-columns: minmax(320px, 1fr) minmax(0, 900px) minmax(320px, 1fr);
-      grid-template-areas:
-        '.    poll  poll'
-        '.    video chat';
-      max-width: 1800px;
     }
   }
   .live-poll-zone { grid-area: poll; }
