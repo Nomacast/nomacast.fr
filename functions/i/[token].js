@@ -20,7 +20,8 @@ export const onRequestGet = async ({ params, env }) => {
       i.id AS invitee_id, i.email AS invitee_email, i.full_name AS invitee_name,
       i.invited_at, i.last_seen_at,
       e.id AS event_id, e.slug, e.title, e.client_name, e.scheduled_at, e.duration_minutes,
-      e.status, e.primary_color, e.logo_url, e.white_label, e.access_mode
+      e.status, e.primary_color, e.logo_url, e.white_label, e.access_mode, e.modes_json,
+      e.stream_uid, e.stream_playback_url
     FROM invitees i
     JOIN events e ON i.event_id = e.id
     WHERE i.magic_token = ?
@@ -33,12 +34,17 @@ export const onRequestGet = async ({ params, env }) => {
     ), 404);
   }
 
+  let modes = [];
+  if (row.modes_json) { try { modes = JSON.parse(row.modes_json); } catch (e) {} }
+
   const event = {
     id: row.event_id, slug: row.slug, title: row.title, client_name: row.client_name,
     scheduled_at: row.scheduled_at, duration_minutes: row.duration_minutes,
     status: row.status, primary_color: row.primary_color || '#5A98D6',
     logo_url: row.logo_url, white_label: row.white_label === 1,
-    access_mode: row.access_mode
+    access_mode: row.access_mode,
+    modes,
+    stream_uid: row.stream_uid, stream_playback_url: row.stream_playback_url
   };
   const invitee = {
     id: row.invitee_id, email: row.invitee_email, name: row.invitee_name,
@@ -150,6 +156,9 @@ function renderWaitingPage(event, invitee, token) {
 
 function renderLivePage(event, invitee, token) {
   const greeting = invitee.name ? `Bonjour ${escapeHtml(invitee.name.split(/\s+/)[0])}` : 'Bonjour';
+  const isLectureSeule = event.modes && event.modes.includes('lecture');
+  const isQaMode = event.modes && event.modes.includes('qa');
+  const hasStream = !!event.stream_playback_url;
 
   const heroBody = `
     <span class="state-badge state-live">
@@ -160,15 +169,29 @@ function renderLivePage(event, invitee, token) {
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
   `;
 
+  // Player : iframe Cloudflare Stream Player si stream provisionné, sinon placeholder
+  const playerHtml = hasStream
+    ? buildPlayerHtml(event.stream_playback_url, event.primary_color)
+    : `
+      <section class="placeholder-viewer">
+        <div class="placeholder-icon">▶</div>
+        <h2 class="placeholder-title">Le live va bientôt démarrer</h2>
+        <p class="placeholder-text">
+          Le flux vidéo apparaîtra ici dès que l'organisateur lancera la diffusion.<br>
+          <span class="muted">Cette page se mettra à jour automatiquement.</span>
+        </p>
+      </section>
+    `;
+
   const mainBody = `
-    <section class="placeholder-viewer">
-      <div class="placeholder-icon">▶</div>
-      <h2 class="placeholder-title">Le chat live est en cours</h2>
-      <p class="placeholder-text">
-        Le lecteur vidéo et le chat interactif seront disponibles ici.<br>
-        <span class="muted">(Implémentation du viewer en cours — Cloudflare Stream Live)</span>
-      </p>
-    </section>
+    <div class="live-layout">
+      <div class="live-video">
+        ${playerHtml}
+      </div>
+      <aside class="live-chat">
+        ${buildChatPanelHtml({ isLectureSeule, isQaMode })}
+      </aside>
+    </div>
 
     <section class="tip">
       <p>${greeting}, vous êtes bien sur la page de l'événement. Si vous rencontrez un problème technique, contactez l'organisateur.</p>
@@ -181,7 +204,17 @@ function renderLivePage(event, invitee, token) {
     logoUrl: event.logo_url,
     whiteLabel: event.white_label,
     heroBody,
-    mainBody
+    mainBody,
+    bodyScript: buildLivePageScript({
+      statusUrl: `/i/${encodeURIComponent(token)}/status`,
+      chatMessagesUrl: `/api/chat/${encodeURIComponent(event.slug)}/messages`,
+      accessMode: event.access_mode,
+      magicToken: token,
+      isLectureSeule,
+      isQaMode,
+      // L'invitee est connu côté serveur, pas besoin de demander un pseudo
+      authorPlaceholder: invitee.name || (invitee.email ? invitee.email.split('@')[0] : 'Invité')
+    })
   });
 }
 
@@ -462,6 +495,135 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     .countdown-unit { min-width: 52px; }
   }
 
+  /* ============ LIVE LAYOUT (C4 player + C5 chat) ============ */
+  .live-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 0 0 24px;
+  }
+  @media (min-width: 720px) {
+    .live-layout {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      align-items: stretch;
+    }
+  }
+
+  .live-video { min-width: 0; }
+  .player-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0f172a;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .player-iframe {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    border: 0; display: block;
+  }
+
+  .chat-panel {
+    display: flex; flex-direction: column;
+    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    min-height: 360px;
+    max-height: 70vh;
+  }
+  @media (min-width: 720px) {
+    .chat-panel { max-height: none; }
+  }
+  .chat-panel-readonly { min-height: 200px; }
+
+  .chat-header {
+    padding: 12px 14px; border-bottom: 1px solid #f1f5f9;
+    background: #fafbfc;
+  }
+  .chat-title {
+    font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.2;
+  }
+  .chat-sub {
+    font-size: 11px; color: #94a3b8; margin-top: 2px; line-height: 1.3;
+  }
+
+  .chat-messages {
+    flex: 1; min-height: 200px;
+    overflow-y: auto; overflow-x: hidden;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+    background: #fafbfc;
+  }
+  .chat-empty {
+    color: #94a3b8; font-size: 12px; font-style: italic;
+    text-align: center; padding: 24px 8px;
+  }
+  .chat-msg {
+    background: #ffffff; border: 1px solid #f1f5f9; border-radius: 8px;
+    padding: 8px 10px;
+    word-break: break-word;
+  }
+  .chat-msg-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .chat-msg-author {
+    font-size: 12px; font-weight: 700; color: #0f172a;
+  }
+  .chat-msg-time {
+    font-size: 10px; color: #94a3b8; font-variant-numeric: tabular-nums;
+  }
+  .chat-msg-body {
+    font-size: 13px; color: #334155; line-height: 1.45;
+    white-space: pre-wrap;
+  }
+  .chat-msg-admin .chat-msg-author { color: ${color}; }
+  .chat-msg-admin { border-left: 3px solid ${color}; }
+  .chat-msg-question { background: #fffbeb; border-color: #fde68a; }
+  .chat-msg-question .chat-msg-author::after {
+    content: ' · question';
+    font-weight: 500; color: #92400e; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  .chat-form {
+    border-top: 1px solid #f1f5f9; padding: 10px 12px;
+    background: #ffffff;
+  }
+  .chat-input {
+    width: 100%; box-sizing: border-box;
+    border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 8px 10px; font: inherit; font-size: 13px;
+    color: #0f172a; background: #ffffff;
+    resize: vertical;
+    min-height: 44px;
+  }
+  .chat-input:focus { outline: 2px solid ${color}; outline-offset: 1px; border-color: transparent; }
+  .chat-form-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 6px;
+  }
+  .chat-counter {
+    font-size: 11px; color: #94a3b8; font-variant-numeric: tabular-nums;
+  }
+  .chat-send-btn {
+    background: ${color}; color: #ffffff; border: 0;
+    padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .chat-send-btn:hover { opacity: 0.9; }
+  .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .chat-error {
+    margin-top: 6px; padding: 6px 8px;
+    background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;
+    border-radius: 6px; font-size: 12px;
+  }
+  .chat-error.chat-info {
+    background: #d1fae5; color: #065f46; border-color: #6ee7b7;
+  }
+
   /* FOOTER */
   .page-footer {
     padding: 38px 24px 40px; background: #fafbfc; border-top: 1px solid #e2e8f0;
@@ -514,6 +676,281 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   ${bodyScript || ''}
 </body>
 </html>`;
+}
+
+// ============================================================
+// Helpers Live (player Cloudflare Stream + chat C5)
+// Duplication assumée avec functions/chat/[slug].js.
+// ============================================================
+function buildPlayerHtml(playbackUrl, primaryColor) {
+  // Le Stream Player Cloudflare prend un param ?primaryColor=RRGGBB (sans #)
+  const colorParam = (primaryColor || '#5A98D6').replace('#', '');
+  const src = playbackUrl + (playbackUrl.includes('?') ? '&' : '?') + 'primaryColor=' + encodeURIComponent(colorParam) + '&letterboxColor=transparent';
+  return `
+    <div class="player-wrap">
+      <iframe
+        class="player-iframe"
+        src="${escapeHtml(src)}"
+        loading="lazy"
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+        allowfullscreen
+        title="Lecteur vidéo en direct"
+      ></iframe>
+    </div>
+  `;
+}
+
+function buildChatPanelHtml({ isLectureSeule, isQaMode }) {
+  if (isLectureSeule) {
+    return `
+      <div class="chat-panel chat-panel-readonly">
+        <div class="chat-header">
+          <div class="chat-title">Chat</div>
+          <div class="chat-sub">Lecture seule</div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-empty">Le chat est désactivé pour cet événement.</div>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="chat-title">${isQaMode ? 'Questions' : 'Chat'}</div>
+        <div class="chat-sub">${isQaMode ? 'Vos questions sont modérées avant diffusion.' : 'Échangez en direct.'}</div>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-empty" id="chat-empty">Aucun message pour le moment. Soyez le premier !</div>
+      </div>
+      <form class="chat-form" id="chat-form" autocomplete="off">
+        <textarea
+          class="chat-input"
+          id="chat-input"
+          rows="2"
+          maxlength="500"
+          placeholder="${isQaMode ? 'Posez votre question…' : 'Votre message…'}"
+          required></textarea>
+        <div class="chat-form-row">
+          <span class="chat-counter" id="chat-counter">0 / 500</span>
+          <button type="submit" class="chat-send-btn" id="chat-send-btn">Envoyer</button>
+        </div>
+        <div class="chat-error" id="chat-error" style="display:none"></div>
+      </form>
+    </div>
+  `;
+}
+
+// Script JS de la page live (polling chat + polling status pour live→ended).
+// Concaténation + (pas de template strings) pour éviter les conflits ${...}
+// avec le template serveur.
+function buildLivePageScript({ statusUrl, chatMessagesUrl, accessMode, magicToken, isLectureSeule, isQaMode, authorPlaceholder }) {
+  return `<script>
+(function () {
+  var STATUS_URL = ${JSON.stringify(statusUrl)};
+  var CHAT_URL = ${JSON.stringify(chatMessagesUrl)};
+  var ACCESS_MODE = ${JSON.stringify(accessMode)};
+  var MAGIC_TOKEN = ${JSON.stringify(magicToken || null)};
+  var IS_LECTURE_SEULE = ${JSON.stringify(!!isLectureSeule)};
+  var IS_QA = ${JSON.stringify(!!isQaMode)};
+  var AUTHOR_NAME = ${JSON.stringify(authorPlaceholder || 'Invité')};
+
+  // ============ Polling status (live -> ended) ============
+  var statusTimer = null;
+  function pollStatus() {
+    var qs = window.location.search || '';
+    fetch(STATUS_URL + qs, { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && data.status && data.status !== 'live') {
+          window.location.reload();
+          return;
+        }
+        statusTimer = setTimeout(pollStatus, 30000);
+      })
+      .catch(function () {
+        statusTimer = setTimeout(pollStatus, 30000);
+      });
+  }
+  statusTimer = setTimeout(pollStatus, 30000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      clearTimeout(statusTimer);
+      pollStatus();
+    }
+  });
+
+  // ============ Chat ============
+  if (IS_LECTURE_SEULE) return;
+
+  var elMessages = document.getElementById('chat-messages');
+  var elEmpty = document.getElementById('chat-empty');
+  var elForm = document.getElementById('chat-form');
+  var elInput = document.getElementById('chat-input');
+  var elCounter = document.getElementById('chat-counter');
+  var elSendBtn = document.getElementById('chat-send-btn');
+  var elError = document.getElementById('chat-error');
+
+  if (!elMessages || !elForm) return;
+
+  var lastTimestamp = null;
+  var seenIds = Object.create(null);
+  var chatTimer = null;
+
+  function htmlEscape(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function formatTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  function renderMessage(m) {
+    if (seenIds[m.id]) return;
+    seenIds[m.id] = true;
+    if (elEmpty) { elEmpty.style.display = 'none'; }
+
+    var kindClass = 'chat-msg-' + (m.author_kind || 'guest');
+    var pinClass = m.kind === 'question' ? ' chat-msg-question' : '';
+    var div = document.createElement('div');
+    div.className = 'chat-msg ' + kindClass + pinClass;
+    div.innerHTML =
+      '<div class="chat-msg-head">'
+      + '<span class="chat-msg-author">' + htmlEscape(m.author_name) + '</span>'
+      + '<span class="chat-msg-time">' + formatTime(m.created_at) + '</span>'
+      + '</div>'
+      + '<div class="chat-msg-body"></div>';
+    div.querySelector('.chat-msg-body').textContent = m.content;
+    elMessages.appendChild(div);
+  }
+
+  function scrollToBottom(force) {
+    // Auto-scroll uniquement si déjà près du bas (l'utilisateur peut scroll up)
+    var nearBottom = (elMessages.scrollHeight - elMessages.scrollTop - elMessages.clientHeight) < 80;
+    if (force || nearBottom) {
+      elMessages.scrollTop = elMessages.scrollHeight;
+    }
+  }
+
+  function pollChat() {
+    var url = CHAT_URL;
+    if (lastTimestamp) {
+      url += '?since=' + encodeURIComponent(lastTimestamp);
+    }
+    var headers = {};
+    if (MAGIC_TOKEN) headers['X-Magic-Token'] = MAGIC_TOKEN;
+
+    fetch(url, { headers: headers, credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && data.messages && data.messages.length) {
+          var atBottom = (elMessages.scrollHeight - elMessages.scrollTop - elMessages.clientHeight) < 80;
+          data.messages.forEach(function (m) {
+            renderMessage(m);
+            if (m.created_at) lastTimestamp = m.created_at;
+          });
+          if (atBottom) scrollToBottom(true);
+        }
+      })
+      .catch(function () {})
+      .then(function () {
+        chatTimer = setTimeout(pollChat, 4000);
+      });
+  }
+
+  // Counter input
+  if (elInput && elCounter) {
+    elInput.addEventListener('input', function () {
+      elCounter.textContent = elInput.value.length + ' / 500';
+    });
+  }
+
+  // Submit handler
+  elForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var content = elInput.value.trim();
+    if (!content) return;
+
+    // Pour event public : demander un pseudo si non encore défini (localStorage)
+    var authorName = AUTHOR_NAME;
+    if (ACCESS_MODE !== 'private') {
+      var stored = '';
+      try { stored = localStorage.getItem('nomacast-chat-author') || ''; } catch (e) {}
+      if (!authorName) authorName = stored;
+      if (!authorName) {
+        var input = (window.prompt('Choisissez un pseudo pour participer au chat :', '') || '').trim();
+        if (!input) return;
+        if (input.length > 60) input = input.slice(0, 60);
+        authorName = input;
+        try { localStorage.setItem('nomacast-chat-author', authorName); } catch (e) {}
+      }
+    }
+
+    elSendBtn.disabled = true;
+    elError.style.display = 'none';
+
+    var body = { content: content };
+    if (IS_QA) body.kind = 'question';
+    if (ACCESS_MODE !== 'private') body.author_name = authorName;
+
+    var headers = { 'Content-Type': 'application/json' };
+    if (MAGIC_TOKEN) headers['X-Magic-Token'] = MAGIC_TOKEN;
+
+    var url = CHAT_URL + (window.location.search || '');
+
+    fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(body),
+      credentials: 'same-origin'
+    })
+      .then(function (r) {
+        return r.json().then(function (data) { return { ok: r.ok, status: r.status, data: data }; })
+          .catch(function () { return { ok: r.ok, status: r.status, data: {} }; });
+      })
+      .then(function (res) {
+        if (!res.ok) {
+          elError.textContent = (res.data && res.data.error) || ('Erreur ' + res.status);
+          elError.style.display = 'block';
+        } else {
+          elInput.value = '';
+          if (elCounter) elCounter.textContent = '0 / 500';
+          // Si Q&A modéré, le message est en pending → on affiche un toast local mais on ne le rend pas
+          if (res.data && res.data.message && res.data.message.status === 'approved') {
+            renderMessage(res.data.message);
+            if (res.data.message.created_at) lastTimestamp = res.data.message.created_at;
+            scrollToBottom(true);
+          } else {
+            elError.textContent = 'Question envoyée. Elle sera diffusée après modération.';
+            elError.style.display = 'block';
+            elError.classList.add('chat-info');
+            setTimeout(function () { elError.style.display = 'none'; elError.classList.remove('chat-info'); }, 4000);
+          }
+        }
+      })
+      .catch(function (err) {
+        elError.textContent = 'Réseau indisponible : ' + err.message;
+        elError.style.display = 'block';
+      })
+      .then(function () {
+        elSendBtn.disabled = false;
+      });
+  });
+
+  // Démarrage du polling chat
+  pollChat();
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      clearTimeout(chatTimer);
+      pollChat();
+    }
+  });
+})();
+<\/script>`;
 }
 
 // ============================================================
