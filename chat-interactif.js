@@ -1190,24 +1190,13 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       if (!container) return;
       var conflicts = [];
 
-      // 1. Notification quand Lecture seule est active (rappel que les autres modes sont désactivés)
+      // Notification quand Lecture seule est active (rappel que les autres modes sont désactivés)
       var lectureInput = wizard.querySelector('input[name="mode-lecture"]');
       if (lectureInput && lectureInput.checked) {
         conflicts.push({
           type: 'info',
           title: 'Mode "Lecture seule" actif',
           text: 'Les modes interactifs (Q&A, sondages, chat, quiz, mur d\'idées…) sont désactivés automatiquement car incompatibles. Restent disponibles : pré-Q&A, citations à retenir et sous-titrage.'
-        });
-      }
-
-      // 2. Notification UX quand Q&A modéré + Chat libre sont cochés ensemble (complication UX, pas un bug)
-      var qaInput = wizard.querySelector('input[name="mode-qa"]');
-      var libreInput = wizard.querySelector('input[name="mode-libre"]');
-      if (qaInput && qaInput.checked && libreInput && libreInput.checked) {
-        conflicts.push({
-          type: 'info',
-          title: 'Q&A modéré + Chat libre activés',
-          text: 'Les questions importantes risquent de se perdre dans le flux du chat libre. Conseillé : privilégier l\'un des deux selon votre événement.'
         });
       }
 
@@ -1241,6 +1230,17 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
         if (LECTURE_INCOMPATIBLES.indexOf(c.name) !== -1 && c.checked) {
           var lectureInput = wizard.querySelector('input[name="mode-lecture"]');
           if (lectureInput && lectureInput.checked) lectureInput.checked = false;
+        }
+        // SMART : MUTEX Q&A ⟷ Chat libre (exclusion bidirectionnelle)
+        // Les deux modes sont conceptuellement redondants (chacun ouvre un canal de questions/messages).
+        // Cocher l'un décoche automatiquement l'autre.
+        if (c.name === 'mode-qa' && c.checked) {
+          var libreInput = wizard.querySelector('input[name="mode-libre"]');
+          if (libreInput && libreInput.checked) libreInput.checked = false;
+        }
+        if (c.name === 'mode-libre' && c.checked) {
+          var qaInput = wizard.querySelector('input[name="mode-qa"]');
+          if (qaInput && qaInput.checked) qaInput.checked = false;
         }
 
         firstInteraction();
