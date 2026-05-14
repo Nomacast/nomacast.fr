@@ -206,15 +206,42 @@ function renderLivePage(event, invitee, token) {
     <div class="live-layout">
       <div class="live-video">
         ${playerHtml}
+        <div class="report-issue-bar">
+          <button type="button" class="report-issue-trigger" id="report-issue-trigger">
+            Signaler un problème technique
+          </button>
+        </div>
       </div>
       <aside class="live-chat">
         ${buildChatPanelHtml({ isLectureSeule, isQaMode })}
       </aside>
     </div>
 
-    <section class="tip">
-      <p>Vous êtes bien sur la page de l'événement. Si vous rencontrez un problème technique, contactez l'organisateur.</p>
-    </section>
+    <div class="report-issue-overlay" id="report-issue-overlay" role="dialog" aria-modal="true" aria-labelledby="report-issue-title">
+      <div class="report-issue-modal">
+        <h3 class="report-issue-title" id="report-issue-title">Signaler un problème technique</h3>
+        <p class="report-issue-sub">Quel type de problème rencontrez-vous ?</p>
+        <div id="report-issue-content">
+          <div class="report-issue-options">
+            <button type="button" class="report-issue-btn" data-type="audio">
+              <span class="report-issue-btn-title">Problème de son</span>
+              <span class="report-issue-btn-sub">Je n'entends pas (ou mal) le son</span>
+            </button>
+            <button type="button" class="report-issue-btn" data-type="video">
+              <span class="report-issue-btn-title">Problème d'image</span>
+              <span class="report-issue-btn-sub">Je ne vois pas (ou mal) la vidéo</span>
+            </button>
+            <button type="button" class="report-issue-btn" data-type="both">
+              <span class="report-issue-btn-title">Problème d'image ET de son</span>
+              <span class="report-issue-btn-sub">Les deux à la fois</span>
+            </button>
+          </div>
+          <div class="report-issue-foot">
+            <button type="button" class="report-issue-cancel" id="report-issue-cancel">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 
   return htmlShell({
@@ -230,6 +257,8 @@ function renderLivePage(event, invitee, token) {
       chatMessagesUrl: `/api/chat/${encodeURIComponent(event.slug)}/messages`,
       pollsActiveUrl: `/api/chat/${encodeURIComponent(event.slug)}/polls/active`,
       voteUrlBase: `/api/chat/${encodeURIComponent(event.slug)}/polls`,
+      reportIssueUrl: `/api/chat/${encodeURIComponent(event.slug)}/report-issue`,
+      inviteeId: invitee.id,
       accessMode: event.access_mode,
       magicToken: token,
       isLectureSeule,
@@ -588,7 +617,7 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     }
   }
 
-  .live-video { min-width: 0; display: flex; }
+  .live-video { min-width: 0; display: flex; flex-direction: column; }
   .live-chat  { min-width: 0; display: flex; }
 
   .player-wrap {
@@ -603,6 +632,112 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   .player-iframe {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     border: 0; display: block;
+  }
+  /* === Bouton Signaler un problème technique === */
+  .report-issue-bar {
+    margin-top: 8px;
+    text-align: right;
+  }
+  .report-issue-trigger {
+    font: inherit; font-size: 12px; font-weight: 500;
+    color: #94a3b8;
+    background: transparent;
+    border: 0;
+    padding: 4px 8px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+  }
+  .report-issue-trigger:hover { color: #ef4444; }
+  .report-issue-trigger:focus-visible { outline: 2px solid ${color}; outline-offset: 2px; border-radius: 4px; }
+
+  .report-issue-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.65);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+  }
+  .report-issue-overlay.is-open { display: flex; }
+  .report-issue-modal {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    animation: report-modal-in 0.18s ease-out;
+  }
+  @keyframes report-modal-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .report-issue-title {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+  }
+  .report-issue-sub {
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.4;
+  }
+  .report-issue-options {
+    display: grid; gap: 10px;
+  }
+  .report-issue-btn {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    display: flex; flex-direction: column; gap: 2px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .report-issue-btn:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+  }
+  .report-issue-btn:hover .report-issue-btn-title { color: #b91c1c; }
+  .report-issue-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .report-issue-btn-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    transition: color 0.15s;
+  }
+  .report-issue-btn-sub {
+    font-size: 12px;
+    color: #64748b;
+  }
+  .report-issue-foot {
+    margin-top: 14px;
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+  .report-issue-cancel {
+    background: transparent; border: 0;
+    color: #64748b; font: inherit; font-size: 13px;
+    cursor: pointer; padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .report-issue-cancel:hover { background: #f1f5f9; color: #0f172a; }
+  .report-issue-feedback {
+    padding: 14px; border-radius: 8px;
+    font-size: 13px; line-height: 1.4;
+  }
+  .report-issue-feedback.is-success {
+    background: #f0fdf4; border: 1px solid #86efac; color: #15803d;
+  }
+  .report-issue-feedback.is-error {
+    background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c;
   }
 
   .chat-panel {
@@ -1089,13 +1224,15 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
 // Script JS de la page live (polling chat + polling status pour live→ended).
 // Concaténation + (pas de template strings) pour éviter les conflits ${...}
 // avec le template serveur.
-function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, authorPlaceholder }) {
+function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, inviteeId, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, authorPlaceholder }) {
   return `<script>
 (function () {
   var STATUS_URL = ${JSON.stringify(statusUrl)};
   var CHAT_URL = ${JSON.stringify(chatMessagesUrl)};
   var POLLS_ACTIVE_URL = ${JSON.stringify(pollsActiveUrl || null)};
   var VOTE_URL_BASE = ${JSON.stringify(voteUrlBase || null)};
+  var REPORT_ISSUE_URL = ${JSON.stringify(reportIssueUrl || null)};
+  var INVITEE_ID = ${JSON.stringify(inviteeId || null)};
   var ACCESS_MODE = ${JSON.stringify(accessMode)};
   var MAGIC_TOKEN = ${JSON.stringify(magicToken || null)};
   var IS_LECTURE_SEULE = ${JSON.stringify(!!isLectureSeule)};
@@ -1541,6 +1678,81 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       }
     });
   }
+
+  // ============================================================
+  // SIGNALER UN PROBLÈME TECHNIQUE
+  // ============================================================
+  (function setupReportIssue() {
+    if (!REPORT_ISSUE_URL) return;
+    var trigger = document.getElementById('report-issue-trigger');
+    var overlay = document.getElementById('report-issue-overlay');
+    var content = document.getElementById('report-issue-content');
+    if (!trigger || !overlay || !content) return;
+
+    var initialHtml = content.innerHTML;
+
+    function openModal() {
+      content.innerHTML = initialHtml;
+      bindOptions();
+      overlay.classList.add('is-open');
+    }
+    function closeModal() {
+      overlay.classList.remove('is-open');
+    }
+
+    function bindOptions() {
+      var btns = content.querySelectorAll('.report-issue-btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function () {
+          sendReport(this.getAttribute('data-type'));
+        });
+      }
+      var cancelBtn = document.getElementById('report-issue-cancel');
+      if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    }
+
+    function showFeedback(kind, message) {
+      var btnLabel = kind === 'success' ? 'Fermer' : 'Annuler';
+      content.innerHTML =
+        '<div class="report-issue-feedback is-' + kind + '">' + message + '</div>' +
+        '<div class="report-issue-foot">' +
+          '<button type="button" class="report-issue-cancel" id="report-issue-close-feedback">' + btnLabel + '</button>' +
+        '</div>';
+      document.getElementById('report-issue-close-feedback').addEventListener('click', closeModal);
+    }
+
+    async function sendReport(type) {
+      var btns = content.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+
+      var body = { type: type };
+      if (INVITEE_ID) body.invitee_id = INVITEE_ID;
+
+      try {
+        var res = await fetch(REPORT_ISSUE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (res.ok) {
+          showFeedback('success', 'Signalement envoyé. Notre équipe technique a été alertée.');
+        } else {
+          var err = await res.json().catch(function () { return {}; });
+          showFeedback('error', 'Erreur : ' + (err.error || 'envoi impossible') + '. Réessayez ou contactez l\\'organisateur.');
+        }
+      } catch (e) {
+        showFeedback('error', 'Erreur réseau. Vérifiez votre connexion.');
+      }
+    }
+
+    trigger.addEventListener('click', openModal);
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeModal();
+    });
+  })();
 })();
 <\/script>`;
 }
