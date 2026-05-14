@@ -1,0 +1,7 @@
+TESTS PAGES
+py script_PAGESPEED.py
+lighthouse https://www.nomacast.fr/?v=15 --form-factor=mobile --view
+
+python3 diag_deployments.py
+python3 pause_deployments.py off
+python3 cancel_stuck_deployments.py 
