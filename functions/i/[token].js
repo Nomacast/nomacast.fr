@@ -565,13 +565,14 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
-    margin: 0 0 24px;
+    margin: 0 auto 24px;
+    max-width: 1280px;
   }
   /* Empilé en mobile/tablette jusqu'à 900px (lisibilité du chat trop étroit en-dessous) */
   @media (min-width: 900px) {
     .live-layout {
-      grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
-      align-items: start;
+      grid-template-columns: minmax(0, 1.5fr) minmax(360px, 1fr);
+      align-items: stretch;
     }
   }
 
@@ -601,10 +602,12 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     min-height: 360px;
     max-height: 70vh;
   }
+  /* Desktop : chat suit la hauteur du player (via stretch) sans dépasser */
   @media (min-width: 900px) {
     .chat-panel {
-      min-height: 540px;
-      max-height: 75vh;
+      min-height: 0;
+      max-height: none;
+      height: 100%;
     }
   }
   .chat-panel-readonly { min-height: 200px; }
