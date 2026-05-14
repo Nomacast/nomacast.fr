@@ -105,6 +105,8 @@
     if (ev.client_admin_token) {
       publicLinkZone.appendChild(A.renderClientAdminLink(ev));
     }
+    // nomacast-stream-card-v1 : card Streaming live
+    publicLinkZone.appendChild(A.renderStreamCard(ev, load));
 
     var body = A.el('div', { className: 'admin-card-body' });
 
@@ -512,6 +514,8 @@
       if (result.event.client_admin_token) {
         publicLinkZone.appendChild(A.renderClientAdminLink(result.event));
       }
+      // nomacast-stream-card-v1 : card Streaming live
+      publicLinkZone.appendChild(A.renderStreamCard(result.event, load));
     } catch (err) {
       A.showMessage(messageZone, 'error', 'Enregistrement échoué : ' + err.message);
     } finally {

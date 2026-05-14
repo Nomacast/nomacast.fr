@@ -363,6 +363,129 @@
   // ============================================================
   // Export global
   // ============================================================
+
+  // ============================================================
+  // Streaming live card — nomacast-stream-card-v1
+  // ============================================================
+  function renderStreamCard(event, onChange) {
+    var card = el('div', { className: 'admin-public-link admin-stream-card' });
+
+    card.appendChild(el('span', {
+      className: 'admin-public-link-label',
+      text: 'Streaming live'
+    }));
+
+    if (event.stream_uid) {
+      var details = el('div', { className: 'admin-stream-details' });
+      details.appendChild(buildStreamFieldRow('Server (RTMPS)', event.stream_rtmps_url));
+      details.appendChild(buildStreamFieldRow('Stream Key', event.stream_rtmps_key, { secret: true }));
+      if (event.stream_playback_url) {
+        details.appendChild(buildStreamFieldRow('Playback URL', event.stream_playback_url));
+      }
+      card.appendChild(details);
+
+      var actions = el('div', { className: 'admin-public-link-actions' });
+      actions.appendChild(el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Supprimer le live input',
+        on: { click: function () {
+          if (!window.confirm('Supprimer le live input Cloudflare Stream ?\n' +
+                              'Si une diffusion est en cours, elle sera interrompue.\n' +
+                              'Cette opération est irréversible.')) return;
+          var btn = this; btn.disabled = true; btn.textContent = 'Suppression...';
+          apiFetch('/api/admin/events/' + encodeURIComponent(event.id) + '/stream', { method: 'DELETE' })
+            .then(function () { if (typeof onChange === 'function') onChange(); })
+            .catch(function (err) {
+              window.alert('Suppression échouée : ' + err.message);
+              btn.disabled = false; btn.textContent = 'Supprimer le live input';
+            });
+        }}
+      }));
+      card.appendChild(actions);
+
+      card.appendChild(el('div', {
+        className: 'admin-public-link-warn admin-public-link-info',
+        text: 'Configure OBS avec ces credentials (latence « ultra low » recommandée, GOP 2s). La Stream Key est secrète : ne la partage pas.'
+      }));
+
+    } else {
+      card.appendChild(el('div', {
+        className: 'admin-public-link-warn admin-public-link-info',
+        text: 'Aucun live input Cloudflare Stream associé à cet event. Provisionne-le pour récupérer la clé OBS et activer le player côté participants.'
+      }));
+
+      var actions2 = el('div', { className: 'admin-public-link-actions' });
+      actions2.appendChild(el('button', {
+        className: 'admin-btn admin-btn-primary admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Provisionner le live input',
+        on: { click: function () {
+          var btn = this; btn.disabled = true; btn.textContent = 'Création...';
+          apiFetch('/api/admin/events/' + encodeURIComponent(event.id) + '/stream', { method: 'POST' })
+            .then(function () { if (typeof onChange === 'function') onChange(); })
+            .catch(function (err) {
+              window.alert('Provisionnement échoué : ' + err.message);
+              btn.disabled = false; btn.textContent = 'Provisionner le live input';
+            });
+        }}
+      }));
+      card.appendChild(actions2);
+    }
+
+    return card;
+  }
+
+  function buildStreamFieldRow(label, value, opts) {
+    opts = opts || {};
+    var isSecret = !!opts.secret;
+    var row = el('div', { className: 'admin-stream-row' });
+
+    row.appendChild(el('div', { className: 'admin-stream-row-label', text: label }));
+
+    var valueWrap = el('div', { className: 'admin-stream-row-value' });
+    var valueText = isSecret ? '••••••••••••••••••' : (value || '—');
+    var valueEl = el('code', { className: 'admin-stream-row-code', text: valueText });
+    valueWrap.appendChild(valueEl);
+    row.appendChild(valueWrap);
+
+    var actions = el('div', { className: 'admin-stream-row-actions' });
+
+    if (isSecret) {
+      var revealed = false;
+      var revealBtn = el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Afficher',
+        on: { click: function () {
+          revealed = !revealed;
+          valueEl.textContent = revealed ? (value || '—') : '••••••••••••••••••';
+          this.textContent = revealed ? 'Masquer' : 'Afficher';
+        }}
+      });
+      actions.appendChild(revealBtn);
+    }
+
+    actions.appendChild(el('button', {
+      className: 'admin-btn admin-btn-ghost admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Copier',
+      on: { click: function () {
+        var btn = this;
+        navigator.clipboard.writeText(value || '').then(
+          function () {
+            btn.textContent = 'Copié ✓';
+            setTimeout(function () { btn.textContent = 'Copier'; }, 1500);
+          },
+          function () { window.prompt('Copie :', value); }
+        );
+      }}
+    }));
+
+    row.appendChild(actions);
+    return row;
+  }
+
   window.NomacastAdmin = {
     apiFetch,
     formatDate, formatDateTime, formatDuration, statusLabel,
@@ -371,6 +494,7 @@
     isoToLocalInput, localInputToIso,
     renderPublicLink,
     renderClientAdminLink,
+    renderStreamCard,
     loadVersion
   };
 })();
