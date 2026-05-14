@@ -257,10 +257,7 @@ function renderLivePage(event, invitee, token) {
       <aside class="live-chat">
         ${hasCta ? `<!-- nomacast-lot-2a-v1 : C4 CTA -->
         <div class="cta-banner" id="cta-banner" style="display:none;">
-          <div class="cta-banner-content">
-            <span class="cta-banner-label" id="cta-banner-label"></span>
-            <a class="cta-banner-button" id="cta-banner-button" target="_blank" rel="noopener"></a>
-          </div>
+          <a class="cta-banner-button" id="cta-banner-button" target="_blank" rel="noopener"></a>
           <button type="button" class="cta-banner-close" id="cta-banner-close" aria-label="Fermer">×</button>
         </div>` : ''}
         ${buildChatPanelHtml({ isLectureSeule, isQaMode })}
@@ -1248,8 +1245,9 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   .cta-banner {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     background: ${color};
     color: #ffffff;
     border-radius: 10px 10px 0 0;
@@ -1261,36 +1259,27 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     0%   { opacity: 0; transform: translateY(-8px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  .cta-banner-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-  }
-  .cta-banner-label {
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.4;
-    color: #ffffff;
-  }
   .cta-banner-button {
+    flex: 1;
     display: inline-block;
-    align-self: flex-start;
-    padding: 7px 14px;
+    padding: 9px 14px;
     background: #ffffff;
     color: #0f172a;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
+    text-align: center;
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: 7px;
     transition: transform 0.1s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .cta-banner-button:hover {
     box-shadow: 0 4px 10px rgba(0,0,0,0.18);
   }
   .cta-banner-button:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
   .cta-banner-close {
     flex-shrink: 0;
@@ -2001,8 +1990,8 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         fetch(PRESENCE_STATS_URL, { cache: 'no-store', credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
-            if (data && typeof data.count === 'number') {
-              if (presenceCount) presenceCount.textContent = data.count;
+            if (data && typeof data.online === 'number') {
+              if (presenceCount) presenceCount.textContent = data.online;
               if (presenceBadge) presenceBadge.style.display = '';
             }
           })
@@ -2046,7 +2035,8 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       var pollTimer = null;
       var sendCooldown = false;
 
-      // Click → POST reaction
+      // Click → POST reaction (pas de spawn optimiste : on attend le polling pour éviter les doublons,
+      // l'API /recent ne renvoie pas l'invitee_id, donc impossible de dédupliquer si on spawn local)
       bar.addEventListener('click', function (e) {
         var btn = e.target.closest('.reaction-btn');
         if (!btn || sendCooldown) return;
@@ -2055,8 +2045,8 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         // Throttling local 250ms pour éviter spam de clics
         sendCooldown = true;
         setTimeout(function () { sendCooldown = false; }, 250);
-        // Floating immédiat (UX optimiste, le serveur confirmera via /recent)
-        spawnFloat(emoji);
+        // Feedback visuel via :active CSS (transform scale 0.92), suffisant pour confirmer le click.
+        // L'emoji flottant apparaîtra ~2s plus tard via le polling /recent (avec ceux des autres).
         fetch(REACTIONS_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2072,18 +2062,16 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
             if (!data) return;
-            // Récents : array d'objets {emoji, created_at, invitee_id?}
-            if (Array.isArray(data.recent)) {
-              data.recent.forEach(function (r) {
-                // Ne pas re-spawn ses propres reactions (déjà spawn en optimiste)
-                if (r.invitee_id && r.invitee_id === INVITEE_ID) return;
+            // API : { reactions: [{ emoji, created_at }], totals: { '👏': N, ... }, server_time: '<ISO>' }
+            if (Array.isArray(data.reactions)) {
+              data.reactions.forEach(function (r) {
                 if (r.emoji) spawnFloat(r.emoji);
               });
-              // Mise à jour du curseur "since"
-              if (data.recent.length > 0) {
-                lastSince = data.recent[data.recent.length - 1].created_at || lastSince;
-              } else if (data.now) {
-                lastSince = data.now;
+              // Mise à jour du curseur "since" sur la base du serveur (autorité)
+              if (data.reactions.length > 0) {
+                lastSince = data.reactions[data.reactions.length - 1].created_at || lastSince;
+              } else if (data.server_time) {
+                lastSince = data.server_time;
               }
             }
             // Totaux 5min : { totals: { '👏': 23, '❤️': 18, ... } }
@@ -2135,10 +2123,9 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
   if (HAS_CTA && CTA_ACTIVE_URL && !IS_ENDED) {
     (function setupCta() {
       var banner = document.getElementById('cta-banner');
-      var labelEl = document.getElementById('cta-banner-label');
       var btnEl = document.getElementById('cta-banner-button');
       var closeEl = document.getElementById('cta-banner-close');
-      if (!banner || !labelEl || !btnEl || !closeEl) return;
+      if (!banner || !btnEl || !closeEl) return;
 
       var DISMISSED_PREFIX = 'nomacast-cta-dismissed-';
       var currentCtaId = null;
@@ -2161,17 +2148,17 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         fetch(CTA_ACTIVE_URL, { cache: 'no-store', credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
+            // API : { cta: { id, label, url, activated_at, expires_in_seconds } } ou { cta: null }
             var cta = data && data.cta ? data.cta : null;
-            if (!cta || !cta.id || isDismissed(cta.id)) {
+            if (!cta || !cta.id || !cta.url || isDismissed(cta.id)) {
               banner.style.display = 'none';
               currentCtaId = null;
               return;
             }
             if (cta.id === currentCtaId) return; // Pas de changement
             currentCtaId = cta.id;
-            labelEl.textContent = cta.label || cta.title || 'Action';
-            btnEl.textContent = cta.button_label || cta.cta_label || 'Découvrir';
-            btnEl.setAttribute('href', cta.url || '#');
+            btnEl.textContent = cta.label || 'Découvrir';
+            btnEl.setAttribute('href', cta.url);
             banner.style.display = '';
           })
           .catch(function () {});
