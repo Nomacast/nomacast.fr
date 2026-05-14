@@ -2,7 +2,10 @@
 // POST /api/chat/<slug>/presence/heartbeat { invitee_id?, anon_key? }
 //
 // Le participant ping toutes les 30 sec pour signaler sa présence.
-// UPSERT sur (event_id, invitee_id) ou (event_id, anon_key).
+// UPSERT sur (event_id, invitee_id) ou (event_id, anon_key) dans event_presence (snapshot temps réel).
+// + INSERT dans event_presence_history pour reconstituer la courbe de présence post-event.
+//
+// Marqueur : nomacast-analytics-presence-history-v1
 
 export const onRequestPost = async ({ params, request, env }) => {
   try {
@@ -28,7 +31,7 @@ export const onRequestPost = async ({ params, request, env }) => {
 
     const now = new Date().toISOString();
 
-    // UPSERT manuel (D1 supporte ON CONFLICT)
+    // 1. Snapshot temps réel : UPSERT dans event_presence (comportement historique inchangé)
     if (inviteeId) {
       await env.DB.prepare(`
         INSERT INTO event_presence (id, event_id, invitee_id, anon_key, last_seen)
@@ -41,6 +44,19 @@ export const onRequestPost = async ({ params, request, env }) => {
         VALUES (?, ?, NULL, ?, ?)
         ON CONFLICT(event_id, anon_key) DO UPDATE SET last_seen = excluded.last_seen
       `).bind(crypto.randomUUID(), ev.id, anonKey, now).run();
+    }
+
+    // 2. Historique analytics : INSERT-only dans event_presence_history (drop-off, durée connexion)
+    // Wrappé en try/catch indépendant : si la table n'existe pas encore (migration 0015 pas appliquée)
+    // ou si autre erreur, on ne fait pas échouer le heartbeat principal.
+    try {
+      await env.DB.prepare(`
+        INSERT INTO event_presence_history (id, event_id, invitee_id, anon_key, pinged_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(crypto.randomUUID(), ev.id, inviteeId, anonKey, now).run();
+    } catch (histErr) {
+      console.error('[presence_history insert]', histErr);
+      // Non-bloquant volontairement
     }
 
     return json({ success: true, anon_key: anonKey });
