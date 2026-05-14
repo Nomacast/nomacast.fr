@@ -35,19 +35,26 @@ export const onRequestGet = async ({ params, request, env }) => {
   const since = url.searchParams.get('since');
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10) || 50, 100);
 
+  // On utilise COALESCE(approved_at, created_at) comme timestamp d'affichage :
+  // - Pour un message chat libre, approved_at = created_at (mis à la création)
+  // - Pour une question Q&A modérée, approved_at = moment où l'admin a approuvé,
+  //   ce qui place la question dans le flux chronologique du chat à l'instant
+  //   où elle est diffusée, et non au moment où elle a été posée (UX correcte :
+  //   pas de question qui apparaît "dans le passé" après modération).
   let query = `
-    SELECT id, author_name, author_kind, content, kind, status, created_at
+    SELECT id, author_name, author_kind, content, kind, status,
+           COALESCE(approved_at, created_at) AS display_at
       FROM chat_messages
      WHERE event_id = ? AND status = 'approved'
   `;
   const bindings = [event.id];
 
   if (since) {
-    query += ' AND created_at > ?';
+    query += ' AND COALESCE(approved_at, created_at) > ?';
     bindings.push(since);
   }
 
-  query += ' ORDER BY created_at ASC LIMIT ?';
+  query += ' ORDER BY COALESCE(approved_at, created_at) ASC LIMIT ?';
   bindings.push(limit);
 
   try {
@@ -58,7 +65,9 @@ export const onRequestGet = async ({ params, request, env }) => {
       author_kind: row.author_kind,
       content: row.content,
       kind: row.kind,
-      created_at: row.created_at
+      // On retourne display_at sous le nom `created_at` côté API publique
+      // pour ne pas casser le polling client qui re-envoie ce timestamp en `since`.
+      created_at: row.display_at
     }));
     return jsonResponse({ messages, count: messages.length });
   } catch (err) {
