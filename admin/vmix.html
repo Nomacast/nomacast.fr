@@ -121,7 +121,15 @@
 <script src="/admin/admin.js"></script>
 <script>
 (function () {
-  if (!window.A) return;
+  var A = window.NomacastAdmin;
+  if (!A) {
+    console.error('NomacastAdmin non défini — /admin/admin.js n\'a pas chargé');
+    document.body.insertAdjacentHTML('afterbegin',
+      '<div style="padding:12px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;margin:12px;border-radius:8px;">'
+      + 'Erreur : <code>/admin/admin.js</code> n\'a pas pu se charger. Vérifie la console (F12).'
+      + '</div>');
+    return;
+  }
 
   A.loadVersion();
 
