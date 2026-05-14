@@ -59,6 +59,10 @@ export const onRequestPost = async ({ params, env }) => {
           },
           // Recording automatique → réplay VOD dispo après l'event
           recording: { mode: 'automatic' },
+          // Auto-delete du replay 30 jours après la fin de l'event
+          // (valeur minimale autorisée par CF, max 1096).
+          // Économie de storage sur les replays peu consultés.
+          deleteRecordingAfterDays: 30,
           // Latence basse : utile pour l'interactivité chat ↔ vidéo
           preferLowLatency: true
         })
