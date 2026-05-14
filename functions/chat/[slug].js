@@ -509,7 +509,19 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   @media (min-width: 900px) {
     .live-layout {
       grid-template-columns: minmax(0, 1.5fr) minmax(360px, 1fr);
+      grid-template-areas: 'video chat';
       align-items: stretch;
+    }
+    .live-video { grid-area: video; }
+    .live-chat  { grid-area: chat; }
+  }
+  /* Sur grand écran (≥ 1500px) : vidéo centrée + chat à droite (décentré).
+     Une 3e colonne fantôme à gauche, symétrique au chat, force la vidéo au centre. */
+  @media (min-width: 1500px) {
+    .live-layout {
+      grid-template-columns: minmax(360px, 1fr) minmax(0, 760px) minmax(360px, 1fr);
+      grid-template-areas: '. video chat';
+      max-width: 1600px;
     }
   }
   .live-video { min-width: 0; display: flex; }
