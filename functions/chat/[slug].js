@@ -507,11 +507,9 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   /* Empilé en mobile/tablette jusqu'à 900px */
   @media (min-width: 900px) {
     .live-layout {
-      grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
-      align-items: stretch;
+      grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+      align-items: start;
     }
-    /* aspect-ratio 32/27 matche exactement la hauteur du player */
-    .live-chat { aspect-ratio: 32 / 27; }
   }
   .live-video { min-width: 0; display: flex; }
   .live-chat  { min-width: 0; display: flex; }
@@ -537,7 +535,7 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     min-height: 360px; max-height: 70vh;
   }
   @media (min-width: 900px) {
-    .chat-panel { max-height: none; min-height: 0; height: 100%; }
+    .chat-panel { min-height: 540px; max-height: 75vh; }
   }
   .chat-panel-readonly { min-height: 200px; }
   .chat-header {
@@ -681,6 +679,67 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     border-radius: 12px;
     padding: 16px 18px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .live-poll-card.is-closed {
+    border-left-color: #94a3b8;
+    opacity: 0.92;
+  }
+  .live-poll-card.is-closed .live-poll-header {
+    color: #64748b;
+  }
+  .live-poll-card.is-closed .live-poll-header-dot {
+    background: #94a3b8;
+    animation: none;
+  }
+  .live-poll-card.is-closed .live-poll-result-row.is-mine {
+    border-color: #94a3b8;
+    background: #94a3b81a;
+  }
+  .live-poll-card.is-closed .live-poll-result-row.is-mine .live-poll-result-bar-bg {
+    background: #94a3b82e;
+  }
+  .live-poll-card.is-closed .live-poll-result-row.is-mine .live-poll-result-label {
+    color: #475569;
+  }
+  .live-poll-card.is-closed .live-poll-result-mine-badge {
+    background: #94a3b8;
+  }
+  .live-poll-card.is-closed .live-poll-result-bar-bg {
+    background: #e2e8f0;
+  }
+  .live-poll-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+  .live-poll-nav {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .live-poll-nav-btn {
+    width: 26px; height: 26px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #475569;
+    padding: 0; line-height: 1;
+    font-family: inherit;
+  }
+  .live-poll-nav-btn:hover:not(:disabled) {
+    border-color: ${color};
+    color: ${color};
+  }
+  .live-poll-nav-btn:disabled {
+    opacity: 0.35; cursor: not-allowed;
+  }
+  .live-poll-nav-count {
+    font-variant-numeric: tabular-nums;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
   }
   .live-poll-header {
     display: flex; align-items: center; gap: 8px;
@@ -878,15 +937,15 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
   }
   if (isLectureSeule) {
     return `
-      <div class="chat-panel chat-panel-readonly">
+      <div class="chat-panel chat-panel-readonly chat-panel-announces">
         <div class="chat-header">
           <div class="chat-header-main">
-            <div class="chat-title">Chat</div>
-            <div class="chat-sub">Lecture seule</div>
+            <div class="chat-title">Annonces</div>
+            <div class="chat-sub">Messages du modérateur.</div>
           </div>
         </div>
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-empty">Le chat est désactivé pour cet événement.</div>
+          <div class="chat-empty" id="chat-empty">Aucune annonce pour le moment.</div>
         </div>
       </div>
     `;
@@ -967,9 +1026,10 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
   }
 
   // ============ Chat ============
-  // Lecture seule pendant le live : pas de chat actif du tout
-  // Lecture seule + ended : on charge l'historique des messages (pour le replay)
-  if (IS_LECTURE_SEULE && !IS_ENDED) return;
+  // En lecture seule (mais event live) : on garde le polling pour afficher les
+  // annonces admin (broadcasts du modérateur). Le form est absent côté HTML donc
+  // l'envoi est impossible côté participant.
+  // En lecture seule + ended : historique des messages (idem mode normal ended).
 
   var elMessages = document.getElementById('chat-messages');
   var elEmpty = document.getElementById('chat-empty');
@@ -1000,6 +1060,8 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
 
   function renderMessage(m) {
     if (seenIds[m.id]) return;
+    // Filtre en lecture seule : n'afficher QUE les messages admin (annonces broadcast)
+    if (IS_LECTURE_SEULE && !IS_ENDED && m.author_kind !== 'admin') return;
     seenIds[m.id] = true;
     if (elEmpty) { elEmpty.style.display = 'none'; }
 
@@ -1171,44 +1233,77 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
   if (!IS_ENDED && POLLS_ACTIVE_URL) {
     var pollZone = document.getElementById('live-poll-zone');
     var pollTimer = null;
-    var currentPollId = null;  // null = aucun sondage affiché
+    var currentPollId = null;  // id du sondage actuellement affiché
     var hasVoted = false;
     var submittingVote = false;
+    var historyIndex = 0;       // index dans le carrousel d'history (closed)
+    var displayState = 'none';  // 'active' | 'history' | 'none'
 
-    function renderPoll(poll) {
-      if (!poll) {
-        // Aucun sondage actif → on cache la zone
+    function renderState(active, history) {
+      // Décision : que montre-t-on ?
+      // - Si active live → on l'affiche en mode vote/résultats
+      // - Sinon si history non vide → on affiche history[historyIndex] en mode lecture
+      // - Sinon → on cache la zone
+      if (active) {
+        renderPollCard(active, 'active', history);
+      } else if (history && history.length > 0) {
+        if (historyIndex >= history.length) historyIndex = 0;
+        if (historyIndex < 0) historyIndex = history.length - 1;
+        renderPollCard(history[historyIndex], 'history', history);
+      } else {
         pollZone.style.display = 'none';
         pollZone.innerHTML = '';
         currentPollId = null;
         hasVoted = false;
-        return;
+        displayState = 'none';
       }
-      // Si on a déjà voté pour ce sondage (côté serveur), on bypass le formulaire
-      var serverSaysVoted = !!poll.my_vote;
-      var showResults = serverSaysVoted; // résultats live = visibles à tous, mais on focalise sur after-vote
+    }
 
-      // Si on change de sondage, reset l'état local
+    function renderPollCard(poll, mode, history) {
+      // mode : 'active' (live, votable) | 'history' (closed, lecture seule)
+      var isHistory = (mode === 'history');
+      var serverSaysVoted = !!poll.my_vote;
+
       if (currentPollId !== poll.id) {
         currentPollId = poll.id;
         hasVoted = serverSaysVoted;
       } else if (serverSaysVoted) {
         hasVoted = true;
       }
-
+      displayState = mode;
       pollZone.style.display = '';
 
-      var html = '<div class="live-poll-card">';
+      var html = '<div class="live-poll-card' + (isHistory ? ' is-closed' : '') + '">';
+
+      // Header row : titre + nav arrows (si history avec >= 2)
+      html += '<div class="live-poll-header-row">';
       html += '<div class="live-poll-header">';
       html += '<span class="live-poll-header-dot"></span>';
-      html += hasVoted ? '<span>Résultats en direct</span>' : '<span>Question en direct</span>';
+      if (isHistory) {
+        html += '<span>Sondage terminé</span>';
+      } else if (hasVoted) {
+        html += '<span>Résultats en direct</span>';
+      } else {
+        html += '<span>Question en direct</span>';
+      }
       html += '</div>';
+
+      // Nav arrows seulement si history mode et > 1 sondage
+      if (isHistory && history && history.length > 1) {
+        html += '<div class="live-poll-nav">';
+        html += '<button type="button" class="live-poll-nav-btn" id="live-poll-nav-prev" title="Précédent">‹</button>';
+        html += '<span class="live-poll-nav-count">' + (historyIndex + 1) + ' / ' + history.length + '</span>';
+        html += '<button type="button" class="live-poll-nav-btn" id="live-poll-nav-next" title="Suivant">›</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+
       html += '<div class="live-poll-question">' + htmlEscape(poll.question) + '</div>';
 
       var options = poll.options || [];
+      var showVoteForm = (mode === 'active' && !hasVoted);
 
-      if (!hasVoted) {
-        // Mode vote : radio buttons + bouton Voter
+      if (showVoteForm) {
         html += '<div class="live-poll-options-vote">';
         options.forEach(function (o, i) {
           html += '<label class="live-poll-option-vote">';
@@ -1222,7 +1317,7 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         html += '</button>';
         html += '<div class="live-poll-error" id="live-poll-error" style="display:none;"></div>';
       } else {
-        // Mode résultats : barres horizontales avec %
+        // Mode résultats : barres %
         html += '<div class="live-poll-options-results">';
         options.forEach(function (o) {
           var pct = (o.percentage != null ? o.percentage : 0);
@@ -1244,10 +1339,24 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       html += '</div>';
       pollZone.innerHTML = html;
 
-      // Attacher le handler du bouton Voter
-      if (!hasVoted) {
+      // Handlers
+      if (showVoteForm) {
         var voteBtn = document.getElementById('live-poll-vote-btn');
         if (voteBtn) voteBtn.addEventListener('click', function () { submitVote(poll.id); });
+      }
+      if (isHistory && history && history.length > 1) {
+        var prevBtn = document.getElementById('live-poll-nav-prev');
+        var nextBtn = document.getElementById('live-poll-nav-next');
+        if (prevBtn) prevBtn.addEventListener('click', function () {
+          historyIndex = (historyIndex - 1 + history.length) % history.length;
+          currentPollId = null; // force re-render (peut changer hasVoted)
+          renderPollCard(history[historyIndex], 'history', history);
+        });
+        if (nextBtn) nextBtn.addEventListener('click', function () {
+          historyIndex = (historyIndex + 1) % history.length;
+          currentPollId = null;
+          renderPollCard(history[historyIndex], 'history', history);
+        });
       }
     }
 
@@ -1278,7 +1387,6 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
           submittingVote = false;
           if (res.ok) {
             hasVoted = true;
-            // Force re-render avec les résultats reçus
             clearTimeout(pollTimer);
             pollActivePolls();
           } else {
@@ -1288,7 +1396,6 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
               errEl.style.display = 'block';
             }
             if (voteBtn) { voteBtn.disabled = false; voteBtn.textContent = 'Voter'; }
-            // Si déjà voté côté serveur (409), force refresh pour passer en résultats
             if (res.status === 409) {
               clearTimeout(pollTimer);
               pollActivePolls();
@@ -1316,7 +1423,11 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
-          renderPoll(data && data.poll ? data.poll : null);
+          if (data) {
+            renderState(data.poll || null, data.history || []);
+          } else {
+            renderState(null, []);
+          }
         })
         .catch(function () {})
         .then(function () {

@@ -35,8 +35,59 @@ export const onRequestGet = async ({ params, request, env }) => {
      LIMIT 1
   `).bind(event.id).first();
 
+  // History : sondages clôturés (les plus récents en tête, max 20)
+  const historyResult = await env.DB.prepare(`
+    SELECT id, question, type, status, results_visibility,
+           created_at, launched_at, closed_at
+      FROM polls
+     WHERE event_id = ? AND status = 'closed'
+     ORDER BY closed_at DESC
+     LIMIT 20
+  `).bind(event.id).all();
+
+  const history = [];
+  for (const cp of (historyResult.results || [])) {
+    const optsResult = await env.DB.prepare(`
+      SELECT o.id, o.label, o.position,
+             (SELECT COUNT(*) FROM poll_votes v WHERE v.option_id = o.id) AS votes_count
+        FROM poll_options o
+       WHERE o.poll_id = ?
+       ORDER BY o.position ASC
+    `).bind(cp.id).all();
+
+    const opts = optsResult.results || [];
+    const total = opts.reduce((s, o) => s + (o.votes_count || 0), 0);
+
+    let myHistoryVote = null;
+    if (voterKey) {
+      const v = await env.DB.prepare(
+        'SELECT option_id FROM poll_votes WHERE poll_id = ? AND voter_key = ?'
+      ).bind(cp.id, voterKey).first();
+      if (v) myHistoryVote = v.option_id;
+    }
+
+    history.push({
+      id: cp.id,
+      question: cp.question,
+      type: cp.type,
+      status: 'closed',
+      closed_at: cp.closed_at,
+      options: opts.map(o => ({
+        id: o.id,
+        label: o.label,
+        position: o.position,
+        votes_count: o.votes_count,
+        percentage: total > 0
+          ? Math.round((o.votes_count / total) * 1000) / 10
+          : 0
+      })),
+      total_votes: total,
+      my_vote: myHistoryVote
+    });
+  }
+
   if (!poll) {
-    return jsonResponse({ poll: null });
+    return jsonResponse({ poll: null, history: history });
   }
 
   // Options avec compteurs
@@ -91,7 +142,8 @@ export const onRequestGet = async ({ params, request, env }) => {
       options: optionsResponse,
       total_votes: showResults ? totalVotes : null,
       my_vote: myVote
-    }
+    },
+    history: history
   });
 };
 

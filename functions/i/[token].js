@@ -570,14 +570,9 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   /* Empilé en mobile/tablette jusqu'à 900px (lisibilité du chat trop étroit en-dessous) */
   @media (min-width: 900px) {
     .live-layout {
-      grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
-      align-items: stretch;
+      grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+      align-items: start;
     }
-    /* aspect-ratio 32/27 sur .live-chat matche exactement la hauteur du player :
-       player_width = container * 3/5, player_height = player_width * 9/16
-       chat_width = container * 2/5, chat_height (cible) = player_height
-       → chat_aspect = chat_width / chat_height = (2/5) / (3/5 * 9/16) = 32/27 */
-    .live-chat { aspect-ratio: 32 / 27; }
   }
 
   .live-video { min-width: 0; display: flex; }
@@ -603,16 +598,13 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     width: 100%;
-    /* Mobile : hauteur libre bornée */
     min-height: 360px;
     max-height: 70vh;
   }
-  /* Desktop : prend toute la hauteur du grid item (qui est définie par aspect-ratio) */
   @media (min-width: 900px) {
     .chat-panel {
-      max-height: none;
-      min-height: 0;
-      height: 100%;
+      min-height: 540px;
+      max-height: 75vh;
     }
   }
   .chat-panel-readonly { min-height: 200px; }
@@ -767,6 +759,67 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     border-radius: 12px;
     padding: 16px 18px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .live-poll-card.is-closed {
+    border-left-color: #94a3b8;
+    opacity: 0.92;
+  }
+  .live-poll-card.is-closed .live-poll-header {
+    color: #64748b;
+  }
+  .live-poll-card.is-closed .live-poll-header-dot {
+    background: #94a3b8;
+    animation: none;
+  }
+  .live-poll-card.is-closed .live-poll-result-row.is-mine {
+    border-color: #94a3b8;
+    background: #94a3b81a;
+  }
+  .live-poll-card.is-closed .live-poll-result-row.is-mine .live-poll-result-bar-bg {
+    background: #94a3b82e;
+  }
+  .live-poll-card.is-closed .live-poll-result-row.is-mine .live-poll-result-label {
+    color: #475569;
+  }
+  .live-poll-card.is-closed .live-poll-result-mine-badge {
+    background: #94a3b8;
+  }
+  .live-poll-card.is-closed .live-poll-result-bar-bg {
+    background: #e2e8f0;
+  }
+  .live-poll-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+  .live-poll-nav {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .live-poll-nav-btn {
+    width: 26px; height: 26px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #475569;
+    padding: 0; line-height: 1;
+    font-family: inherit;
+  }
+  .live-poll-nav-btn:hover:not(:disabled) {
+    border-color: ${color};
+    color: ${color};
+  }
+  .live-poll-nav-btn:disabled {
+    opacity: 0.35; cursor: not-allowed;
+  }
+  .live-poll-nav-count {
+    font-variant-numeric: tabular-nums;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
   }
   .live-poll-header {
     display: flex; align-items: center; gap: 8px;
@@ -1274,33 +1327,66 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
     var currentPollId = null;
     var hasVoted = false;
     var submittingVote = false;
+    var historyIndex = 0;
+    var displayState = 'none';
 
-    function renderPoll(poll) {
-      if (!poll) {
+    function renderState(active, history) {
+      if (active) {
+        renderPollCard(active, 'active', history);
+      } else if (history && history.length > 0) {
+        if (historyIndex >= history.length) historyIndex = 0;
+        if (historyIndex < 0) historyIndex = history.length - 1;
+        renderPollCard(history[historyIndex], 'history', history);
+      } else {
         pollZone.style.display = 'none';
         pollZone.innerHTML = '';
         currentPollId = null;
         hasVoted = false;
-        return;
+        displayState = 'none';
       }
+    }
+
+    function renderPollCard(poll, mode, history) {
+      var isHistory = (mode === 'history');
       var serverSaysVoted = !!poll.my_vote;
+
       if (currentPollId !== poll.id) {
         currentPollId = poll.id;
         hasVoted = serverSaysVoted;
       } else if (serverSaysVoted) {
         hasVoted = true;
       }
+      displayState = mode;
       pollZone.style.display = '';
 
-      var html = '<div class="live-poll-card">';
+      var html = '<div class="live-poll-card' + (isHistory ? ' is-closed' : '') + '">';
+      html += '<div class="live-poll-header-row">';
       html += '<div class="live-poll-header">';
       html += '<span class="live-poll-header-dot"></span>';
-      html += hasVoted ? '<span>Résultats en direct</span>' : '<span>Question en direct</span>';
+      if (isHistory) {
+        html += '<span>Sondage terminé</span>';
+      } else if (hasVoted) {
+        html += '<span>Résultats en direct</span>';
+      } else {
+        html += '<span>Question en direct</span>';
+      }
       html += '</div>';
+
+      if (isHistory && history && history.length > 1) {
+        html += '<div class="live-poll-nav">';
+        html += '<button type="button" class="live-poll-nav-btn" id="live-poll-nav-prev" title="Précédent">‹</button>';
+        html += '<span class="live-poll-nav-count">' + (historyIndex + 1) + ' / ' + history.length + '</span>';
+        html += '<button type="button" class="live-poll-nav-btn" id="live-poll-nav-next" title="Suivant">›</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+
       html += '<div class="live-poll-question">' + htmlEscape(poll.question) + '</div>';
 
       var options = poll.options || [];
-      if (!hasVoted) {
+      var showVoteForm = (mode === 'active' && !hasVoted);
+
+      if (showVoteForm) {
         html += '<div class="live-poll-options-vote">';
         options.forEach(function (o, i) {
           html += '<label class="live-poll-option-vote">';
@@ -1335,9 +1421,23 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       html += '</div>';
       pollZone.innerHTML = html;
 
-      if (!hasVoted) {
+      if (showVoteForm) {
         var voteBtn = document.getElementById('live-poll-vote-btn');
         if (voteBtn) voteBtn.addEventListener('click', function () { submitVote(poll.id); });
+      }
+      if (isHistory && history && history.length > 1) {
+        var prevBtn = document.getElementById('live-poll-nav-prev');
+        var nextBtn = document.getElementById('live-poll-nav-next');
+        if (prevBtn) prevBtn.addEventListener('click', function () {
+          historyIndex = (historyIndex - 1 + history.length) % history.length;
+          currentPollId = null;
+          renderPollCard(history[historyIndex], 'history', history);
+        });
+        if (nextBtn) nextBtn.addEventListener('click', function () {
+          historyIndex = (historyIndex + 1) % history.length;
+          currentPollId = null;
+          renderPollCard(history[historyIndex], 'history', history);
+        });
       }
     }
 
@@ -1404,7 +1504,11 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
-          renderPoll(data && data.poll ? data.poll : null);
+          if (data) {
+            renderState(data.poll || null, data.history || []);
+          } else {
+            renderState(null, []);
+          }
         })
         .catch(function () {})
         .then(function () {
