@@ -522,7 +522,10 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
 
   /* ============ LIVE LAYOUT (C4 player + C5 chat) ============ */
   /* Sur la page live, on élargit le container pour avoir un player confortable */
-  body.live-page .container { max-width: 1280px; }
+  body.live-page .container { max-width: 1400px; }
+  @media (min-width: 1600px) {
+    body.live-page .container { max-width: 1800px; }
+  }
   body.live-page .tip { max-width: 680px; margin-left: auto; margin-right: auto; }
 
   .live-layout {

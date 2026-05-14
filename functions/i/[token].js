@@ -586,7 +586,10 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
 
   /* ============ LIVE LAYOUT (C4 player + C5 chat) ============ */
   /* Sur la page live, on élargit le container pour avoir un player confortable */
-  body.live-page .container { max-width: 1280px; }
+  body.live-page .container { max-width: 1400px; }
+  @media (min-width: 1600px) {
+    body.live-page .container { max-width: 1800px; }
+  }
   body.live-page .tip { max-width: 680px; margin-left: auto; margin-right: auto; }
 
   .live-layout {
@@ -1741,11 +1744,18 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         if (res.ok) {
           showFeedback('success', 'Signalement envoyé. Notre équipe technique a été alertée.');
         } else {
-          var err = await res.json().catch(function () { return {}; });
-          showFeedback('error', 'Erreur : ' + (err.error || 'envoi impossible') + '. Réessayez ou contactez l\\'organisateur.');
+          var rawText = await res.text().catch(function () { return ''; });
+          var parsed = null;
+          try { parsed = JSON.parse(rawText); } catch (e) {}
+          var reason = parsed && parsed.error
+            ? parsed.error
+            : (rawText.length < 200 && rawText ? rawText : 'envoi impossible');
+          console.error('[report-issue]', res.status, REPORT_ISSUE_URL, rawText.slice(0, 500));
+          showFeedback('error', 'Erreur (HTTP ' + res.status + ') : ' + reason + '. Réessayez ou contactez l\\'organisateur.');
         }
       } catch (e) {
-        showFeedback('error', 'Erreur réseau. Vérifiez votre connexion.');
+        console.error('[report-issue network]', e);
+        showFeedback('error', 'Erreur réseau : ' + e.message + '. Vérifiez votre connexion.');
       }
     }
 
