@@ -923,7 +923,18 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     text-transform: uppercase; color: #94a3b8; margin-top: 6px;
   }
   .countdown-overdue {
+    /* nomacast-lot-c-c2-v1 — message overdue stylé avec dot pulse pour rassurer */
     font-size: 14px; color: #475569; line-height: 1.5; padding: 4px 8px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .countdown-overdue-dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    background: #5A98D6;
+    animation: nomacast-cd-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes nomacast-cd-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
   }
   @media (max-width: 480px) {
     .countdown-value { font-size: 26px; }
@@ -2279,7 +2290,8 @@ function buildCountdownHtml(scheduledAt) {
         <div class="countdown-unit"><span class="countdown-value" data-cd-unit="seconds">--</span><span class="countdown-unit-label">sec</span></div>
       </div>
       <div class="countdown-overdue" id="nomacast-cd-overdue" style="display:none">
-        L'événement va bientôt commencer.
+        <span class="countdown-overdue-dot" aria-hidden="true"></span>
+        <span>Le live va démarrer d'un instant à l'autre…</span>
       </div>
     </section>
   `;
@@ -2355,7 +2367,9 @@ function buildDraftScript({ scheduledAt, statusUrl }) {
     var diffSec = (scheduledAt.getTime() - Date.now()) / 1000;
     if (diffSec > 600) return 60000;  // > 10 min : 60s
     if (diffSec > 60)  return 30000;  // > 1 min  : 30s
-    return 10000;                      // < 1 min ou dépassé : 10s
+    if (diffSec > 0)   return 10000;  // < 1 min mais pas dépassé : 10s
+    // nomacast-lot-c-c2-v1 : après scheduled_at, polling 5s pour bascule rapide
+    return 5000;                       // dépassé : 5s (fenêtre critique de bascule)
   }
 
   function schedule() {
