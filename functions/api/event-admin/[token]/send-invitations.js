@@ -6,7 +6,7 @@
 // (marqueur `nomacast-invitation-email-helper-v1`).
 
 
-import { buildInvitationEmail } from '../../../../_lib/invitation-email.js';
+import { buildInvitationEmail } from '../../../_lib/invitation-email.js';
 
 const BATCH_SIZE = 100;
 
