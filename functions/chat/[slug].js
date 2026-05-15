@@ -1321,6 +1321,68 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   .cta-banner-close:hover {
     background: rgba(255,255,255,0.32);
   }
+
+  /* ==========================================================
+     nomacast-event-ended-modal-v1 — Modal de fin d'événement
+     Affiché quand le polling détecte status passe de live → ended.
+     Remplace l'ancien window.location.reload() brutal.
+     ========================================================== */
+  .event-ended-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(15, 23, 42, 0.75);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: ended-fade-in 0.3s ease-out;
+  }
+  @keyframes ended-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .event-ended-modal-box {
+    background: #fff; border-radius: 16px;
+    padding: 32px 28px 28px;
+    max-width: 420px; width: 100%;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+    animation: ended-slide-up 0.35s ease-out;
+  }
+  @keyframes ended-slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .event-ended-modal-box h2 {
+    margin: 0 0 12px;
+    font-size: 22px; font-weight: 700; color: #0f172a;
+  }
+  .event-ended-modal-box p {
+    margin: 0 0 22px;
+    font-size: 14px; color: #475569; line-height: 1.55;
+  }
+  .event-ended-modal-btn {
+    background: var(--brand-color, #5D9CEC); color: #fff;
+    border: 0; padding: 12px 28px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .event-ended-modal-btn:hover { opacity: 0.92; }
+  .event-ended-modal-btn:active { transform: translateY(1px); }
+  .event-ended-modal-countdown {
+    margin-top: 16px;
+    font-size: 12px; color: #94a3b8;
+  }
+  .event-ended-modal-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(15, 23, 42, 0.08);
+    color: #64748b;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
 </style>
 </head>
 <body${bodyClass ? ' class="' + escapeHtml(bodyClass) + '"' : ''}>
@@ -1466,7 +1528,9 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
           if (data && data.status && data.status !== 'live') {
-            window.location.reload();
+            // nomacast-event-ended-modal-v1 : remplace le reload brutal par un overlay
+            // avec message + bouton "Voir le replay" + countdown auto-reload 10s.
+            showEndedModal();
             return;
           }
           statusTimer = setTimeout(pollStatus, 30000);
@@ -1482,6 +1546,64 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         pollStatus();
       }
     });
+  }
+
+  // ============================================================
+  // nomacast-event-ended-modal-v1 — Overlay fin d'événement
+  // ============================================================
+  // Affiche un overlay non-fermable quand l'event passe en 'ended' :
+  //   - Bouton "Voir le replay" → reload immédiat
+  //   - Countdown 10s → auto-reload
+  // L'idée : éviter le reload brutal qui surprend l'user en plein chat/replay.
+  function showEndedModal() {
+    if (document.getElementById('event-ended-overlay')) return; // idempotent
+    var overlay = document.createElement('div');
+    overlay.id = 'event-ended-overlay';
+    overlay.className = 'event-ended-overlay';
+
+    var box = document.createElement('div');
+    box.className = 'event-ended-modal-box';
+
+    var tag = document.createElement('span');
+    tag.className = 'event-ended-modal-tag';
+    tag.textContent = 'Événement terminé';
+    box.appendChild(tag);
+
+    var h2 = document.createElement('h2');
+    h2.textContent = "C'est fini, merci d'avoir suivi le live";
+    box.appendChild(h2);
+
+    var p = document.createElement('p');
+    p.textContent = "Le replay sera disponible dans un instant. Cliquez ci-dessous pour le découvrir.";
+    box.appendChild(p);
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'event-ended-modal-btn';
+    btn.textContent = 'Voir le replay';
+    btn.addEventListener('click', function () { window.location.reload(); });
+    box.appendChild(btn);
+
+    var cd = document.createElement('div');
+    cd.className = 'event-ended-modal-countdown';
+    cd.id = 'event-ended-modal-countdown';
+    cd.textContent = 'Rechargement automatique dans 10 s…';
+    box.appendChild(cd);
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    // Countdown 10s avant auto-reload
+    var seconds = 10;
+    var cdTimer = setInterval(function () {
+      seconds--;
+      if (seconds <= 0) {
+        clearInterval(cdTimer);
+        window.location.reload();
+      } else {
+        cd.textContent = 'Rechargement automatique dans ' + seconds + ' s…';
+      }
+    }, 1000);
   }
 
   // ============ Chat ============
