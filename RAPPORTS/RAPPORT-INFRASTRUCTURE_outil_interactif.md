@@ -1,7 +1,7 @@
 # Rapport infrastructure — Nomacast Live (chat interactif)
 
 **Date initiale** : 14 mai 2026
-**Dernière MAJ** : 15 mai 2026 (Auth client login/password + Onglets event-admin + Lot A QA + FR-3 description + Lot F sécu phase 1 + Lot C QA C2/C3 + Phase E.3 Part 1 tracking CTA)
+**Dernière MAJ** : 15 mai 2026 (Auth client login/password + Onglets event-admin + Lot A QA + FR-3 description + Lot F sécu phase 1 + Lot C QA C2/C3 + Phase E.3 Part 1 tracking CTA + Favicon Part 1 + Lot D complet + Live control edit.html + Régie outils ↔ modes)
 **Méthode** : repo `Nomacast/nomacast.fr` cloné en local (`git clone --depth 1`), tous les fichiers cités ci-dessous ont été lus directement.
 **Statut** : production stable.
 
@@ -15,6 +15,9 @@
 - **Lot F sécu phase 1** (15 mai) : rate limit `/event-admin/login` (5 fails/min/IP via KV `auth-fail:`) + table `auth_logs` (migration `0019_auth_logs.sql`) avec insertions systématiques success/fail. CSP nonce + CSRF token report en phase 2 (cf §10.8).
 - **Lot C QA C2/C3** (15 mai) : countdown overdue avec dot pulse + polling client adaptatif (60→30→10→5s, marqueur `nomacast-lot-c-c2-v1`) dans `chat/[slug].js` + `i/[token].js`. Statut détaillé des items QA en §10.9.
 - **Phase E.3 Part 1 — Tracking CTA** (15 mai) : table `event_cta_clicks` (migration `0020_event_cta_clicks.sql`) + endpoint `POST /api/chat/<slug>/cta-clicks` + tracking JS keepalive dans les pages participant (marqueur `nomacast-cta-clicks-v1`). Phase E.3 Part 2 (timeline détaillée par invité) restante (cf §10.7).
+- **Lot D modes compatibilité ✅ complet** (15 mai) : validation backend (POST + PATCH events) + UI désactivation cases dans `new.html` et `edit.html` (ajout du 15 mai, marqueur `nomacast-modes-compat-v1`). Source unique `MODE_INCOMPATIBLE_PAIRS` (6 paires) dupliquée sur 4 surfaces — cf §10.6.
+- **Live control depuis `admin/edit.html`** (15 mai) : bouton contextuel Lancer/Terminer le direct (▶ vert / ■ rouge pulse / info ended) qui PATCH `{status}` sans passer par la régie (marqueur `nomacast-live-control-v1`, cf §10.11).
+- **Régie : outils conditionnés sur modes** (15 mai) : refactor `admin/live.html` (marqueur `nomacast-tools-by-modes-v1`) — `applyToolsByModes(ev)` masque les boutons/sections des outils dont le mode n'est pas activé. Bugfix corollaire `new.html` : 2 modes Tour 2.A (`presence` + `cta`) manquaient à la création (cf §10.12).
 - **Conflit numérotation migrations 0016** : 2 fichiers nommés `0016_*` dans le repo (`reactions_config` + `client_credentials`). Renommage à faire via GitHub web : `0017_client_credentials.sql` + `0018_event_description.sql`.
 
 ---
@@ -962,43 +965,14 @@ Le HMAC backup `client_admin_token` reste calculé côté serveur (pour rétro-c
 
 ### 10.4 Modifier le wording du mail invitation ✅ Résolu (15 mai)
 
-**Livré** : helper `functions/_lib/invitation-email.js` créé (subject + buildText + buildHtml), **les 4 endpoints d'envoi/resend** importent désormais le helper (single source of truth). Bilan : **1731 → 791 lignes, soit -940 lignes (54% de réduction)**. Plus aucune duplication du template HTML/texte (cf §12 bloc imports). Détail historique conservé ci-dessous pour traçabilité.
+**Livré** : helper `functions/_lib/invitation-email.js` créé (subject + buildText + buildHtml), **les 4 endpoints d'envoi/resend** importent désormais le helper (single source of truth). Bilan : **1731 → 791 lignes, soit -940 lignes (54% de réduction)**. Plus aucune duplication du template HTML/texte (cf §12 bloc imports).
 
-**Fichier** : `functions/api/admin/events/[id]/send-invitations.js`
+**Changements de wording appliqués** (centralisés dans le helper, donc cohérents sur les 4 endpoints) :
 
-**À modifier** :
-
-1. **Eyebrow HTML** ligne 344 : `Invitation chat live` → `Invitation événement live`
-
-2. **Paragraphe intro HTML** lignes 357-360 :
-   ```html
-   <p style="margin:0 0 8px;color:#334155;">
-     Vous êtes invité(e) à participer au chat live de l'événement.
-     Posez vos questions à l'oral, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur — aucune installation nécessaire.
-   </p>
-   ```
-   À remplacer par le nouveau wording : `à notre événement live` + `Aucune installation nécessaire.` (avec point au lieu de tiret).
-
-3. **Version texte** ligne 205 :
-   ```js
-   `Vous êtes invité(e) à participer au chat live de l'événement « ${event.title} »` + (orgLine ? `, ${orgLine}` : '') + '.',
-   ```
-   À reformuler avec `à notre événement live` + ajouter le bloc `INVITATION ÉVÉNEMENT LIVE` en header.
-
-4. **Bloc "Agenda tip"** ligne 409 (HTML) + ligne 221 (texte) :
-   ```
-   Le chat ouvrira automatiquement le jour J.
-   ```
-   À **supprimer** (HTML : tout le `<tr>` du bloc `AGENDA TIP` lignes 405-412, sauf la mention "Ce lien est personnel" qui doit rester conditionnellement pour `access_mode === 'private'`).
-
-⚠️ **À refaire aussi côté admin client** dans :
-- `functions/api/event-admin/[token]/send-invitations.js`
-- `functions/api/event-admin/[token]/invitees/[invitee_id]/resend.js`
-- `functions/api/admin/events/[id]/invitees/[invitee_id]/resend.js`
-- `functions/i/[token]/send-invitations.js`
-- `functions/i/[token]/resend.js`
-
-→ **Soit chacun de ces fichiers dupliqua le même template**, soit ils délèguent à un helper. À vérifier au cas par cas : possibilité d'un helper commun `_invitation-email.js` mentionné en commentaire ligne 109 (`// Helper d'email (dupliqué depuis _invitation-email.js)`) mais le fichier n'existe pas dans le repo (donc dupliqué).
+1. **Eyebrow HTML** : `Invitation chat live` → `Invitation événement live`
+2. **Paragraphe intro** : `participer au chat live de l'événement` → `participer à notre événement live`. Tiret de fin remplacé par un point (`aucune installation nécessaire — ` → `Aucune installation nécessaire.`)
+3. **Version texte** : reformulée pour cohérence avec le HTML + ajout d'un header `INVITATION ÉVÉNEMENT LIVE`
+4. **Bloc "Agenda tip"** (`Le chat ouvrira automatiquement le jour J.`) : supprimé. La mention « Ce lien est personnel » reste, conditionnellement pour `access_mode === 'private'`.
 
 ### 10.5 Chantier analytics live (en pause) — REPRISE
 
@@ -1014,7 +988,7 @@ Le HMAC backup `client_admin_token` reste calculé côté serveur (pour rétro-c
 
 **Procédure de reprise** : redemander upload des fichiers à traiter depuis le début pour revérifier le déploiement actuel.
 
-### 10.6 Lot D — Matrice de compatibilité des modes (validée 15 mai)
+### 10.6 Lot D — Matrice de compatibilité des modes ✅ Complet (15 mai)
 
 Modes mutuellement exclusifs côté UI et backend :
 
@@ -1024,16 +998,16 @@ Modes mutuellement exclusifs côté UI et backend :
 | **Q&A modéré** ↔ **Chat libre** | **Incompatibles** entre eux (un seul mode chat à la fois) |
 | **Sondages**, **Quiz**, **Nuage**, **Ideas**, **Reactions**, **Annonces** | Combinables librement (sauf avec lecture seule pour les 4 premiers) |
 
-**État au 15 mai 2026 — Fallback détecté** : implémentation incomplète, cohérence à restaurer.
+**Statut au 15 mai 2026** :
 
 | Surface | Statut | Détail |
 |---|---|---|
-| PATCH `/api/admin/events/[id].js` | ✅ Conforme | `validateModesCompatibility` présent, refuse 400 si combinaison invalide |
-| POST `/api/admin/events.js` | ❌ Manquant | `validateModesCompatibility` **absent** — un event peut être créé avec modes contradictoires (la validation arrive seulement au PATCH suivant) |
-| `admin/edit.html` (UI) | ❌ Manquant | Désactivation visuelle des checkboxes incompatibles absente — l'utilisateur peut cocher des modes contradictoires sans signal |
-| `admin/new.html` (UI) | ❌ Manquant | Idem `edit.html` (probablement, à confirmer fichier en main) |
+| POST `/api/admin/events.js` | ✅ Conforme | `validateModesCompatibility` présent — refuse 400 à la création si combinaison invalide |
+| PATCH `/api/admin/events/[id].js` | ✅ Conforme | `validateModesCompatibility` présent — refuse 400 à l'édition |
+| `admin/new.html` (UI) | ✅ Conforme | Désactivation visuelle des checkboxes via `MODE_INCOMPATIBLE_PAIRS` + listeners |
+| `admin/edit.html` (UI) | ✅ Conforme | Désactivation visuelle ajoutée 15 mai (marqueur `nomacast-modes-compat-v1`) — `setupModesCompat(form)` après `form.appendChild(modesField)`, helpers `refreshModesCompat` + `MODE_INCOMPATIBLE_PAIRS` cohérents avec le serveur |
 
-**Action** : re-livrer les 3 fichiers `edit.html`, `new.html`, `events.js` (POST) en alignant sur le `validateModesCompatibility` déjà présent dans `events/[id].js` PATCH. Listener JS sur les `<input name="mode">` qui grise/coche les incompatibles côté UI.
+**Source de vérité** : `MODE_INCOMPATIBLE_PAIRS` (6 paires) — dupliqué entre 4 fichiers (2 serveur + 2 UI). À long terme, candidat à un fichier de config partagé, mais la structure repo Cloudflare Pages ne permet pas un import shared simple entre Functions et statiques. Maintenir la cohérence à la main pour le moment.
 
 ### 10.7 Lot E — Tracking actions par personne (vue simple)
 
@@ -1112,6 +1086,43 @@ Test à faire ultérieurement (pas de cas client concret au 15 mai). Cloudflare 
 
 Question ouverte : juste le player vidéo, ou player + chat + reactions (l'app complète) ?
 
+### 10.11 Workflow "Lancer / Terminer le direct" depuis `admin/edit.html` ✅ Livré (15 mai)
+
+Bouton de bascule de statut event depuis la page d'édition, sans passer par la page régie. Marqueur `nomacast-live-control-v1`.
+
+**Comportement contextuel selon `ev.status`** :
+
+| Statut event | Panel rendu | Action |
+|---|---|---|
+| `draft` | Bouton ▶ vert "Lancer le direct" | Confirme, PATCH `/api/admin/events/<id>` `{status: 'live'}`, `load()` |
+| `live` | Bouton ■ rouge avec dot pulsant "Terminer le direct" | Confirme, PATCH `/api/admin/events/<id>` `{status: 'ended'}`, `load()` |
+| `ended` | Panel info "Événement terminé" | Pas de bouton |
+
+**Insertion** : dans `publicLinkZone` juste après la card Streaming live, via `renderLiveControlPanel(ev)`.
+
+**Aucun nouveau endpoint** : réutilise le PATCH existant qui accepte déjà `status`. Aucune migration.
+
+**Côté participant** : bascule auto dans les 5-10s grâce au polling status (marqueur `nomacast-lot-c-c2-v1`, cf §10.9 + §11 timings). Pas de rechargement de page côté admin (`load()` re-fetch l'event et re-render localement).
+
+### 10.12 Régie : outils conditionnés sur modes activés ✅ Livré (15 mai)
+
+Refactor de `admin/live.html` (marqueur `nomacast-tools-by-modes-v1`). Avant : les 4 appels `setupToolToggle('xxx')` étaient exécutés au boot du script (avant le `loadEvent` async) → tous les outils étaient visibles en permanence, même si le mode n'était pas activé sur l'event. Maintenant : fonction `applyToolsByModes(ev)` appelée dans `loadEvent` après `renderEvent` et avant `updateLayoutGrid()`.
+
+**Comportement** : pour chaque outil régie, si le mode correspondant est dans `event.modes`, le toggle est setup normalement. Sinon, `btn.style.display='none'` + `col.hidden=true` (et listener non attaché).
+
+**Mapping mode → outil régie** :
+
+| Outil régie | Mode requis |
+|---|---|
+| Modération | `qa` OU `libre` |
+| Sondages | `sondages` |
+| CTAs | `cta` |
+| Réactions | `reactions` |
+
+Cohérent avec le côté participant (`chat/[slug].js` + `i/[token].js`) qui conditionne déjà l'affichage selon `event.modes`.
+
+**Bugfix corollaire** : `admin/new.html` proposait 7 modes au lieu de 9 (les 2 modes Tour 2.A `presence` + `cta` avaient été ajoutés à `edit.html` `buildModesCheckboxes` lors du Tour 2.A mais oubliés à la création). Symptôme : un CTA configuré en régie n'apparaissait pas côté chat car le mode `cta` n'avait jamais pu être coché à la création (`modes_json` ne le contenait pas). Listes désormais alignées à 9 modes entre `new.html` et `edit.html`. Règle de synchronisation des modes en §11.
+
 ---
 
 ## 11. Points à surveiller
@@ -1125,14 +1136,21 @@ Question ouverte : juste le player vidéo, ou player + chat + reactions (l'app c
 - **Templating mail** : ~~5+ fichiers dupliquent le même template — refactoriser en helper commun `_invitation-email.js` (mentionné en commentaire, jamais créé)~~ **Résolu (15 mai)** : helper `functions/_lib/invitation-email.js` créé, 4 importeurs migrés, -940 lignes (54%) sur l'ensemble (cf §10.4 + §12 bloc imports).
 - **(15 mai)** Renommer migrations `0016_client_credentials.sql` → `0017_*` et `0017_event_description.sql` → `0018_*` via GitHub web pour respecter l'ordre chronologique
 - **(15 mai)** Variable d'env `SESSION_SECRET` à présent **critique** : si elle disparaît, tous les utilisateurs sont déconnectés et `/event-admin/login` retourne 500
-- **(15 mai)** Lot E tracking actions par personne : migration + tables à créer (cf §10.7)
-- **(15 mai)** Lot F sécu **phase 1 livrée** : rate limit login (KV `auth-fail:`) + table `auth_logs` (mig 0019). Phase 2 candidate (notif burst, purge auto, Turnstile post-fails, CSP nonce, CSRF token) en attente d'observations réelles (cf §10.8).
+- **(15 mai)** Lot E tracking actions par personne : Phase E.3 Part 1 livrée (CTA clicks), reste Part 2 (timeline drilldown) + phases ultérieures pour `event_quote_shares` / `event_resource_views` (cf §10.7)
 - **(15 mai)** **`auth_logs` : forensics et surveillance** — La table `auth_logs` n'a pas de purge auto. À long terme (>6 mois prod), prévoir un cleanup mensuel des entrées > 90 jours via SQL manuel ou cron. Cible : moins de 100 000 lignes pour garder les indexes performants.
 - **(15 mai)** **Rate limit KV consumption** — Chaque IP qui rate son login crée 1 entrée KV `auth-fail:<ip_hash>` (TTL 60s, auto-purge). Pas de risque de remplissage durable.
 - **(15 mai)** **Imports relatifs depuis dossiers avec brackets `[id]`, `[token]`** — Cloudflare Pages Functions résout correctement les imports relatifs depuis les dossiers brackets (validé 15 mai 2026 après fix d'une typo). Règle : nombre de `../` = nombre de dossiers entre le fichier source et `functions/`. Erreur typique : croire que `event-admin/[token]/` a 4 niveaux comme `admin/events/[id]/`. Un seul dossier composé ≠ deux dossiers imbriqués.
 - **(15 mai)** **Polling status client : timings actuels** — Page draft poll `/chat/<slug>/status` ou `/i/<token>/status` : 60s avant T-10min, 30s avant T-1min, 10s avant T0, 5s après T0 (marqueur `nomacast-lot-c-c2-v1`). Au retour de focus onglet → poll immédiat. Si beaucoup d'utilisateurs en attente sur un event → vérifier la charge sur D1 (1 SELECT par poll × N utilisateurs). Ex. 5s × 300 viewers = 60 req/s sur la fenêtre critique. Acceptable mais à surveiller.
 - **(15 mai)** **CTA tracking : `keepalive: true`** — Le fetch POST `/api/chat/<slug>/cta-clicks` utilise `keepalive: true` pour s'assurer que le ping arrive même si l'utilisateur quitte la page immédiatement après le clic. Limitation native du navigateur : body max 64 KB (largement suffisant pour notre body `{cta_id}`).
 - **(15 mai)** **CTA tracking : duplication d'helpers** — `authenticatePrivateRequest`, `computePreviewToken`, `hashIp` dupliqués entre `messages.js` et `cta-clicks.js` (et probablement d'autres endpoints chat). À refactoriser un jour en `functions/_lib/chat-auth.js` (idem `invitation-email.js`). Pas urgent.
+- **(15 mai)** **Liste des modes d'interaction : 5 surfaces à synchroniser** — Une modification de la liste des modes (ajout, retrait, renommage) doit toucher en cohérence :
+  1. `admin/new.html` — cases à cocher statiques (création event)
+  2. `admin/edit.html` `buildModesCheckboxes` — array de définitions (édition event)
+  3. `admin/live.html` `applyToolsByModes` — mapping mode → toggle outil régie (marqueur `nomacast-tools-by-modes-v1`, cf §10.12)
+  4. `functions/chat/[slug].js` — flags conditionnels (`hasReactions`, `hasCta`, etc.) côté participant public
+  5. `functions/i/[token].js` — mêmes flags côté invité privé
+  
+  Sinon : bugs silencieux. Incident 15 mai : `new.html` proposait 7 modes au lieu de 9 (`presence` + `cta` ajoutés à `edit.html` Tour 2.A mais oubliés à la création). Détecté quand un CTA configuré en régie n'apparaissait pas sur la page chat car le mode `cta` n'était pas dans `modes_json` (jamais coché à la création).
 
 ---
 
@@ -1230,4 +1248,4 @@ Reste à faire (Part 2) :
 
 ---
 
-*Rapport mis à jour le 15 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` et de la session du jour (auth client login/password, onglets event-admin, Lot A QA, FR-3 description, Lot F sécu phase 1 — rate limit login + table auth_logs, Lot C QA C2/C3 polling client, Phase E.3 Part 1 tracking CTA). Toutes les affirmations ont été vérifiées sur les fichiers réels ou sur les modifications livrées dans la session.*
+*Rapport mis à jour le 15 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` et de la session du jour (auth client login/password, onglets event-admin, Lot A QA, FR-3 description, Lot F sécu phase 1 — rate limit login + table auth_logs, Lot C QA C2/C3 polling client, Phase E.3 Part 1 tracking CTA, Favicon Part 1, Lot D modes compatibilité complet, Live control depuis edit.html, Régie outils conditionnés sur modes + fix new.html). Toutes les affirmations ont été vérifiées sur les fichiers réels ou sur les modifications livrées dans la session.*
