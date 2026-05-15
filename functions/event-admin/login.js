@@ -43,11 +43,19 @@ export const onRequestGet = async ({ request, env }) => {
     : error === 'missing' ? 'Identifiant et mot de passe requis.'
     : error === 'server' ? 'Erreur serveur, réessayez dans un instant.'
     : error === 'too-many' ? `Trop de tentatives échouées. Patiente ${RATE_LIMIT_WINDOW_SEC} secondes avant de réessayer.`
+    : error === 'csrf' ? 'Session expirée ou requête non valide. La page a été rafraîchie, réessaye.'
     : null;
 
-  return new Response(renderLoginPage(errorMsg), {
+  // nomacast-csrf-login-v1 : générer un token CSRF + set cookie HttpOnly
+  const csrfToken = generateCsrfToken();
+
+  return new Response(renderLoginPage(errorMsg, csrfToken), {
     status: 200,
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Set-Cookie': buildCsrfCookieHeader(csrfToken)
+    }
   });
 };
 
@@ -62,23 +70,41 @@ export const onRequestPost = async ({ request, env }) => {
   const ipHash = await hashIp(request, env);
   const userAgent = (request.headers.get('User-Agent') || '').slice(0, 256);
 
-  // Récupérer login + password depuis form-data ou JSON
+  // Récupérer login + password + csrf_token depuis form-data ou JSON
   let login = '';
   let password = '';
+  let bodyCsrf = '';
   const contentType = request.headers.get('Content-Type') || '';
   try {
     if (contentType.includes('application/json')) {
       const data = await request.json();
       login = String(data.login || '').trim();
       password = String(data.password || '');
+      bodyCsrf = String(data.csrf_token || '');
     } else {
       // application/x-www-form-urlencoded (form standard HTML)
       const form = await request.formData();
       login = String(form.get('login') || '').trim();
       password = String(form.get('password') || '');
+      bodyCsrf = String(form.get('csrf_token') || '');
     }
   } catch (e) {
     return redirectErr(request, 'missing');
+  }
+
+  // nomacast-csrf-login-v1 : vérifier le token CSRF AVANT toute autre logique
+  // (low-cost : pas de DB hit, pas de PBKDF2). Un attaquant CSRF est bloqué ici.
+  const cookieCsrf = readCsrfCookie(request);
+  if (!cookieCsrf || !bodyCsrf || !constantTimeEquals(cookieCsrf, bodyCsrf)) {
+    await logAuthAttempt(env, {
+      event_id: null,
+      login: login || null,
+      ip_hash: ipHash,
+      success: 0,
+      reason: 'csrf_mismatch',
+      user_agent: userAgent
+    });
+    return redirectErr(request, 'csrf');
   }
 
   if (!login || !password) {
@@ -276,9 +302,74 @@ function escapeHtml(s) {
 }
 
 // ============================================================
+// nomacast-csrf-login-v1 — Protection CSRF (Double Submit Cookie, OWASP)
+// ============================================================
+// Pattern : à chaque GET sur la page login, on génère un token aléatoire
+// qu'on (1) injecte dans un hidden input du form, et (2) set en cookie
+// HttpOnly. Au POST, on vérifie que les 2 valeurs matchent.
+//
+// Un attaquant qui voudrait soumettre le form depuis un autre domaine
+// (CSRF) n'a pas accès au cookie HttpOnly du domaine nomacast.fr donc
+// ne peut pas faire matcher les 2 valeurs.
+
+const CSRF_COOKIE_NAME = 'nomacast_csrf';
+const CSRF_COOKIE_MAX_AGE = 3600;  // 1h (largement suffisant pour saisir un login)
+
+/**
+ * Génère un token CSRF aléatoire (32 chars URL-safe).
+ */
+function generateCsrfToken() {
+  const arr = new Uint8Array(24);  // 24 bytes → 32 chars base64url
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/**
+ * Comparaison constant-time pour éviter timing attacks sur le token.
+ */
+function constantTimeEquals(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length || a.length === 0) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+/**
+ * Cookie CSRF : HttpOnly (le JS ne peut pas le lire), Secure (HTTPS only),
+ * SameSite=Lax (suffit pour la protection CSRF tout en autorisant les liens depuis email),
+ * Path scoped sur /event-admin/ pour ne pas leak ailleurs.
+ */
+function buildCsrfCookieHeader(token) {
+  const parts = [
+    `${CSRF_COOKIE_NAME}=${token}`,
+    'Path=/event-admin/',
+    'HttpOnly',
+    'Secure',
+    'SameSite=Lax',
+    `Max-Age=${CSRF_COOKIE_MAX_AGE}`
+  ];
+  return parts.join('; ');
+}
+
+/**
+ * Lit le cookie CSRF depuis les headers de la request.
+ */
+function readCsrfCookie(request) {
+  const cookieHeader = request.headers.get('Cookie') || '';
+  // Match nomacast_csrf= jusqu'au prochain ; ou fin
+  const re = new RegExp('(?:^|;\\s*)' + CSRF_COOKIE_NAME + '=([^;]+)');
+  const m = cookieHeader.match(re);
+  return m ? m[1] : null;
+}
+
+// ============================================================
 // Template HTML — page de login, brand Nomacast
 // ============================================================
-function renderLoginPage(errorMsg) {
+function renderLoginPage(errorMsg, csrfToken) {
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -426,6 +517,7 @@ body {
     <p class="card-sub">Accédez à la régie et aux données de votre événement.</p>
     ${errorMsg ? `<div class="error">${escapeHtml(errorMsg)}</div>` : ''}
     <form method="POST" action="/event-admin/login" autocomplete="on">
+      <input type="hidden" name="csrf_token" value="${escapeHtml(csrfToken || '')}">
       <div class="field">
         <label for="login">Identifiant</label>
         <input
