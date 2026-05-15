@@ -136,7 +136,7 @@ function buildAgendaUrls(event, chatLink, token) {
   const end = event.scheduled_at ? toCalDate(addMinutes(event.scheduled_at, event.duration_minutes || 90)) : '';
   const details = `Chat live de l'événement « ${event.title} »` +
     (event.client_name ? `, organisé par ${event.client_name}.` : '.') +
-    `\n\nPour rejoindre : ${chatLink}\n\nPropulsé par Nomacast — https://nomacast.fr`;
+    `\n\nPour rejoindre votre événement : ${chatLink}\n\nPropulsé par Nomacast — https://nomacast.fr`;
 
   const googleParams = new URLSearchParams({
     action: 'TEMPLATE',
@@ -221,7 +221,7 @@ function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel, agen
     ? 'Accès   : Lien personnel (ne pas partager)'
     : 'Accès   : Lien public');
   lines.push('');
-  lines.push('Pour rejoindre le chat live :');
+  lines.push('Pour rejoindre votre événement :');
   lines.push(link);
   lines.push('');
   lines.push('AJOUTER À MON AGENDA');
@@ -336,7 +336,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
 <body style="margin:0;padding:0;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif;">
 <!-- Préheader (texte d'aperçu masqué) -->
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
-  Vous êtes invité(e) au chat live ${safeTitle}.${safeDate ? ' ' + safeDate : ''}
+  Vous êtes invité(e) à l'événement ${safeTitle}.${safeDate ? ' ' + safeDate : ''}
 </div>
 
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f4f6fa;padding:40px 0;">
@@ -365,7 +365,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
           <p style="margin:0 0 14px;font-size:16px;">${safeGreeting}</p>
           <p style="margin:0 0 8px;color:#334155;">
             Vous êtes invité(e) à participer à notre événement live.
-            Posez vos questions à l'oral, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur.
+            Posez vos questions, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur.
             Aucune installation nécessaire.
           </p>
         </td>
@@ -408,7 +408,7 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr><td style="border-radius:10px;background:${color};box-shadow:0 4px 12px ${color}33;">
               <a href="${safeLink}" style="display:inline-block;padding:15px 36px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.01em;">
-                Rejoindre le chat live →
+                Rejoindre votre événement →
               </a>
             </td></tr>
           </table>

@@ -530,9 +530,8 @@
       attrs: { autocomplete: 'off' }
     });
 
-    // Fix 8 v2 + M2 — slug modifiable uniquement si aucun invité n'a reçu le lien.
-    // Cast explicite Number() pour éviter les pièges si invitees_count arrive en string "0".
-    var canChangeSlug = Number(ev.invitees_count || 0) === 0;
+    // Fix 8 v2 : slug modifiable uniquement si aucun invité n'a reçu le lien
+    var canChangeSlug = (ev.invitees_count || 0) === 0;
 
     // --- Title + Client ---
     var titleHint = canChangeSlug
@@ -575,31 +574,6 @@
           'L\'URL sera « /chat/' + ev.slug + ' ». Modifiable tant qu\'aucun invité n\'a reçu le lien. Sera figée définitivement dès le 1er ajout d\'invité.')
       ]));
     }
-
-    // --- Description (nomacast-event-description-v1 / FR-3) ---
-    var descTextarea = A.el('textarea', {
-      className: 'admin-form-input',
-      attrs: {
-        name: 'description',
-        maxlength: '500',
-        rows: '3',
-        placeholder: 'Présentation rapide affichée aux participants et dans le mail d\'invitation.'
-      }
-    });
-    descTextarea.value = ev.description || '';
-    var descCountSpan = A.el('span', { text: String((ev.description || '').length) });
-    descTextarea.addEventListener('input', function () {
-      descCountSpan.textContent = String(this.value.length);
-    });
-    var descField = field('Description de l\'événement', false, descTextarea, null);
-    // Remplace le hint pour ajouter le compteur dynamique
-    var descHintNode = descField.querySelector('.admin-form-hint');
-    if (descHintNode) {
-      A.clearNode(descHintNode);
-      descHintNode.appendChild(descCountSpan);
-      descHintNode.appendChild(document.createTextNode('/500 caractères. Affichée sur la page d\'accueil du chat et dans le mail d\'invitation.'));
-    }
-    form.appendChild(formRow([descField]));
 
     // --- Date + Durée ---
     form.appendChild(formRow([
@@ -938,8 +912,6 @@
       var checkbox = A.el('input', {
         attrs: { type: 'checkbox', name: 'mode', value: m[0], checked: activeModes.indexOf(m[0]) !== -1 }
       });
-      // nomacast-modes-compat-v1 / Lot D — refresh compatibilité au changement
-      checkbox.addEventListener('change', refreshModesCompat);
       var inner = A.el('div', {
         children: [
           A.el('div', { className: 'admin-form-check-label', text: m[1] }),
@@ -951,49 +923,7 @@
         children: [checkbox, inner]
       }));
     });
-    // Premier refresh après que le container soit attaché au DOM
-    setTimeout(refreshModesCompat, 0);
     return container;
-  }
-
-  // ============================================================
-  // nomacast-modes-compat-v1 / Lot D — Matrice de compatibilité modes
-  // ============================================================
-  // Doit rester synchronisé avec `validateModesCompatibility` dans
-  // functions/api/admin/events/[id].js. Toute modif ici → modif là-bas.
-  var MODE_INCOMPATIBLE_PAIRS = [
-    ['lecture', 'qa'],
-    ['lecture', 'libre'],
-    ['lecture', 'sondages'],
-    ['lecture', 'quiz'],
-    ['lecture', 'nuage'],
-    ['qa', 'libre']
-  ];
-  function refreshModesCompat() {
-    var checks = document.querySelectorAll('input[name="mode"]');
-    if (!checks || checks.length === 0) return;
-    var checked = new Set();
-    for (var i = 0; i < checks.length; i++) {
-      if (checks[i].checked) checked.add(checks[i].value);
-    }
-    for (var j = 0; j < checks.length; j++) {
-      var v = checks[j].value;
-      var blocker = null;
-      if (!checked.has(v)) {
-        for (var k = 0; k < MODE_INCOMPATIBLE_PAIRS.length; k++) {
-          var p = MODE_INCOMPATIBLE_PAIRS[k];
-          if (p[0] === v && checked.has(p[1])) { blocker = p[1]; break; }
-          if (p[1] === v && checked.has(p[0])) { blocker = p[0]; break; }
-        }
-      }
-      checks[j].disabled = !!blocker;
-      var labelEl = checks[j].closest ? checks[j].closest('.admin-form-check') : null;
-      if (labelEl) {
-        labelEl.style.opacity = blocker ? '0.45' : '';
-        labelEl.style.cursor = blocker ? 'not-allowed' : '';
-        labelEl.title = blocker ? 'Incompatible avec un mode déjà coché.' : '';
-      }
-    }
   }
 
   function buildOptionsCheckboxes(whiteLabel, subtitles) {
@@ -1052,8 +982,6 @@
     var data = {
       title: form.title.value,
       client_name: form.client_name.value,
-      // nomacast-event-description-v1 / FR-3 : description event (null si vide)
-      description: form.description ? ((form.description.value || '').trim() || null) : null,
       scheduled_at: A.localInputToIso(form.scheduled_at.value),
       duration_minutes: form.duration_minutes.value,
       audience_estimate: form.audience_estimate.value || null,
@@ -1112,23 +1040,6 @@
       // Mettre à jour le badge statut
       statusBadge.textContent = A.statusLabel(result.event.status);
       statusBadge.className = 'admin-badge admin-badge-' + result.event.status;
-
-      // M3 / nomacast-logo-reset-v1 (fix UI) — refresh des inputs branding après save
-      // Si white_label vient de passer OFF, le backend a reset logo_url=null + primary_color=#5A98D6 :
-      // on doit refléter ça dans le DOM, sinon l'ancien logo reste affiché et serait ré-envoyé au prochain PATCH.
-      if (form.logo_url) {
-        form.logo_url.value = result.event.logo_url || '';
-        // Déclenche l'event 'input' → renderLogoPreview (défini dans une closure) se met à jour
-        form.logo_url.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      if (form.primary_color) {
-        form.primary_color.value = result.event.primary_color || '#5A98D6';
-        form.primary_color.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      if (form.white_label) form.white_label.checked = !!result.event.white_label;
-      if (form.subtitles) form.subtitles.checked = !!result.event.subtitles;
-      if (form.description) form.description.value = result.event.description || '';
-
       // Re-render le panneau URLs (pour refléter changement public↔privé / slug changé)
       A.clearNode(publicLinkZone);
       publicLinkZone.appendChild(renderUrlPanel(result.event));
@@ -1258,6 +1169,10 @@
         });
         A.showMessage(messageZone, 'success', 'Identifiant enregistré.');
         credsLastGeneratedPassword = null;
+        // nomacast-client-credentials-v1 — sync ev avec la réponse pour que renderUrlPanel
+        // affiche immédiatement le bon lien admin client (sans recharger la page)
+        ev.client_login = result.login;
+        ev.has_client_password = !!result.has_password;
         renderCredentialsCard(ev, result);
         // Re-render aussi le panneau URLs pour montrer la nouvelle URL /event-admin/<login>
         A.clearNode(publicLinkZone);
@@ -1299,8 +1214,13 @@
           method: 'POST'
         });
         credsLastGeneratedPassword = result.password;
+        // nomacast-client-credentials-v1 — sync ev avec la réponse pour que renderUrlPanel
+        // affiche immédiatement le lien admin client `/event-admin/<login>` au lieu de
+        // « Pas encore configuré » (sans recharger la page)
+        ev.client_login = result.login;
+        ev.has_client_password = !!result.has_password;
         renderCredentialsCard(ev, result);
-        // Re-render le panneau URLs (login a pu changer)
+        // Re-render le panneau URLs (login a pu changer + has_password désormais true)
         A.clearNode(publicLinkZone);
         publicLinkZone.appendChild(renderUrlPanel(ev));
         publicLinkZone.appendChild(A.renderStreamCard(ev, load));
@@ -1327,8 +1247,16 @@
             method: 'DELETE'
           });
           credsLastGeneratedPassword = null;
+          // nomacast-client-credentials-v1 — sync ev pour que renderUrlPanel retire
+          // immédiatement le lien admin client (sans recharger la page)
+          ev.client_login = null;
+          ev.has_client_password = false;
           A.showMessage(messageZone, 'success', 'Accès client révoqué.');
           renderCredentialsCard(ev, result);
+          // Re-render le panneau URLs (lien admin client doit redevenir « Pas encore configuré »)
+          A.clearNode(publicLinkZone);
+          publicLinkZone.appendChild(renderUrlPanel(ev));
+          publicLinkZone.appendChild(A.renderStreamCard(ev, load));
         } catch (err) {
           A.showMessage(messageZone, 'error', err.message);
           revokeBtn.disabled = false;

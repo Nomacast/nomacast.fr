@@ -173,7 +173,7 @@ function renderPrivatePage(event) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
-    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
+    ${event.description ? `<div class="event-description-card"><div class="event-description-eyebrow">À propos de l\'événement</div><div class="event-description-text">${escapeHtml(event.description)}</div></div>` : ''}
   `;
   const mainBody = `
     <section class="message">
@@ -209,7 +209,7 @@ function renderWaitingPage(event) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
-    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
+    ${event.description ? `<div class="event-description-card"><div class="event-description-eyebrow">À propos de l\'événement</div><div class="event-description-text">${escapeHtml(event.description)}</div></div>` : ''}
   `;
 
   const mainBody = `
@@ -303,7 +303,7 @@ function renderLivePage(event) {
     </div>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
-    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
+    ${event.description ? `<div class="event-description-card"><div class="event-description-eyebrow">À propos de l\'événement</div><div class="event-description-text">${escapeHtml(event.description)}</div></div>` : ''}
   `;
 
   const playerHtml = hasStream
@@ -416,7 +416,7 @@ function renderEndedPage(event) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
-    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
+    ${event.description ? `<div class="event-description-card"><div class="event-description-eyebrow">À propos de l\'événement</div><div class="event-description-text">${escapeHtml(event.description)}</div></div>` : ''}
   `;
 
   const playerHtml = hasStream
@@ -571,11 +571,29 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     letter-spacing: -0.02em; line-height: 1.2; margin: 0; color: #ffffff;
   }
   .event-client { margin-top: 8px; font-size: 14px; color: rgba(255,255,255,0.85); }
-  /* nomacast-event-description-v1 / FR-3 */
-  .event-description {
-    margin: 14px 0 0; font-size: 15px; line-height: 1.55;
-    color: rgba(255,255,255,0.92);
+  /* nomacast-event-description-v1 / FR-3 — refonte UI Lot E session 15 mai */
+  .event-description-card {
+    margin: 18px 0 0;
     max-width: 640px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.10);
+    border-left: 3px solid rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .event-description-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 6px;
+  }
+  .event-description-text {
+    font-size: 15px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.95);
     white-space: pre-wrap;
   }
   .page-main { flex: 1; }
