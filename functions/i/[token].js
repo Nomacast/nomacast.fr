@@ -359,6 +359,8 @@ function renderLivePage(event, invitee, token) {
 function renderEndedPage(event, invitee, token) {
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
+  // nomacast-cta-ended-persist-v1 : CTA actif reste visible après la fin de l'event
+  const hasCta = !!(event.modes && event.modes.includes('cta'));
   const hasStream = !!event.stream_playback_url;
 
   const heroBody = `
@@ -369,6 +371,11 @@ function renderEndedPage(event, invitee, token) {
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
     ${event.description ? `<div class="event-description-card"><div class="event-description-eyebrow">À propos de l\'événement</div><div class="event-description-text">${escapeHtml(event.description)}</div></div>` : ''}
+    ${hasCta ? `<!-- nomacast-cta-ended-persist-v1 : banner CTA persistent en mode ended -->
+    <div class="cta-banner" id="cta-banner" style="display:none;">
+      <a class="cta-banner-button" id="cta-banner-button" target="_blank" rel="noopener"></a>
+      <button type="button" class="cta-banner-close" id="cta-banner-close" aria-label="Fermer">×</button>
+    </div>` : ''}
   `;
 
   // Player replay : le Stream Player Cloudflare détecte automatiquement
@@ -413,6 +420,10 @@ function renderEndedPage(event, invitee, token) {
     bodyScript: buildLivePageScript({
       statusUrl: null, // pas de polling status en mode ended
       chatMessagesUrl: `/api/chat/${encodeURIComponent(event.slug)}/messages`,
+      // nomacast-cta-ended-persist-v1 : on passe les params CTA même en ended
+      ctaActiveUrl: hasCta ? `/api/chat/${encodeURIComponent(event.slug)}/cta/active` : null,
+      hasCta,
+      inviteeId: invitee ? invitee.id : null,
       accessMode: event.access_mode,
       magicToken: token,
       isLectureSeule,
@@ -2402,8 +2413,10 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
 
   // ============================================================
   // nomacast-lot-2a-v1 : C4 CTA banner (polling + dismiss)
+  // nomacast-cta-ended-persist-v1 : on retire !IS_ENDED — un CTA actif reste visible
+  // après la fin de l'event (utile en replay : "demandez un devis", "ressources", etc.)
   // ============================================================
-  if (HAS_CTA && CTA_ACTIVE_URL && !IS_ENDED) {
+  if (HAS_CTA && CTA_ACTIVE_URL) {
     (function setupCta() {
       var banner = document.getElementById('cta-banner');
       var btnEl = document.getElementById('cta-banner-button');
