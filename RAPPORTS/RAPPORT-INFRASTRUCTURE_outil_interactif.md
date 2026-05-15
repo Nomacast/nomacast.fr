@@ -91,7 +91,7 @@ admin/
 
 | Élément | Valeur |
 |---|---|
-| Rôle | Page principale de gestion d'un event individuel : formulaire édition + URL participant + lien admin client + card streaming Cloudflare Stream |
+| Rôle | Page principale de gestion d'un event individuel. Depuis le 15 mai (marqueur `nomacast-edit-tabs-v1`), structure en **2 onglets** « Données » (formulaire + URLs + lien admin client + card streaming) et « Régie en direct » (iframe `/admin/live.html?id=<id>` lazy-loadée). Cf §10.17. |
 | Param URL | **`?id=<event_id>`** (et optionnellement `?created=1` pour message succès post-création) |
 | `<title>` actuel | `Éditer event · Admin Nomacast` (jamais mis à jour dynamiquement) |
 | `<h1>` actuel | `Éditer l'event` (statique, `id="page-title"`) |
@@ -1021,6 +1021,20 @@ Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>
 - Tracking JS dans `chat/[slug].js` + `i/[token].js` — handler click sur `btnEl` avec POST `keepalive: true` fire-and-forget, ne bloque pas l'ouverture du lien CTA (marqueur `nomacast-cta-clicks-v1`). Fix syntaxe 15 mai : remplacement d'une regex `/\\/cta\\/active$/` (qui cassait l'IIFE dans le HTML rendu) par `lastIndexOf + substring`. Cf §11 « Regex dans template strings serveur ».
 - Aucun impact UX
 
+**Phase E.3 Vue analytics CTA ✅ Livrée (15 mai)** — Exploitation des données de Part 1, marqueur `nomacast-cta-analytics-v1`. Section « Performance des CTAs » dans `/event-admin/<token>` onglet Données, visible pour les events `live` et `ended` qui ont au moins un CTA créé.
+
+- **Endpoint** `functions/api/event-admin/[token]/stats.js` : nouvelle section 7 « CTAs analytics » (query avec sous-requêtes count + DISTINCT `invitee_id`/`anon_key`). Helper `safeQuery` ajouté (try/catch + return []). Réponse enrichie de `summary.ctas_total`, `summary.cta_total_clicks`, `summary.cta_unique_clickers`, et `ctas: [...]`
+- **UI** dans `functions/event-admin/[token].js` : `renderCtasAnalytics(body, stats.ctas, s)` appelée dans `renderStats`, helper `ctaKpiTile(value, label)`, badge `.stats-cta-status` (vert Actif / gris Inactif)
+- **3 tuiles KPI globales** : Clics totaux (incluant multi-clics d'un même user), Cliqueurs uniques (par `invitee_id` ou `anon_key`), Taux de clic global (formule cf §11)
+- **Tableau par CTA** trié par clics totaux DESC : Label + URL, statut Actif/Inactif, Clics totaux, Clics uniques
+
+Pas de requête additionnelle côté participant — les données sont déjà collectées en arrière-plan par la Part 1.
+
+**Export CSV bilan enrichi ✅ Livré (15 mai)** — marqueur `nomacast-csv-engagement-v1`. L'export `GET /api/event-admin/<token>/export-csv` (téléchargeable uniquement quand `status='ended'`) retourne maintenant **19 colonnes au lieu de 14**.
+
+- **Endpoint** `functions/api/event-admin/[token]/export-csv.js` : 4 sous-requêtes ajoutées au SQL (`event_reactions`, `poll_votes`, `idea_votes`, `event_cta_clicks`), 5 nouvelles colonnes dans les headers (Réactions, Votes sondages, Votes idées, Clics CTA, Total actions), boucle qui calcule `totalActions = messages + reactions + pollVotes + ideaVotes + ctaClicks`
+- Alignement avec les KPIs affichés dans le tableau « Détail par invité » de la régie client (cohérence UI ↔ export)
+
 **Phase E.3 Part 2 — Restante** :
 - Endpoint timeline détaillée par invité : `GET /api/event-admin/<token>/invitees/<invitee_id>/timeline` qui UNION 6 sources (messages, reactions, votes, CTAs, quotes, presence)
 - UI drilldown dans `event-admin/[token].js` pour afficher la timeline
@@ -1145,6 +1159,16 @@ Fix dans `functions/chat/[slug].js` + `functions/i/[token].js` (marqueur `nomaca
 
 Polling inchangé à 10s, donc latence max 10s pour les viewers. Règle générale du pattern « polling avec early return » et zones à vérifier en §11.
 
+**CTAs persistants en mode ended ✅ Livré (15 mai)** — marqueur `nomacast-cta-ended-persist-v1`. Un CTA actif (`active=1` en BDD) reste désormais visible côté participant **après la fin de l'événement**. Use case : « Demandez un devis » qui doit rester actionable sur la page replay.
+
+Trois modifs minimales dans `functions/chat/[slug].js` + `functions/i/[token].js` :
+
+1. `renderEndedPage` calcule `hasCta` et inclut le banner DOM dans `heroBody` si présent
+2. `buildLivePageScript` reçoit `ctaActiveUrl` et `hasCta` (en plus des params existants)
+3. Condition `setupCta` : retrait de `!IS_ENDED` dans `if (HAS_CTA && CTA_ACTIVE_URL && !IS_ENDED)` → polling CTA `/api/chat/<slug>/cta/active` continue en mode ended
+
+L'admin peut désactiver le CTA depuis la régie à tout moment (même en `ended`) → disparition chez les viewers en ≤10s grâce au polling. Le tracking `event_cta_clicks` (cf §10.7 Phase E.3 Part 1) continue de comptabiliser les clics post-event.
+
 ### 10.15 Participant : modal fin d'événement ✅ Livré (15 mai)
 
 Résout FR-1. Fix dans `functions/chat/[slug].js` + `functions/i/[token].js` (marqueur `nomacast-event-ended-modal-v1`). Quand le polling status détecte que l'event est passé de `live` à `ended`, le navigateur participant n'affiche plus un reload brutal mais un overlay propre.
@@ -1175,9 +1199,31 @@ Résout FR-4. Endpoint `POST /api/admin/events/<id>/announce` (fichier `function
 
 **UI régie** (`admin/live.html`) : zone repliable « Publier une annonce », shortcut **Ctrl+Entrée**, max 500 chars, compteur visible.
 
+**Fix d'intégration 15 mai** (marqueur `nomacast-announce-bar-v1`) : la zone d'annonce était initialement à l'intérieur de la section régie `data-tool="moderation"`. Or `applyToolsByModes` (cf §10.12) masque cette section si l'event n'a ni mode `qa` ni `libre`. Conséquence : un event avec uniquement `reactions` / `cta` / `presence` / `quiz` privait l'admin de la possibilité d'envoyer des annonces — alors que les annonces n'ont rien à voir avec la modération. Solution : extraction dans un wrapper `<div class="regie-announce-bar" id="regie-announce-bar">` placé entre la `tools-bar` et le `regie-layout`. CSS `.regie-announce-bar` (max-width 1280px, padding 18px, margin auto). `loadEvent` révèle `regie-announce-bar.style.display = ''` au même titre que `tools-bar` et `regie-layout`. La zone est désormais visible dès qu'un event est chargé en régie, indépendamment des modes activés.
+
 **Auteur affiché** côté participant : email admin extrait du JWT Cloudflare Access (partie avant `@`), fallback « Modérateur » si le JWT n'est pas dispo.
 
 **CSS distinctif** côté participant : `.chat-msg-admin { border-left: 3px solid var(--brand-color); }` pour différencier visuellement les annonces des messages des participants (respecte le white-label).
+
+### 10.17 Onglets data/live unifiés sur `admin/edit.html` ✅ Livré (15 mai)
+
+Refactor de `admin/edit.html` (marqueur `nomacast-edit-tabs-v1`). Mise en cohérence avec la structure d'onglets déjà en place dans `functions/event-admin/[token].js` (régie client) — l'admin Nomacast et la régie client utilisent désormais le même pattern.
+
+**Structure** (commune aux 2 pages admin) :
+
+- Onglet « Données » : formulaire / paramètres / analytics
+- Onglet « Régie en direct » : iframe vers `/admin/live.html?id=<id>` (avec `?client=1` côté `event-admin/[token].js`, sans côté `edit.html`)
+
+**Patterns communs** :
+
+- Sticky `tabs-bar` au top
+- Active state via `border-bottom` couleur brand
+- **Lazy-load iframe** : l'attribut `data-src` est défini en HTML, transféré dans `src` au 1er clic sur l'onglet — pas de chargement de la régie tant que l'admin ne l'ouvre pas
+- Persistance fragment `#live` dans l'URL (rechargement de page sur l'onglet régie le rouvre directement)
+
+**Bénéfice** : un seul point d'entrée par event côté admin Nomacast (`edit.html?id=X`), navigation fluide entre paramètres et régie sans changer de page.
+
+Règle de synchronisation des 3 surfaces concernées en §11.
 
 ---
 
@@ -1223,6 +1269,13 @@ Résout FR-4. Endpoint `POST /api/admin/events/<id>/announce` (fichier `function
   
   Sinon, l'admin peut déclencher une transition que les pages participant ne savent pas interpréter (ou inversement). Aujourd'hui les transitions gérées sont `draft → live` (full reload côté participant) et `live → ended` (modal `nomacast-event-ended-modal-v1`, cf §10.15).
 - **(15 mai)** **Détection auto colonne contenu `chat_messages`** — L'endpoint `announce.js` (cf §10.16) fait un `PRAGMA table_info(chat_messages)` au runtime pour détecter dynamiquement la colonne de contenu parmi (`content` / `body` / `message` / `text`). Si tu changes le schéma de `chat_messages` à l'avenir, vérifier que la nouvelle colonne reste dans cette liste — sinon, ajouter le nouveau nom dans le helper `detectContentColumn` d'`announce.js`. Sans cela, l'endpoint d'annonce renverra une erreur silencieuse à l'INSERT.
+- **(15 mai)** **Taux de clic CTA : choix du dénominateur** — La formule actuelle dans `renderCtasAnalytics` (cf §10.7 vue analytics CTA) utilise `public_unique_viewers` comme dénominateur. Pour un event 100% privé (liens personnels uniquement), il vaudrait mieux `invitees_attended`. Fallback déjà prévu côté JS : si `public_unique_viewers === 0`, on bascule sur `invitees_attended`. Si tu introduis un autre dénominateur métier (ex. inscrits ayant reçu l'email d'invitation), adapter la variable `uniqueViewers` au début de `renderCtasAnalytics` dans `functions/event-admin/[token].js`.
+- **(15 mai)** **Onglets admin (data/live) : 3 surfaces à synchroniser** — Pattern partagé entre admin Nomacast et régie client (cf §10.17). Si on ajoute un 3e onglet (« Replay », « Analytics avancé », etc.), penser à mettre à jour :
+  1. `admin/edit.html` `setupTabs` (admin Nomacast, marqueur `nomacast-edit-tabs-v1`)
+  2. `functions/event-admin/[token].js` `setupTabs` (régie client)
+  3. `admin/live.html` query param `?client=1` (mode régie embarquée pour le client — l'admin Nomacast ouvre sans ce flag)
+  
+  Sinon les deux pages divergeront et un onglet visible côté client manquera côté Nomacast (ou inversement).
 
 ---
 
