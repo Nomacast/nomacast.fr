@@ -405,6 +405,116 @@ tbody tr:hover { background: #fafbfc; }
 }
 .footer a { color: #64748b; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
+
+/* nomacast-analytics-event-admin-ui-v1 — styles dashboard statistiques */
+.analytics-card {
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 18px 20px; margin-top: 24px;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+}
+.stats-card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.stats-card-title {
+  font-size: 14px; font-weight: 700; color: #0f172a;
+  display: flex; align-items: center; gap: 8px;
+}
+.stats-card-title-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #94a3b8; display: inline-block;
+}
+.stats-card-title-dot.live {
+  background: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+  animation: stats-pulse 1.8s infinite;
+}
+@keyframes stats-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.stats-card-meta { font-size: 11px; color: #94a3b8; }
+.stats-card-actions { display: flex; gap: 8px; align-items: center; }
+.stats-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px; margin-bottom: 18px;
+}
+.stats-tile {
+  background: #f8fafc; border: 1px solid #f1f5f9;
+  border-radius: 8px; padding: 12px 14px;
+}
+.stats-tile-label {
+  font-size: 10px; font-weight: 700; color: #475569;
+  letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px;
+}
+.stats-tile-value { font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1; }
+.stats-tile-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.stats-tile.highlight .stats-tile-value { color: #5A98D6; }
+.stats-tile.live-now {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.stats-tile.live-now .stats-tile-value { color: #ef4444; }
+.stats-section-title {
+  font-size: 11px; font-weight: 700; color: #475569;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  margin-bottom: 10px; margin-top: 4px;
+}
+.stats-chart-wrap {
+  background: #f8fafc; border: 1px solid #f1f5f9;
+  border-radius: 8px; padding: 12px; margin-bottom: 18px;
+}
+.stats-chart-svg { width: 100%; height: 180px; display: block; }
+.stats-chart-empty {
+  padding: 30px 12px; text-align: center;
+  color: #94a3b8; font-size: 13px; font-style: italic;
+}
+.stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stats-table th {
+  text-align: left; padding: 8px 10px; background: #f8fafc;
+  color: #475569; font-weight: 700; font-size: 11px;
+  letter-spacing: 0.03em; text-transform: uppercase;
+  border-bottom: 1px solid #f1f5f9;
+}
+.stats-table td {
+  padding: 8px 10px; border-bottom: 1px solid #f1f5f9; color: #0f172a;
+}
+.stats-table tr:last-child td { border-bottom: none; }
+.stats-table td.muted { color: #94a3b8; }
+.stats-table-empty {
+  padding: 18px; text-align: center;
+  color: #94a3b8; font-size: 13px; font-style: italic;
+}
+.stats-present-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #10b981; margin-right: 6px; vertical-align: middle;
+}
+.stats-source-badge {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 6px; border-radius: 4px;
+  background: #f1f5f9; color: #475569;
+  text-transform: uppercase; letter-spacing: 0.03em;
+}
+.stats-source-badge.self { background: rgba(90, 152, 214, 0.08); color: #5A98D6; }
+.stats-error {
+  padding: 12px 14px; background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444; border-radius: 8px; font-size: 13px;
+}
+.stats-loading {
+  padding: 18px; text-align: center; color: #94a3b8; font-size: 13px;
+}
+.btn-csv-export {
+  font: inherit; font-size: 12px; font-weight: 600;
+  padding: 7px 12px; background: #f1f5f9; color: #0f172a;
+  border: 1px solid #e2e8f0; border-radius: 7px;
+  cursor: pointer; text-decoration: none; display: inline-flex;
+  align-items: center; gap: 6px;
+  transition: background 0.15s ease;
+}
+.btn-csv-export:hover { background: #e2e8f0; }
 </style>
 </head>
 <body>
@@ -500,6 +610,9 @@ tbody tr:hover { background: #fafbfc; }
   </div>
 
   <div id="list-zone" class="table-wrap"></div>
+
+  <!-- nomacast-analytics-event-admin-ui-v1 : dashboard statistiques -->
+  <div id="analytics-zone"></div>
 
   <div class="footer">
     Propulsé par <a href="https://www.nomacast.fr/" target="_blank" rel="noopener">Nomacast</a> · Live streaming corporate
@@ -979,6 +1092,483 @@ tbody tr:hover { background: #fafbfc; }
 
   // Init
   loadInvitees();
+
+  // ============================================================
+  // nomacast-analytics-event-admin-ui-v1 — Module Statistiques (régie client)
+  // Polling 5s en mode live, snapshot à froid en draft/ended.
+  // Endpoint : GET /api/event-admin/<token>/stats (déjà préfixé via apiBase).
+  // Export CSV : GET /api/event-admin/<token>/export-csv (uniquement si ended).
+  // ============================================================
+  var analyticsZone = $('analytics-zone');
+  if (analyticsZone) {
+    var statsPollTimer = null;
+    var statsLastFetchAt = 0;
+    var statsInFlight = false;
+    var statsMounted = false;
+    var statsVisListener = null;
+
+    function el(tag, opts) {
+      opts = opts || {};
+      var node = document.createElement(tag);
+      if (opts.className) node.className = opts.className;
+      if (opts.text != null) node.textContent = opts.text;
+      if (opts.html != null) node.innerHTML = opts.html;
+      if (opts.attrs) {
+        for (var k in opts.attrs) if (Object.prototype.hasOwnProperty.call(opts.attrs, k)) {
+          node.setAttribute(k, opts.attrs[k]);
+        }
+      }
+      if (opts.style) {
+        for (var k2 in opts.style) if (Object.prototype.hasOwnProperty.call(opts.style, k2)) {
+          node.style[k2] = opts.style[k2];
+        }
+      }
+      if (opts.children) {
+        for (var i = 0; i < opts.children.length; i++) {
+          var c = opts.children[i];
+          if (c) node.appendChild(c);
+        }
+      }
+      return node;
+    }
+
+    function clearNode(node) {
+      while (node && node.firstChild) node.removeChild(node.firstChild);
+    }
+
+    function mountStats() {
+      clearNode(analyticsZone);
+      analyticsZone.appendChild(el('div', {
+        className: 'analytics-card',
+        children: [el('div', { className: 'stats-loading', text: 'Chargement des statistiques…' })]
+      }));
+      fetchAndRenderStats();
+      statsMounted = true;
+      // Visibility listener (1 seul, ré-utilisé)
+      if (!statsVisListener) {
+        statsVisListener = function () {
+          if (document.visibilityState === 'visible') {
+            if (statsPollTimer) { clearTimeout(statsPollTimer); statsPollTimer = null; }
+            fetchAndRenderStats();
+          }
+        };
+        document.addEventListener('visibilitychange', statsVisListener);
+      }
+    }
+
+    function scheduleStatsPoll() {
+      statsPollTimer = setTimeout(function () {
+        if (document.visibilityState !== 'visible') {
+          scheduleStatsPoll();
+          return;
+        }
+        fetchAndRenderStats().then(function () {
+          // Le scheduling suivant est décidé après render selon ev.status
+        });
+      }, 5000);
+    }
+
+    async function fetchAndRenderStats() {
+      if (statsInFlight) return;
+      statsInFlight = true;
+      try {
+        var stats = await api('/stats');
+        statsLastFetchAt = Date.now();
+        renderStatsCard(stats.event || {}, stats);
+        // Polling 5s UNIQUEMENT si live
+        if (stats.event && stats.event.status === 'live') {
+          if (statsPollTimer) clearTimeout(statsPollTimer);
+          scheduleStatsPoll();
+        } else {
+          if (statsPollTimer) { clearTimeout(statsPollTimer); statsPollTimer = null; }
+        }
+      } catch (err) {
+        clearNode(analyticsZone);
+        analyticsZone.appendChild(el('div', {
+          className: 'analytics-card',
+          children: [el('div', { className: 'stats-error', text: 'Erreur statistiques : ' + err.message })]
+        }));
+      } finally {
+        statsInFlight = false;
+      }
+    }
+
+    function renderStatsCard(ev, stats) {
+      var s = stats.summary || {};
+      var status = ev.status || 'draft';
+
+      var titleText;
+      if (status === 'draft') titleText = 'Statistiques — pré-événement';
+      else if (status === 'live') titleText = 'Statistiques — en direct';
+      else if (status === 'ended') titleText = "Bilan de l'événement";
+      else titleText = 'Statistiques';
+
+      var titleDot = el('span', { className: 'stats-card-title-dot' + (status === 'live' ? ' live' : '') });
+      var titleBox = el('div', {
+        className: 'stats-card-title',
+        children: [titleDot, el('span', { text: titleText })]
+      });
+      var metaBox = el('div', {
+        className: 'stats-card-meta',
+        text: status === 'live'
+          ? 'Mis à jour automatiquement toutes les 5s'
+          : 'Calculé le ' + new Date(statsLastFetchAt || Date.now()).toLocaleTimeString('fr-FR')
+      });
+      var actions = el('div', { className: 'stats-card-actions' });
+      // Bouton export CSV uniquement quand l'event est terminé
+      if (status === 'ended') {
+        var csvBtn = el('a', {
+          className: 'btn-csv-export',
+          attrs: {
+            href: API + '/export-csv',
+            download: '',
+            title: 'Télécharger le détail par invité au format CSV'
+          },
+          children: [el('span', { text: '↓' }), el('span', { text: 'Exporter en CSV' })]
+        });
+        actions.appendChild(csvBtn);
+      }
+      var header = el('div', {
+        className: 'stats-card-header',
+        children: [titleBox, metaBox, actions]
+      });
+
+      var body = document.createDocumentFragment();
+      body.appendChild(header);
+
+      if (status === 'draft') {
+        renderTilesDraft(body, s);
+        renderPerInviteeTable(body, stats.per_invitee || [], status);
+      } else if (status === 'live') {
+        renderTilesLive(body, s);
+        renderTimelineChart(body, stats.timeline || [], s.peak_concurrent || 0);
+        renderTopChatters(body, stats.top_chatters || []);
+        renderPerInviteeTable(body, stats.per_invitee || [], status);
+      } else if (status === 'ended') {
+        renderTilesEnded(body, s, ev);
+        renderTimelineChart(body, stats.timeline || [], s.peak_concurrent || 0);
+        renderTopChatters(body, stats.top_chatters || []);
+        renderPerInviteeTable(body, stats.per_invitee || [], status);
+        renderGeoAndSources(body, stats.geography || [], stats.traffic_sources || []);
+      }
+
+      clearNode(analyticsZone);
+      var card = el('div', { className: 'analytics-card' });
+      card.appendChild(body);
+      analyticsZone.appendChild(card);
+    }
+
+    function renderTilesDraft(parent, s) {
+      var clickPct = s.invitations_sent > 0
+        ? Math.round((s.invitees_clicked / s.invitations_sent) * 100)
+        : 0;
+      var tiles = el('div', { className: 'stats-tiles' });
+      tiles.appendChild(tile('Invitations envoyées', s.invitations_sent + ' / ' + s.invitees_total));
+      tiles.appendChild(tile('Clics uniques sur lien', String(s.invitees_clicked), clickPct + "% d'engagement", true));
+      if (s.invitees_self_registered > 0) {
+        tiles.appendChild(tile('Inscriptions publiques', String(s.invitees_self_registered)));
+      }
+      parent.appendChild(tiles);
+    }
+
+    function renderTilesLive(parent, s) {
+      var tiles = el('div', { className: 'stats-tiles' });
+      var liveTile = el('div', { className: 'stats-tile live-now' });
+      liveTile.appendChild(el('div', { className: 'stats-tile-label', text: 'En ligne maintenant' }));
+      liveTile.appendChild(el('div', { className: 'stats-tile-value', text: String(s.concurrent_now) }));
+      liveTile.appendChild(el('div', { className: 'stats-tile-sub', text: 'spectateurs connectés' }));
+      tiles.appendChild(liveTile);
+      tiles.appendChild(tile('Pic concurrents', String(s.peak_concurrent),
+        s.peak_concurrent_at ? formatRelativeTime(s.peak_concurrent_at) : null, true));
+      tiles.appendChild(tile('Présents au total', String((s.invitees_attended || 0) + (s.public_unique_viewers || 0))));
+      tiles.appendChild(tile('Messages approuvés', String(s.messages_approved)));
+      if (s.messages_pending > 0) tiles.appendChild(tile('À modérer', String(s.messages_pending), 'messages en attente'));
+      if (s.reactions_total > 0) tiles.appendChild(tile('Réactions', String(s.reactions_total)));
+      parent.appendChild(tiles);
+    }
+
+    function renderTilesEnded(parent, s, ev) {
+      var totalAttendees = (s.invitees_attended || 0) + (s.public_unique_viewers || 0);
+      var attendPct = s.invitees_total > 0
+        ? Math.round((s.invitees_attended / s.invitees_total) * 100)
+        : null;
+      var avgPct = ev.duration_minutes && s.avg_duration_seconds
+        ? Math.round((s.avg_duration_seconds / (ev.duration_minutes * 60)) * 100)
+        : 0;
+
+      var tiles = el('div', { className: 'stats-tiles' });
+      tiles.appendChild(tile('Présents au total', String(totalAttendees),
+        attendPct !== null ? attendPct + '% des invités' : null, true));
+      tiles.appendChild(tile('Pic concurrents', String(s.peak_concurrent)));
+      tiles.appendChild(tile('Durée moyenne', formatSeconds(s.avg_duration_seconds), avgPct + '% du live'));
+      tiles.appendChild(tile('Messages chat', String((s.messages_approved || 0) + (s.qa_approved || 0))));
+      if (s.reactions_total > 0) tiles.appendChild(tile('Réactions', String(s.reactions_total)));
+      if (s.polls_total > 0) tiles.appendChild(tile('Sondages', String(s.polls_total)));
+      if (s.quotes_total > 0) tiles.appendChild(tile('Citations', String(s.quotes_total)));
+      parent.appendChild(tiles);
+    }
+
+    function tile(label, value, sub, highlight) {
+      var t = el('div', { className: 'stats-tile' + (highlight ? ' highlight' : '') });
+      t.appendChild(el('div', { className: 'stats-tile-label', text: label }));
+      t.appendChild(el('div', { className: 'stats-tile-value', text: value }));
+      if (sub) t.appendChild(el('div', { className: 'stats-tile-sub', text: sub }));
+      return t;
+    }
+
+    function renderTimelineChart(parent, timeline, peak) {
+      parent.appendChild(el('div', { className: 'stats-section-title', text: 'Courbe de présence' }));
+      var wrap = el('div', { className: 'stats-chart-wrap' });
+      if (!timeline.length) {
+        wrap.appendChild(el('div', {
+          className: 'stats-chart-empty',
+          text: 'Aucune donnée de présence pour le moment.'
+        }));
+        parent.appendChild(wrap);
+        return;
+      }
+      var w = 800, h = 180, padL = 40, padR = 12, padT = 12, padB = 26;
+      var iw = w - padL - padR, ih = h - padT - padB;
+      var maxY = Math.max(peak || 0,
+        Math.max.apply(null, timeline.map(function (p) { return p.viewers; })),
+        1);
+      var topY = Math.ceil(maxY * 1.1);
+
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+      svg.setAttribute('class', 'stats-chart-svg');
+      svg.setAttribute('preserveAspectRatio', 'none');
+
+      [0.25, 0.5, 0.75].forEach(function (frac) {
+        var y = padT + ih * (1 - frac);
+        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padL); line.setAttribute('y1', y);
+        line.setAttribute('x2', w - padR); line.setAttribute('y2', y);
+        line.setAttribute('stroke', '#e2e8f0');
+        line.setAttribute('stroke-dasharray', '2 4');
+        svg.appendChild(line);
+      });
+
+      [0, Math.round(topY / 2), topY].forEach(function (val) {
+        var y = padT + ih * (1 - (val / topY));
+        var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', padL - 6); t.setAttribute('y', y + 3);
+        t.setAttribute('text-anchor', 'end');
+        t.setAttribute('font-size', '10');
+        t.setAttribute('fill', '#94a3b8');
+        t.textContent = String(val);
+        svg.appendChild(t);
+      });
+
+      var n = timeline.length;
+      var points = timeline.map(function (p, i) {
+        var x = padL + (n > 1 ? (i / (n - 1)) * iw : iw / 2);
+        var y = padT + ih * (1 - p.viewers / topY);
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      }).join(' ');
+
+      var areaPoints = points + ' ' + (padL + iw).toFixed(1) + ',' + (padT + ih) + ' ' + padL + ',' + (padT + ih);
+      var area = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      area.setAttribute('points', areaPoints);
+      area.setAttribute('fill', '#5A98D6');
+      area.setAttribute('fill-opacity', '0.12');
+      svg.appendChild(area);
+
+      var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      poly.setAttribute('points', points);
+      poly.setAttribute('fill', 'none');
+      poly.setAttribute('stroke', '#5A98D6');
+      poly.setAttribute('stroke-width', '2');
+      poly.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(poly);
+
+      [0, Math.floor(n / 2), n - 1].forEach(function (i) {
+        if (i < 0 || i >= n) return;
+        var x = padL + (n > 1 ? (i / (n - 1)) * iw : iw / 2);
+        var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', x); t.setAttribute('y', h - 8);
+        t.setAttribute('text-anchor', i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle'));
+        t.setAttribute('font-size', '10');
+        t.setAttribute('fill', '#94a3b8');
+        t.textContent = formatTimeOnly(timeline[i].ts);
+        svg.appendChild(t);
+      });
+
+      wrap.appendChild(svg);
+      parent.appendChild(wrap);
+    }
+
+    function renderTopChatters(parent, top) {
+      if (!top.length) return;
+      parent.appendChild(el('div', {
+        className: 'stats-section-title',
+        text: 'Participants les plus actifs (chat)'
+      }));
+      var table = el('table', { className: 'stats-table' });
+      var thead = el('thead');
+      thead.appendChild(el('tr', { children: [
+        el('th', { text: 'Nom' }),
+        el('th', { text: 'Messages', attrs: { style: 'text-align:right' } })
+      ]}));
+      table.appendChild(thead);
+      var tbody = el('tbody');
+      top.slice(0, 5).forEach(function (r) {
+        tbody.appendChild(el('tr', { children: [
+          el('td', { text: r.name || '—' }),
+          el('td', { text: String(r.messages_count), attrs: { style: 'text-align:right' } })
+        ]}));
+      });
+      table.appendChild(tbody);
+      parent.appendChild(el('div', {
+        style: { marginBottom: '18px' },
+        children: [table]
+      }));
+    }
+
+    function renderPerInviteeTable(parent, perInvitee, status) {
+      parent.appendChild(el('div', { className: 'stats-section-title', text: 'Détail par invité' }));
+      if (!perInvitee.length) {
+        parent.appendChild(el('div', {
+          className: 'stats-table-empty',
+          text: "Aucun invité n'a encore été ajouté à cet événement."
+        }));
+        return;
+      }
+      var table = el('table', { className: 'stats-table' });
+      var headers = ['Invité', 'Source'];
+      if (status === 'draft') headers.push('Vu le lien', 'Visites');
+      else headers.push('Vu le lien', 'Présence', 'Durée', 'Messages');
+      var thead = el('thead');
+      thead.appendChild(el('tr', { children: headers.map(function (h) { return el('th', { text: h }); }) }));
+      table.appendChild(thead);
+      var tbody = el('tbody');
+      perInvitee.slice(0, 50).forEach(function (r) {
+        var cells = [];
+        var nameCell = el('td');
+        if (r.is_present_now) {
+          nameCell.appendChild(el('span', {
+            className: 'stats-present-dot',
+            attrs: { title: 'Connecté maintenant' }
+          }));
+        }
+        nameCell.appendChild(document.createTextNode(r.name || r.email || '—'));
+        if (r.email && r.name) {
+          nameCell.appendChild(el('div', {
+            className: 'stats-tile-sub',
+            style: { marginTop: '2px' },
+            text: r.email
+          }));
+        }
+        cells.push(nameCell);
+        cells.push(el('td', { children: [el('span', {
+          className: 'stats-source-badge' + (r.source === 'self_registered' ? ' self' : ''),
+          text: r.source === 'self_registered' ? 'inscrit' : 'invité'
+        })]}));
+        cells.push(el('td', {
+          className: r.first_visit_at ? '' : 'muted',
+          text: r.first_visit_at ? '✓' : '—'
+        }));
+        if (status !== 'draft') {
+          cells.push(el('td', {
+            className: r.total_duration_sec > 0 ? '' : 'muted',
+            text: r.total_duration_sec > 0 ? '✓' : '—'
+          }));
+          cells.push(el('td', {
+            className: r.total_duration_sec > 0 ? '' : 'muted',
+            text: r.total_duration_sec > 0 ? formatSeconds(r.total_duration_sec) : '—'
+          }));
+          cells.push(el('td', {
+            className: r.messages_count > 0 ? '' : 'muted',
+            text: String(r.messages_count || 0)
+          }));
+        } else {
+          cells.push(el('td', {
+            className: r.visits_count > 0 ? '' : 'muted',
+            text: String(r.visits_count || 0)
+          }));
+        }
+        tbody.appendChild(el('tr', { children: cells }));
+      });
+      table.appendChild(tbody);
+      parent.appendChild(table);
+      if (perInvitee.length > 50) {
+        parent.appendChild(el('div', {
+          className: 'stats-tile-sub',
+          style: { marginTop: '8px', textAlign: 'center' },
+          text: 'Affichage limité aux 50 premiers (' + perInvitee.length + ' au total).'
+        }));
+      }
+    }
+
+    function renderGeoAndSources(parent, geography, sources) {
+      if (!geography.length && !sources.length) return;
+      var row = el('div', { style: { display: 'flex', gap: '18px', marginTop: '18px', flexWrap: 'wrap' } });
+      if (geography.length) {
+        var geoBlock = el('div', { style: { flex: '1', minWidth: '200px' } });
+        geoBlock.appendChild(el('div', { className: 'stats-section-title', text: 'Origine géographique' }));
+        var table = el('table', { className: 'stats-table' });
+        var tbody = el('tbody');
+        geography.slice(0, 6).forEach(function (g) {
+          tbody.appendChild(el('tr', { children: [
+            el('td', { text: g.country_code }),
+            el('td', { text: String(g.count), attrs: { style: 'text-align:right' } })
+          ]}));
+        });
+        table.appendChild(tbody);
+        geoBlock.appendChild(table);
+        row.appendChild(geoBlock);
+      }
+      if (sources.length) {
+        var srcBlock = el('div', { style: { flex: '1', minWidth: '200px' } });
+        srcBlock.appendChild(el('div', { className: 'stats-section-title', text: 'Sources de trafic' }));
+        var table2 = el('table', { className: 'stats-table' });
+        var tbody2 = el('tbody');
+        sources.slice(0, 6).forEach(function (s2) {
+          tbody2.appendChild(el('tr', { children: [
+            el('td', { text: s2.referrer_domain }),
+            el('td', { text: String(s2.count), attrs: { style: 'text-align:right' } })
+          ]}));
+        });
+        table2.appendChild(tbody2);
+        srcBlock.appendChild(table2);
+        row.appendChild(srcBlock);
+      }
+      parent.appendChild(row);
+    }
+
+    function formatSeconds(s) {
+      s = parseInt(s, 10) || 0;
+      if (s < 60) return s + 's';
+      if (s < 3600) {
+        var m = Math.floor(s / 60);
+        var rs = s % 60;
+        return rs > 0 ? m + 'min ' + rs + 's' : m + 'min';
+      }
+      var h = Math.floor(s / 3600);
+      var mm = Math.floor((s % 3600) / 60);
+      return mm > 0 ? h + 'h ' + mm + 'min' : h + 'h';
+    }
+
+    function formatTimeOnly(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    function formatRelativeTime(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      var diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (diffSec < 60) return 'il y a ' + diffSec + 's';
+      if (diffSec < 3600) return 'il y a ' + Math.floor(diffSec / 60) + 'min';
+      if (diffSec < 86400) return 'il y a ' + Math.floor(diffSec / 3600) + 'h';
+      return formatTimeOnly(iso);
+    }
+
+    // Mount au boot
+    mountStats();
+  }
 })();
 </script>
 
