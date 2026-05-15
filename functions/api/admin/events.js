@@ -12,7 +12,7 @@ export const onRequestGet = async ({ env }) => {
     // JOIN sur invitees pour récupérer count + count "envoyé"
     const { results } = await env.DB.prepare(
       `SELECT
-         e.id, e.slug, e.title, e.client_name, e.scheduled_at, e.duration_minutes,
+         e.id, e.slug, e.title, e.client_name, e.description, e.scheduled_at, e.duration_minutes,
          e.audience_estimate, e.status, e.primary_color, e.white_label, e.subtitles,
          e.modes_json, e.access_mode, e.created_at, e.updated_at,
          (SELECT COUNT(*) FROM invitees i WHERE i.event_id = e.id) AS invitees_count,
@@ -46,23 +46,32 @@ export const onRequestPost = async ({ request, env }) => {
   const validationError = validateEventInput(data);
   if (validationError) return jsonResponse({ error: validationError }, 400);
 
+  // nomacast-modes-compat-v1 / Lot D — validation matrice de compatibilité des modes
+  const modesArr = Array.isArray(data.modes) ? data.modes : [];
+  const compatError = validateModesCompatibility(modesArr);
+  if (compatError) return jsonResponse({ error: compatError }, 400);
+
   const id = generateId();
   const slug = await uniqueSlug(env.DB, data.title);
   const now = new Date().toISOString();
 
+  // nomacast-event-description-v1 / FR-3 — description optionnelle (validation taille faite dans validateEventInput)
+  const description = data.description ? String(data.description).trim() || null : null;
+
   try {
     await env.DB.prepare(`
       INSERT INTO events (
-        id, slug, title, client_name, scheduled_at, duration_minutes,
+        id, slug, title, client_name, description, scheduled_at, duration_minutes,
         audience_estimate, status, primary_color, logo_url,
         white_label, subtitles, modes_json, access_mode,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id,
       slug,
       data.title.trim(),
       data.client_name ? data.client_name.trim() : null,
+      description,
       data.scheduled_at,
       parseInt(data.duration_minutes, 10),
       data.audience_estimate ? parseInt(data.audience_estimate, 10) : null,
@@ -71,7 +80,7 @@ export const onRequestPost = async ({ request, env }) => {
       data.logo_url || null,
       data.white_label ? 1 : 0,
       data.subtitles ? 1 : 0,
-      JSON.stringify(Array.isArray(data.modes) ? data.modes : []),
+      JSON.stringify(modesArr),
       data.access_mode || 'public',
       now,
       now
@@ -109,6 +118,8 @@ function deserializeEvent(row) {
     slug: row.slug,
     title: row.title,
     client_name: row.client_name,
+    // nomacast-event-description-v1 / FR-3
+    description: row.description || null,
     scheduled_at: row.scheduled_at,
     duration_minutes: row.duration_minutes,
     audience_estimate: row.audience_estimate,
@@ -145,6 +156,46 @@ function validateEventInput(data) {
   }
   if (data.access_mode && !['public', 'private'].includes(data.access_mode)) {
     return 'Mode d\'accès invalide';
+  }
+  // nomacast-event-description-v1 / FR-3
+  if (data.description !== undefined && data.description !== null) {
+    if (typeof data.description !== 'string') return 'La description doit être du texte';
+    if (data.description.length > 500) return 'La description ne doit pas dépasser 500 caractères (actuel : ' + data.description.length + ')';
+  }
+  return null;
+}
+
+// ============================================================
+// nomacast-modes-compat-v1 / Lot D — Matrice de compatibilité des modes
+// ============================================================
+// Doit rester synchronisé avec validateModesCompatibility dans
+// functions/api/admin/events/[id].js et l'UI dans admin/new.html + admin/edit.html.
+const MODE_INCOMPATIBLE_PAIRS = [
+  ['lecture', 'qa'],
+  ['lecture', 'libre'],
+  ['lecture', 'sondages'],
+  ['lecture', 'quiz'],
+  ['lecture', 'nuage'],
+  ['qa', 'libre']
+];
+const MODE_LABELS = {
+  qa: 'Q&A modéré',
+  libre: 'Chat libre',
+  sondages: 'Sondages live',
+  quiz: 'Quiz interactif',
+  nuage: 'Nuage de mots-clés',
+  reactions: 'Réactions rapides',
+  lecture: 'Lecture seule'
+};
+function validateModesCompatibility(modes) {
+  if (!Array.isArray(modes) || modes.length === 0) return null;
+  const set = new Set(modes);
+  for (const [a, b] of MODE_INCOMPATIBLE_PAIRS) {
+    if (set.has(a) && set.has(b)) {
+      const labelA = MODE_LABELS[a] || a;
+      const labelB = MODE_LABELS[b] || b;
+      return 'Modes incompatibles : « ' + labelA + ' » et « ' + labelB + ' » ne peuvent pas être activés simultanément.';
+    }
   }
   return null;
 }
