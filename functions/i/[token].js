@@ -20,7 +20,8 @@ export const onRequestGet = async ({ params, request, env }) => {
     SELECT
       i.id AS invitee_id, i.email AS invitee_email, i.full_name AS invitee_name,
       i.invited_at, i.last_seen_at,
-      e.id AS event_id, e.slug, e.title, e.client_name, e.scheduled_at, e.duration_minutes,
+      e.id AS event_id, e.slug, e.title, e.client_name, e.description,
+      e.scheduled_at, e.duration_minutes,
       e.status, e.primary_color, e.logo_url, e.white_label, e.access_mode, e.modes_json,
       e.stream_uid, e.stream_playback_url,
       e.reaction_emojis_json
@@ -50,6 +51,7 @@ export const onRequestGet = async ({ params, request, env }) => {
 
   const event = {
     id: row.event_id, slug: row.slug, title: row.title, client_name: row.client_name,
+    description: row.description || null,
     scheduled_at: row.scheduled_at, duration_minutes: row.duration_minutes,
     status: row.status, primary_color: row.primary_color || '#5A98D6',
     logo_url: row.logo_url, white_label: row.white_label === 1,
@@ -153,6 +155,7 @@ function renderWaitingPage(event, invitee, token) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
+    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
   `;
 
   const mainBody = `
@@ -248,6 +251,7 @@ function renderLivePage(event, invitee, token) {
     </div>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
+    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
   `;
 
   // Player : iframe Cloudflare Stream Player si stream provisionné, sinon placeholder
@@ -364,6 +368,7 @@ function renderEndedPage(event, invitee, token) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
+    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
   `;
 
   // Player replay : le Stream Player Cloudflare détecte automatiquement
@@ -426,9 +431,13 @@ function renderErrorPage(title, message) {
     </span>
     <h1 class="event-title">${escapeHtml(title)}</h1>
   `;
+  // U2 — CTA cohérent avec 404 globale du site
   const mainBody = `
     <section class="message">
       <p>${escapeHtml(message)}</p>
+      <p class="error-cta">
+        <a href="https://www.nomacast.fr/" class="error-cta-link">Retourner sur Nomacast</a>
+      </p>
     </section>
   `;
   return htmlShell({
@@ -541,6 +550,26 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
   .event-client {
     margin-top: 8px; font-size: 14px; color: rgba(255,255,255,0.85);
   }
+  /* nomacast-event-description-v1 / FR-3 */
+  .event-description {
+    margin: 14px 0 0; font-size: 15px; line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+    max-width: 640px;
+    white-space: pre-wrap;
+  }
+  /* U2 — CTA dans renderErrorPage */
+  .error-cta { margin-top: 20px; }
+  .error-cta-link {
+    display: inline-block;
+    padding: 10px 18px;
+    background: #5A98D6;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .error-cta-link:hover { background: #4a87c5; }
 
   /* MAIN */
   .page-main { flex: 1; }

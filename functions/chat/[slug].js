@@ -17,7 +17,8 @@ export const onRequestGet = async ({ params, env, request }) => {
 
   const row = await env.DB.prepare(`
     SELECT
-      id, slug, title, client_name, scheduled_at, duration_minutes,
+      id, slug, title, client_name, description,
+      scheduled_at, duration_minutes,
       status, primary_color, logo_url, white_label, access_mode, modes_json,
       stream_uid, stream_playback_url,
       reaction_emojis_json
@@ -45,6 +46,7 @@ export const onRequestGet = async ({ params, env, request }) => {
 
   const event = {
     id: row.id, slug: row.slug, title: row.title, client_name: row.client_name,
+    description: row.description || null,
     scheduled_at: row.scheduled_at, duration_minutes: row.duration_minutes,
     status: row.status, primary_color: row.primary_color || '#5A98D6',
     logo_url: row.logo_url, white_label: row.white_label === 1,
@@ -171,6 +173,7 @@ function renderPrivatePage(event) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
+    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
   `;
   const mainBody = `
     <section class="message">
@@ -206,6 +209,7 @@ function renderWaitingPage(event) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
+    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
   `;
 
   const mainBody = `
@@ -299,6 +303,7 @@ function renderLivePage(event) {
     </div>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
+    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
   `;
 
   const playerHtml = hasStream
@@ -411,6 +416,7 @@ function renderEndedPage(event) {
     </span>
     <h1 class="event-title">${escapeHtml(event.title)}</h1>
     ${event.client_name ? `<div class="event-client">organisé par ${escapeHtml(event.client_name)}</div>` : ''}
+    ${event.description ? `<p class="event-description">${escapeHtml(event.description)}</p>` : ''}
   `;
 
   const playerHtml = hasStream
@@ -565,6 +571,13 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
     letter-spacing: -0.02em; line-height: 1.2; margin: 0; color: #ffffff;
   }
   .event-client { margin-top: 8px; font-size: 14px; color: rgba(255,255,255,0.85); }
+  /* nomacast-event-description-v1 / FR-3 */
+  .event-description {
+    margin: 14px 0 0; font-size: 15px; line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+    max-width: 640px;
+    white-space: pre-wrap;
+  }
   .page-main { flex: 1; }
   .container { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
   .card {
