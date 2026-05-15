@@ -1,23 +1,51 @@
 // functions/admin/_middleware.js
-// Protège toutes les routes /admin/* (pages HTML) par Basic Auth.
-// Le mot de passe attendu est lu depuis env.ADMIN_PASSWORD
-// (à configurer dans Cloudflare Pages → Settings → Environment variables).
+// Protège les routes /admin/* avec auth en cascade :
 //
-// Username : ignoré (mettre n'importe quoi).
-// Password : doit correspondre à ADMIN_PASSWORD.
+//   1. Assets statiques /admin/*.{css,js,svg,png,jpg,jpeg,webp,woff,woff2,ico}
+//      → publics (déjà dans le repo GitHub Nomacast/nomacast.fr public)
+//   2. /admin/live.html?id=<event_id>
+//      → accessible avec cookie session client valide pour CET event (iframe régie côté client)
+//   3. Toutes les autres routes /admin/*
+//      → Basic Auth admin Nomacast (mot de passe partagé via env.ADMIN_PASSWORD)
+//
+// Le username Basic Auth est ignoré (mettre n'importe quoi).
+//
+// nomacast-live-client-mode-v1 + nomacast-client-credentials-v1
+
+import { getSessionFromRequest } from '../_lib/session.js';
+
+const STATIC_ASSET_RE = /^\/admin\/[^\/]+\.(css|js|svg|png|jpg|jpeg|webp|woff2?|ico)$/i;
 
 export const onRequest = async (context) => {
   const { request, env, next } = context;
-
-  // nomacast-live-client-mode-v1 : exception pour /admin/live.html?client=1
-  // La régie en direct est embarquée en iframe dans /event-admin/<token> (côté client).
-  // L'auth se fait au niveau du parent via le token HMAC client, pas ici.
-  // Le reste de /admin/* reste protégé par Basic Auth (edit, invitees, index, etc.).
   const url = new URL(request.url);
-  if (url.pathname === '/admin/live.html' && url.searchParams.get('client') === '1') {
+
+  // ============================================================
+  // 1. Assets statiques publics (CSS/JS/icônes nécessaires aux iframes embarquées)
+  // ============================================================
+  if (STATIC_ASSET_RE.test(url.pathname)) {
     return next();
   }
 
+  // ============================================================
+  // 2. /admin/live.html : accès client via cookie session (iframe régie)
+  //    Le cookie session contient event_id ; on vérifie qu'il correspond au ?id= demandé.
+  // ============================================================
+  if (url.pathname === '/admin/live.html') {
+    const eventId = url.searchParams.get('id');
+    if (eventId) {
+      try {
+        const session = await getSessionFromRequest(request, env);
+        if (session && session.event_id === eventId) {
+          return next();
+        }
+      } catch (e) { /* on retombe sur le Basic Auth ci-dessous */ }
+    }
+  }
+
+  // ============================================================
+  // 3. Basic Auth admin Nomacast (toutes les autres routes /admin/*)
+  // ============================================================
   if (!env.ADMIN_PASSWORD) {
     return new Response(
       'Configuration manquante : la variable d\'environnement ADMIN_PASSWORD '
@@ -46,7 +74,6 @@ export const onRequest = async (context) => {
     return unauthorized();
   }
 
-  // Auth OK : on laisse passer (page HTML statique servie par Pages)
   return next();
 };
 
