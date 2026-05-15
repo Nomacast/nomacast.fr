@@ -516,6 +516,8 @@
     publicLinkZone.appendChild(renderUrlPanel(ev));
     // nomacast-stream-card-v1 : card Streaming live (rôle distinct : provisioning Cloudflare Stream)
     publicLinkZone.appendChild(A.renderStreamCard(ev, load));
+    // nomacast-live-control-v1 : bouton Lancer/Terminer le direct (raccourci sans passer par régie)
+    publicLinkZone.appendChild(renderLiveControlPanel(ev));
 
     // nomacast-client-credentials-v1 : card Accès client (login + password)
     mountCredentials(ev);
@@ -789,6 +791,8 @@
       buildModesCheckboxes(ev.modes || [])
     );
     form.appendChild(modesField);
+    // nomacast-modes-compat-v1 / Lot D — UI désactivation cases incompatibles
+    setupModesCompat(form);
 
     // --- Options (white-label + subtitles) ---
     var optionsField = fieldNoLabel('Options',
@@ -1712,6 +1716,158 @@
     if (diffSec < 3600) return 'il y a ' + Math.floor(diffSec / 60) + 'min';
     if (diffSec < 86400) return 'il y a ' + Math.floor(diffSec / 3600) + 'h';
     return formatTimeOnly(iso);
+  }
+
+  // ============================================================
+  // nomacast-modes-compat-v1 / Lot D — UI désactivation cases incompatibles
+  // ============================================================
+  // Doit rester synchronisé avec validateModesCompatibility côté serveur
+  // (functions/api/admin/events.js + functions/api/admin/events/[id].js).
+  var MODE_INCOMPATIBLE_PAIRS = [
+    ['lecture', 'qa'],
+    ['lecture', 'libre'],
+    ['lecture', 'sondages'],
+    ['lecture', 'quiz'],
+    ['lecture', 'nuage'],
+    ['qa', 'libre']
+  ];
+  function refreshModesCompat(scopeEl) {
+    var checks = scopeEl.querySelectorAll('input[name="mode"]');
+    var checked = new Set();
+    for (var i = 0; i < checks.length; i++) {
+      if (checks[i].checked) checked.add(checks[i].value);
+    }
+    for (var j = 0; j < checks.length; j++) {
+      var v = checks[j].value;
+      var blocker = null;
+      if (!checked.has(v)) {
+        for (var k = 0; k < MODE_INCOMPATIBLE_PAIRS.length; k++) {
+          var p = MODE_INCOMPATIBLE_PAIRS[k];
+          if (p[0] === v && checked.has(p[1])) { blocker = p[1]; break; }
+          if (p[1] === v && checked.has(p[0])) { blocker = p[0]; break; }
+        }
+      }
+      checks[j].disabled = !!blocker;
+      var labelEl = checks[j].closest('.admin-form-check');
+      if (labelEl) {
+        labelEl.style.opacity = blocker ? '0.45' : '';
+        labelEl.style.cursor = blocker ? 'not-allowed' : '';
+        labelEl.title = blocker ? 'Incompatible avec un mode déjà coché.' : '';
+      }
+    }
+  }
+  function setupModesCompat(scopeEl) {
+    scopeEl.querySelectorAll('input[name="mode"]').forEach(function (cb) {
+      cb.addEventListener('change', function () { refreshModesCompat(scopeEl); });
+    });
+    refreshModesCompat(scopeEl);
+  }
+
+  // ============================================================
+  // nomacast-live-control-v1 — Bouton "Lancer le direct" / "Terminer le direct"
+  // À côté de la card Streaming live, raccourci pour basculer le status sans
+  // passer par la page régie. Le PATCH /api/admin/events/:id supporte déjà status.
+  // ============================================================
+  function renderLiveControlPanel(ev) {
+    if (ev.status === 'ended') {
+      // Event terminé : panel info, pas de bouton d'action
+      var endedCard = A.el('div', { className: 'admin-card', style: { marginTop: '14px' } });
+      var endedBody = A.el('div', { className: 'admin-card-body' });
+      endedBody.appendChild(A.el('div', {
+        style: { fontSize: '13px', color: '#64748b' },
+        text: 'Événement terminé. Plus de bascule possible.'
+      }));
+      endedCard.appendChild(endedBody);
+      return endedCard;
+    }
+
+    var card = A.el('div', { className: 'admin-card', style: { marginTop: '14px' } });
+    var body = A.el('div', { className: 'admin-card-body' });
+
+    if (ev.status === 'draft') {
+      body.appendChild(A.el('div', {
+        style: {
+          fontSize: '14px', fontWeight: '700', color: '#0f172a', marginBottom: '6px',
+          letterSpacing: '-0.01em'
+        },
+        text: 'Lancer le direct'
+      }));
+      body.appendChild(A.el('div', {
+        style: { marginBottom: '14px', fontSize: '13px', color: '#64748b', lineHeight: '1.5' },
+        text: 'Bascule l\'événement en direct. Les participants verront immédiatement la page live (rafraîchissement auto en moins de 10 secondes via le polling status).'
+      }));
+      var goLiveBtn = A.el('button', {
+        className: 'admin-btn admin-btn-primary',
+        attrs: { type: 'button' },
+        text: '▶ Lancer le direct',
+        style: { background: '#10b981', borderColor: '#10b981' }
+      });
+      goLiveBtn.addEventListener('click', async function () {
+        if (!confirm('Lancer le direct maintenant ?\n\nLes participants seront immédiatement basculés sur la page live (dans les 5-10 secondes via leur polling).')) return;
+        goLiveBtn.disabled = true;
+        var originalText = goLiveBtn.textContent;
+        goLiveBtn.textContent = 'Bascule…';
+        try {
+          await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), {
+            method: 'PATCH',
+            body: { status: 'live' }
+          });
+          A.showMessage(messageZone, 'success', 'Direct lancé. Les participants vont basculer dans les 5-10 prochaines secondes (page live auto, sans rechargement manuel requis).');
+          load();
+        } catch (err) {
+          A.showMessage(messageZone, 'error', 'Erreur : ' + err.message);
+          goLiveBtn.disabled = false;
+          goLiveBtn.textContent = originalText;
+        }
+      });
+      body.appendChild(goLiveBtn);
+    } else if (ev.status === 'live') {
+      body.appendChild(A.el('div', {
+        style: {
+          fontSize: '14px', fontWeight: '700', color: '#0f172a', marginBottom: '6px',
+          letterSpacing: '-0.01em'
+        },
+        children: [
+          A.el('span', { style: {
+            display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
+            background: '#dc2626', marginRight: '8px', verticalAlign: 'middle',
+            animation: 'pulse 1.6s infinite'
+          }}),
+          document.createTextNode('Événement en direct')
+        ]
+      }));
+      body.appendChild(A.el('div', {
+        style: { marginBottom: '14px', fontSize: '13px', color: '#64748b', lineHeight: '1.5' },
+        text: 'L\'événement est actuellement en direct. Termine-le quand le live est fini — les participants verront automatiquement la page "terminée" avec l\'historique des messages.'
+      }));
+      var endBtn = A.el('button', {
+        className: 'admin-btn',
+        attrs: { type: 'button' },
+        text: '■ Terminer le direct',
+        style: { background: '#dc2626', borderColor: '#dc2626', color: '#fff' }
+      });
+      endBtn.addEventListener('click', async function () {
+        if (!confirm('Terminer le direct ?\n\nL\'événement passera en mode "ended" et les participants ne pourront plus envoyer de messages. Cette action est irréversible.')) return;
+        endBtn.disabled = true;
+        endBtn.textContent = 'Bascule…';
+        try {
+          await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id), {
+            method: 'PATCH',
+            body: { status: 'ended' }
+          });
+          A.showMessage(messageZone, 'success', 'Direct terminé. Les participants vont voir la page "terminée" dans les prochaines secondes.');
+          load();
+        } catch (err) {
+          A.showMessage(messageZone, 'error', 'Erreur : ' + err.message);
+          endBtn.disabled = false;
+          endBtn.textContent = '■ Terminer le direct';
+        }
+      });
+      body.appendChild(endBtn);
+    }
+
+    card.appendChild(body);
+    return card;
   }
 
   load();
