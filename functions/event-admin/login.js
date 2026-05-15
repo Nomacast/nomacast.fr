@@ -2,7 +2,12 @@
 // GET  /event-admin/login        → page de connexion HTML (brand Nomacast)
 // POST /event-admin/login        → traitement : valide login/password, set cookie session, redirige vers /event-admin/<slug>
 //
-// nomacast-client-credentials-v1
+// Marqueurs : nomacast-client-credentials-v1, nomacast-auth-logs-v1, nomacast-rate-limit-login-v1
+//
+// Sécurité Lot F (15 mai 2026) :
+//   - Rate limit : 5 tentatives échouées max / minute / IP via env.RATE_LIMIT (KV)
+//   - Logs : chaque tentative (succès + échec) inscrite dans auth_logs (RGPD : IP hashée HMAC)
+//   - Hash IP utilise env.CHAT_IP_HASH_SECRET (déjà existant pour rate limit chat_messages)
 
 import { verifyPassword } from '../_lib/password.js';
 import {
@@ -10,6 +15,10 @@ import {
   buildSetCookieHeader,
   getSessionFromRequest
 } from '../_lib/session.js';
+
+// Configuration rate limit
+const RATE_LIMIT_MAX_FAILS = 5;       // tentatives échouées max
+const RATE_LIMIT_WINDOW_SEC = 60;     // par fenêtre de 60 secondes
 
 // ============================================================
 // GET — page de connexion
@@ -33,6 +42,7 @@ export const onRequestGet = async ({ request, env }) => {
   const errorMsg = error === 'invalid' ? 'Identifiant ou mot de passe incorrect.'
     : error === 'missing' ? 'Identifiant et mot de passe requis.'
     : error === 'server' ? 'Erreur serveur, réessayez dans un instant.'
+    : error === 'too-many' ? `Trop de tentatives échouées. Patiente ${RATE_LIMIT_WINDOW_SEC} secondes avant de réessayer.`
     : null;
 
   return new Response(renderLoginPage(errorMsg), {
@@ -47,6 +57,10 @@ export const onRequestGet = async ({ request, env }) => {
 export const onRequestPost = async ({ request, env }) => {
   if (!env.DB) return redirectErr(request, 'server');
   if (!env.SESSION_SECRET) return redirectErr(request, 'server');
+
+  // nomacast-rate-limit-login-v1 — préparer ip_hash pour rate limit + logging
+  const ipHash = await hashIp(request, env);
+  const userAgent = (request.headers.get('User-Agent') || '').slice(0, 256);
 
   // Récupérer login + password depuis form-data ou JSON
   let login = '';
@@ -71,6 +85,25 @@ export const onRequestPost = async ({ request, env }) => {
     return redirectErr(request, 'missing');
   }
 
+  // nomacast-rate-limit-login-v1 — check rate limit AVANT verifyPassword
+  // (sinon un attaquant peut faire X tentatives avec coût CPU sur PBKDF2)
+  if (ipHash && env.RATE_LIMIT) {
+    const blocked = await isRateLimited(env, ipHash);
+    if (blocked) {
+      // Log la tentative bloquée mais ne consomme PAS le compteur
+      // (sinon l'attaquant peut allonger artificiellement le blocage)
+      await logAuthAttempt(env, {
+        event_id: null,
+        login,
+        ip_hash: ipHash,
+        success: 0,
+        reason: 'rate_limited',
+        user_agent: userAgent
+      });
+      return redirectErr(request, 'too-many');
+    }
+  }
+
   // Recherche de l'event par client_login
   let event;
   try {
@@ -86,11 +119,45 @@ export const onRequestPost = async ({ request, env }) => {
   if (!event || !event.client_password_hash) {
     // Faire une vérification factice pour normaliser le temps de réponse
     await verifyPassword(password, 'pbkdf2:AAAAAAAAAAAAAAAAAAAAAA:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+    // nomacast-auth-logs-v1 — log + increment rate counter
+    await logAuthAttempt(env, {
+      event_id: null,
+      login,
+      ip_hash: ipHash,
+      success: 0,
+      reason: 'unknown_login',
+      user_agent: userAgent
+    });
+    await incrementFailCounter(env, ipHash);
     return redirectErr(request, 'invalid');
   }
 
   const ok = await verifyPassword(password, event.client_password_hash);
-  if (!ok) return redirectErr(request, 'invalid');
+  if (!ok) {
+    // nomacast-auth-logs-v1 — log + increment rate counter
+    await logAuthAttempt(env, {
+      event_id: event.id,
+      login,
+      ip_hash: ipHash,
+      success: 0,
+      reason: 'wrong_password',
+      user_agent: userAgent
+    });
+    await incrementFailCounter(env, ipHash);
+    return redirectErr(request, 'invalid');
+  }
+
+  // nomacast-auth-logs-v1 — log succès (ne reset PAS le compteur fail :
+  // un attaquant pourrait avoir trouvé un mot de passe valide après brute force,
+  // les ops doivent voir la corrélation)
+  await logAuthAttempt(env, {
+    event_id: event.id,
+    login,
+    ip_hash: ipHash,
+    success: 1,
+    reason: null,
+    user_agent: userAgent
+  });
 
   // Succès : créer le cookie session et rediriger vers /event-admin/<slug>
   const cookieValue = await createSessionCookieValue(env, {
@@ -108,6 +175,90 @@ export const onRequestPost = async ({ request, env }) => {
     }
   });
 };
+
+// ============================================================
+// nomacast-rate-limit-login-v1 — Rate limit helpers (KV)
+// ============================================================
+async function isRateLimited(env, ipHash) {
+  if (!env.RATE_LIMIT || !ipHash) return false;
+  try {
+    const key = `auth-fail:${ipHash}`;
+    const raw = await env.RATE_LIMIT.get(key);
+    const count = parseInt(raw || '0', 10) || 0;
+    return count >= RATE_LIMIT_MAX_FAILS;
+  } catch (err) {
+    console.error('[login rate-limit check]', err);
+    return false; // fail-open : ne pas bloquer un user légitime si KV indispo
+  }
+}
+
+async function incrementFailCounter(env, ipHash) {
+  if (!env.RATE_LIMIT || !ipHash) return;
+  try {
+    const key = `auth-fail:${ipHash}`;
+    const raw = await env.RATE_LIMIT.get(key);
+    const count = (parseInt(raw || '0', 10) || 0) + 1;
+    // TTL fixe à 60s pour fenêtre glissante simple
+    // (chaque échec étend le bannissement d'1 minute si le compteur reste actif)
+    await env.RATE_LIMIT.put(key, String(count), { expirationTtl: RATE_LIMIT_WINDOW_SEC });
+  } catch (err) {
+    console.error('[login rate-limit incr]', err);
+    // fail-silent : ne pas remonter l'erreur côté user
+  }
+}
+
+// ============================================================
+// nomacast-auth-logs-v1 — Persistence des tentatives
+// ============================================================
+async function logAuthAttempt(env, { event_id, login, ip_hash, success, reason, user_agent }) {
+  if (!env.DB) return;
+  try {
+    await env.DB.prepare(`
+      INSERT INTO auth_logs (id, event_id, login, ip_hash, success, reason, user_agent, attempted_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      crypto.randomUUID(),
+      event_id,
+      login ? login.slice(0, 80) : null,
+      ip_hash || null,
+      success ? 1 : 0,
+      reason || null,
+      user_agent || null,
+      new Date().toISOString()
+    ).run();
+  } catch (err) {
+    // Le log auth ne doit JAMAIS faire échouer un login.
+    // Si la table n'existe pas (migration pas encore appliquée), on log et on continue.
+    console.error('[login auth-log]', err);
+  }
+}
+
+/**
+ * Hash HMAC-SHA-256 de l'IP du client avec env.CHAT_IP_HASH_SECRET comme clé.
+ * RGPD compliance : on ne stocke jamais l'IP en clair.
+ * Si secret non configuré, retourne null → rate limit + log ip_hash désactivés.
+ */
+async function hashIp(request, env) {
+  if (!env.CHAT_IP_HASH_SECRET) return null;
+  const ip = request.headers.get('CF-Connecting-IP')
+    || request.headers.get('X-Forwarded-For')
+    || 'unknown';
+  try {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw', enc.encode(env.CHAT_IP_HASH_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false, ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(ip));
+    return btoa(String.fromCharCode(...new Uint8Array(sig)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+      .slice(0, 32);
+  } catch (err) {
+    console.error('[login hashIp]', err);
+    return null;
+  }
+}
 
 function redirectErr(request, code) {
   const url = new URL('/event-admin/login', request.url);
