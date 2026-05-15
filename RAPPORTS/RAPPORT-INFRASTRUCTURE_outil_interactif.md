@@ -938,7 +938,9 @@ Le HMAC backup `client_admin_token` reste calculé côté serveur (pour rétro-c
 
 **CSS existant à étendre** : `.regie-video-wrap` lignes 123-130 de `admin/live.html` (CSS embarqué dans la `<head>`).
 
-### 10.4 Modifier le wording du mail invitation
+### 10.4 Modifier le wording du mail invitation ✅ Résolu (15 mai)
+
+**Livré** : helper `functions/_lib/invitation-email.js` créé (subject + buildText + buildHtml), 3 importeurs migrés (cf §12 bloc imports). La duplication du template à travers 5+ fichiers est terminée, le wording mis à jour est désormais centralisé. Détail historique conservé ci-dessous pour traçabilité.
 
 **Fichier** : `functions/api/admin/events/[id]/send-invitations.js`
 
@@ -1017,7 +1019,7 @@ Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>
 - **Endpoint agrégation** : `GET /api/event-admin/<token>/invitee-stats` retourne `{invitee_id, name, email, messages_count, reactions_count, votes_count, ctas_clicked, quotes_shared, resources_viewed}[]`
 - **UI tableau** côté `event-admin/<slug>` onglet Données
 
-### 10.8 Lot F — Sécurité globale (sans rotation PageSpeed)
+### 10.8 Lot F — Sécurité globale (sans rotation PageSpeed) — phase 1 ✅ Livrée (15 mai)
 
 **En place** : HTTPS, cookies HttpOnly+Secure+SameSite=Lax, PBKDF2 100k, escapeHtml, Basic Auth admin, HMAC cookie session, cross-event isolation.
 
