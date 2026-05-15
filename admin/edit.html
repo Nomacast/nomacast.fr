@@ -303,6 +303,61 @@
     .creds-status-empty {
       color: #94a3b8; font-size: 12px; font-style: italic;
     }
+
+    /* ==========================================================
+       nomacast-edit-tabs-v1 — Bandeau d'onglets DATA / RÉGIE LIVE
+       Pattern identique à event-admin/[token].js pour cohérence UX
+       ========================================================== */
+    .tabs-bar {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .tabs-bar-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 0;
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+      font-family: inherit;
+    }
+    .tab-btn:hover { color: #0f172a; }
+    .tab-btn.active {
+      color: #5D9CEC;
+      border-bottom-color: #5D9CEC;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Iframe pour la régie embarquée dans l'onglet live */
+    .tab-panel-live { padding: 0; }
+    .tab-iframe-wrap {
+      height: calc(100vh - 110px); /* viewport moins header (50) + tabs (50) + marge */
+      width: 100%;
+      background: #f8fafc;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .tab-iframe-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -322,7 +377,15 @@
   </div>
 </header>
 
-<main class="admin-main">
+<!-- nomacast-edit-tabs-v1 : bandeau d'onglets DATA / RÉGIE LIVE -->
+<div class="tabs-bar">
+  <div class="tabs-bar-inner">
+    <button type="button" class="tab-btn active" data-tab="data">Données &amp; paramètres</button>
+    <button type="button" class="tab-btn" data-tab="live">Régie en direct</button>
+  </div>
+</div>
+
+<main class="admin-main tab-panel tab-panel-data active" id="panel-data">
 
   <div class="admin-page-head">
     <div>
@@ -347,6 +410,18 @@
 
 </main>
 
+<!-- nomacast-edit-tabs-v1 : panel régie (iframe lazy-loaded au 1er clic) -->
+<div class="tab-panel tab-panel-live" id="panel-live">
+  <div class="tab-iframe-wrap">
+    <iframe
+      id="live-iframe"
+      class="tab-iframe-frame"
+      title="Régie en direct"
+      loading="lazy"
+      referrerpolicy="same-origin"></iframe>
+  </div>
+</div>
+
 <script src="/admin/admin.js"></script>
 <script>
 (function () {
@@ -363,6 +438,48 @@
   var qs = new URLSearchParams(window.location.search);
   var id = qs.get('id');
   var justCreated = qs.get('created') === '1';
+
+  // ============================================================
+  // nomacast-edit-tabs-v1 : gestion onglets Données / Régie en direct
+  // - Onglet par défaut : data
+  // - L'iframe régie est lazy-loaded au 1er clic (data-src → src injecté avec ?id=)
+  // - Persistance via fragment #live pour partage et refresh
+  // ============================================================
+  (function setupTabs() {
+    var tabBtns = document.querySelectorAll('.tab-btn');
+    var panels = {
+      data: document.getElementById('panel-data'),
+      live: document.getElementById('panel-live')
+    };
+    var iframe = document.getElementById('live-iframe');
+    var iframeLoaded = false;
+
+    function activateTab(tabName) {
+      tabBtns.forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-tab') === tabName);
+      });
+      Object.keys(panels).forEach(function (key) {
+        if (panels[key]) panels[key].classList.toggle('active', key === tabName);
+      });
+      // Lazy load iframe au 1er clic sur "Régie en direct"
+      if (tabName === 'live' && iframe && !iframeLoaded && id) {
+        iframe.src = '/admin/live.html?id=' + encodeURIComponent(id);
+        iframeLoaded = true;
+      }
+      // Persistance dans l'URL (fragment)
+      var newHash = tabName === 'live' ? '#live' : '';
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search + newHash);
+      }
+    }
+
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () { activateTab(btn.getAttribute('data-tab')); });
+    });
+
+    // Au boot : si fragment #live, activer cet onglet directement
+    if (window.location.hash === '#live') activateTab('live');
+  })();
 
   if (!id) {
     A.clearNode(container);
