@@ -44,12 +44,16 @@ export const onRequestGet = async ({ request, env }) => {
     : error === 'server' ? 'Erreur serveur, réessayez dans un instant.'
     : error === 'too-many' ? `Trop de tentatives échouées. Patiente ${RATE_LIMIT_WINDOW_SEC} secondes avant de réessayer.`
     : error === 'csrf' ? 'Session expirée ou requête non valide. La page a été rafraîchie, réessaye.'
+    : error === 'turnstile' ? 'Vérification anti-bot échouée. Rafraîchis la page et réessaye.'
     : null;
 
   // nomacast-csrf-login-v1 : générer un token CSRF + set cookie HttpOnly
   const csrfToken = generateCsrfToken();
 
-  return new Response(renderLoginPage(errorMsg, csrfToken), {
+  // nomacast-login-bots-v1 : sitekey publique Turnstile (env var)
+  const turnstileSitekey = env.TURNSTILE_SITEKEY || '';
+
+  return new Response(renderLoginPage(errorMsg, csrfToken, turnstileSitekey), {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
@@ -74,6 +78,8 @@ export const onRequestPost = async ({ request, env }) => {
   let login = '';
   let password = '';
   let bodyCsrf = '';
+  let honeypot = '';
+  let turnstileToken = '';
   const contentType = request.headers.get('Content-Type') || '';
   try {
     if (contentType.includes('application/json')) {
@@ -81,12 +87,16 @@ export const onRequestPost = async ({ request, env }) => {
       login = String(data.login || '').trim();
       password = String(data.password || '');
       bodyCsrf = String(data.csrf_token || '');
+      honeypot = String(data[HONEYPOT_FIELD_NAME] || '');
+      turnstileToken = String(data['cf-turnstile-response'] || '');
     } else {
       // application/x-www-form-urlencoded (form standard HTML)
       const form = await request.formData();
       login = String(form.get('login') || '').trim();
       password = String(form.get('password') || '');
       bodyCsrf = String(form.get('csrf_token') || '');
+      honeypot = String(form.get(HONEYPOT_FIELD_NAME) || '');
+      turnstileToken = String(form.get('cf-turnstile-response') || '');
     }
   } catch (e) {
     return redirectErr(request, 'missing');
@@ -105,6 +115,41 @@ export const onRequestPost = async ({ request, env }) => {
       user_agent: userAgent
     });
     return redirectErr(request, 'csrf');
+  }
+
+  // nomacast-login-bots-v1 : honeypot — si le champ leurre est rempli, c'est un bot.
+  // On renvoie ?error=invalid (et PAS un message spécifique) pour ne pas révéler
+  // la détection au bot. Pas d'incrément rate limit (sinon attaquant peut bloquer
+  // le compteur d'un user légitime sur la même IP).
+  if (honeypot.length > 0) {
+    await logAuthAttempt(env, {
+      event_id: null,
+      login: login || null,
+      ip_hash: ipHash,
+      success: 0,
+      reason: 'honeypot_filled',
+      user_agent: userAgent
+    });
+    return redirectErr(request, 'invalid');
+  }
+
+  // nomacast-login-bots-v1 : Turnstile (siteverify)
+  // Désactivé silencieusement si TURNSTILE_SECRET_KEY non configurée (mode dev/transition).
+  // Sinon : 1 fetch HTTP vers Cloudflare (~100ms), résultat success/failure.
+  if (env.TURNSTILE_SECRET_KEY) {
+    const clientIp = request.headers.get('CF-Connecting-IP') || '';
+    const turnstileResult = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, clientIp);
+    if (!turnstileResult.success) {
+      await logAuthAttempt(env, {
+        event_id: null,
+        login: login || null,
+        ip_hash: ipHash,
+        success: 0,
+        reason: 'turnstile_failed:' + (turnstileResult.errorCodes.join(',') || 'unknown'),
+        user_agent: userAgent
+      });
+      return redirectErr(request, 'turnstile');
+    }
   }
 
   if (!login || !password) {
@@ -367,9 +412,49 @@ function readCsrfCookie(request) {
 }
 
 // ============================================================
+// nomacast-login-bots-v1 — Anti-bot (Honeypot + Turnstile)
+// ============================================================
+
+/**
+ * Nom du champ honeypot. Doit ressembler à un champ légitime que les bots
+ * form-fillers vont remplir automatiquement. "website" est un classique.
+ */
+const HONEYPOT_FIELD_NAME = 'website';
+
+/**
+ * Vérifie le token Turnstile auprès de Cloudflare.
+ * @returns {Promise<{success: boolean, errorCodes: string[]}>}
+ */
+async function verifyTurnstile(token, secret, clientIp) {
+  if (!secret) return { success: false, errorCodes: ['not_configured'] };
+  if (!token) return { success: false, errorCodes: ['missing_token'] };
+
+  try {
+    const params = new URLSearchParams();
+    params.append('secret', secret);
+    params.append('response', token);
+    if (clientIp) params.append('remoteip', clientIp);
+
+    const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: params,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    const data = await resp.json();
+    return {
+      success: !!data.success,
+      errorCodes: data['error-codes'] || []
+    };
+  } catch (err) {
+    console.error('[turnstile siteverify]', err);
+    return { success: false, errorCodes: ['network_error'] };
+  }
+}
+
+// ============================================================
 // Template HTML — page de login, brand Nomacast
 // ============================================================
-function renderLoginPage(errorMsg, csrfToken) {
+function renderLoginPage(errorMsg, csrfToken, turnstileSitekey) {
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -378,6 +463,7 @@ function renderLoginPage(errorMsg, csrfToken) {
 <meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Connexion — Nomacast</title>
+${turnstileSitekey ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' : ''}
 <style>
 *,*::before,*::after { box-sizing: border-box; }
 body {
@@ -500,6 +586,24 @@ body {
 }
 .footer a { color: #64748b; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
+
+/* nomacast-login-bots-v1 — honeypot off-screen (caché aux humains, pas aux bots) */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* nomacast-login-bots-v1 — widget Turnstile (espace réservé + centré) */
+.turnstile-wrap {
+  margin: 14px 0 4px;
+  min-height: 65px;
+  display: flex;
+  justify-content: center;
+}
 </style>
 </head>
 <body>
@@ -518,6 +622,12 @@ body {
     ${errorMsg ? `<div class="error">${escapeHtml(errorMsg)}</div>` : ''}
     <form method="POST" action="/event-admin/login" autocomplete="on">
       <input type="hidden" name="csrf_token" value="${escapeHtml(csrfToken || '')}">
+      <!-- nomacast-login-bots-v1 : honeypot — champ leurre invisible aux humains, rempli par les bots form-fillers -->
+      <div class="hp-field" aria-hidden="true">
+        <label for="${HONEYPOT_FIELD_NAME}">Laissez ce champ vide</label>
+        <input type="text" id="${HONEYPOT_FIELD_NAME}" name="${HONEYPOT_FIELD_NAME}"
+               tabindex="-1" autocomplete="off" value="">
+      </div>
       <div class="field">
         <label for="login">Identifiant</label>
         <input
@@ -531,6 +641,9 @@ body {
           type="password" id="password" name="password"
           autocomplete="current-password" required>
       </div>
+      ${turnstileSitekey ? `<div class="turnstile-wrap">
+        <div class="cf-turnstile" data-sitekey="${escapeHtml(turnstileSitekey)}" data-theme="light" data-size="normal"></div>
+      </div>` : ''}
       <button type="submit" class="btn-submit">Se connecter</button>
     </form>
     <p class="card-help">
