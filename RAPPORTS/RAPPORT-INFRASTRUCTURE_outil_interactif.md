@@ -91,7 +91,7 @@ admin/
 
 | Élément | Valeur |
 |---|---|
-| Rôle | Page principale de gestion d'un event individuel. Depuis le 15 mai (marqueur `nomacast-edit-tabs-v1`), structure en **2 onglets** « Données » (formulaire + URLs + lien admin client + card streaming) et « Régie en direct » (iframe `/admin/live.html?id=<id>` lazy-loadée). Cf §10.17. |
+| Rôle | Page principale de gestion d'un event individuel. Depuis le 15 mai (marqueur `nomacast-edit-tabs-v2`), structure en **2 onglets** « Données & paramètres » (infos event, branding, credentials client, stats) et « Live & interactions » (statut, modes, options, URL publique, Stream card, contrôle live). Les 2 panels sont dans un seul `<form>` avec bar sticky d'actions. Cf §10.17. |
 | Param URL | **`?id=<event_id>`** (et optionnellement `?created=1` pour message succès post-création) |
 | `<title>` actuel | `Éditer event · Admin Nomacast` (jamais mis à jour dynamiquement) |
 | `<h1>` actuel | `Éditer l'event` (statique, `id="page-title"`) |
@@ -314,6 +314,7 @@ Authentification : token = HMAC-SHA-256 du `slug + ':client'` avec `env.ADMIN_PA
 |---|---|
 | `/api/validate-code` | Valide les codes partenaires du configurateur tarifs (site marketing, lit KV `env.PARTNERS`) |
 | `functions/nmc-7k9q3p2x/api/partners.js` | API admin codes partenaires (slug obfusqué, site marketing) |
+| `/api/admin/auth-logs/purge` | **(15 mai)** POST = purge `auth_logs` > 90 jours, GET = compte purgeable. Admin transverse (pas lié à un event). Auth header `X-Cron-Token` matché contre `env.CRON_PURGE_TOKEN`. Appelé par le cron GitHub Actions (`cron-purge-auth-logs.yml`, 03:15 UTC quotidien). Cf §10.8 bloc Purge cron. |
 
 ---
 
@@ -531,20 +532,21 @@ window.NomacastAdmin = {
 
 ⚠️ Conséquence : pour appeler les API admin en CLI/curl, il faut le header Basic Auth (`-u admin:<password>` avec curl).
 
-### 4.5 Helpers inline dans les Pages Functions
+### 4.5 Helpers `_lib/` (partagés) et helpers inline (locaux)
 
-**Pas d'imports croisés possibles en Cloudflare Pages Functions**. Chaque endpoint redéfinit ses helpers :
+**Les imports croisés sont possibles** en Cloudflare Pages Functions via des chemins relatifs (cf §11 « Imports relatifs depuis dossiers avec brackets »). Le dossier `functions/_lib/` regroupe les helpers partagés entre plusieurs endpoints :
+
+| Helper `_lib/` | Rôle | Consommateurs |
+|---|---|---|
+| `password.js` | PBKDF2 100k generate/hash/verify | `event-admin/login.js`, endpoints credentials (§5.1) |
+| `session.js` | Cookie session HMAC sign/verify (client login/password) | `event-admin/[token].js`, `event-admin/login.js`, `event-admin/logout.js`, middlewares admin |
+| `invitation-email.js` | Template mail invitation (subject + buildText + buildHtml) | 4 endpoints d'envoi/resend (cf §10.4 + §12 bloc imports) |
+| `chat-auth.js` | Auth participant + hash IP (5 exports) | 2 endpoints chat (`messages.js`, `cta-clicks.js`) — cf §4.6 + §12 bloc imports |
+
+**Helpers encore inline** (pas extraits, dupliqués entre Functions) :
 
 ```js
-async function hashIp(ip, secret) {
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip));
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
+// Exemple type, présent dans plusieurs endpoints
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -553,7 +555,25 @@ function jsonResponse(body, status = 200) {
 }
 ```
 
-Pour les tokens admin (preview admin, client admin) : `computePreviewToken(slug, ADMIN_PASSWORD)` et `computeClientToken(slug, ADMIN_PASSWORD)` dans `functions/api/admin/events/[id].js` et `functions/event-admin/[token].js`.
+Pour les tokens admin (preview admin, client admin) : `computePreviewToken(slug, ADMIN_PASSWORD)` et `computeClientToken(slug, ADMIN_PASSWORD)` calculés dans `functions/api/admin/events/[id].js` et `functions/event-admin/[token].js`. (Note : `computePreviewToken` est aussi exporté par `_lib/chat-auth.js` côté participant — cf §4.6.)
+
+### 4.6 `_lib/chat-auth.js` — auth participant + hash IP
+
+Helper extrait le 15 mai 2026 (marqueur `nomacast-chat-auth-helper-v1`). Élimine la duplication de ~130 lignes entre `messages.js` et `cta-clicks.js` (et tout futur endpoint chat participant).
+
+**Exports** :
+
+| Export | Signature | Rôle |
+|---|---|---|
+| `authenticatePrivateRequest` | `(request, env, event)` | Auth via header `X-Magic-Token` (invité) ou query `?preview=<hmac>` (admin preview) |
+| `computePreviewToken` | `(slug, secret)` | HMAC `slug + ADMIN_PASSWORD` (24 chars) — calcul du token admin preview |
+| `hashIp` | `(ip, secret)` | HMAC IP pure (32 chars) — anonymisation analytique |
+| `extractIp` | `(request)` | `CF-Connecting-IP` \|\| `X-Forwarded-For` \|\| `'unknown'` |
+| `hashIpFromRequest` | `(request, secret)` | Combo `hashIp(extractIp(request), secret)` |
+
+**Path d'import** depuis un fichier `functions/api/chat/[slug]/X.js` : `'../../../_lib/chat-auth.js'` (3 niveaux, cf §11 imports relatifs). Liste des consommateurs en §12 bloc imports.
+
+**Bénéfice** : fix de sécu propagé automatiquement à tous les consommateurs. Boilerplate divisé par ~5 pour les nouveaux endpoints chat.
 
 ---
 
@@ -801,6 +821,7 @@ Insertion depuis `functions/api/chat/[slug]/cta-clicks.js` (POST). Auth cohéren
 | `env.RESEND_API_KEY` | secret | Envoi emails (Resend) |
 | `env.TURNSTILE_SECRET_KEY` | secret | Validation Turnstile (site marketing) |
 | `env.HEALTHCHECK_TOKEN` | secret | Bypass Turnstile/RateLimit workflow daily |
+| `env.CRON_PURGE_TOKEN` | secret | **(15 mai)** Authentifie l'appel POST `/api/admin/auth-logs/purge` depuis le cron GitHub Actions. Header `X-Cron-Token` matché. Générer avec `openssl rand -hex 32`. Cf §10.8 bloc Purge cron. |
 | `env.CLOUDFLARE_ACCOUNT_ID` | plaintext | API Cloudflare Stream |
 | `env.CLOUDFLARE_STREAM_API_TOKEN` | secret | Token API Cloudflare Stream |
 | `env.CF_PAGES_COMMIT_SHA` | auto-injecté | Build info `/api/admin/version` |
@@ -826,6 +847,7 @@ Insertion depuis `functions/api/chat/[slug]/cta-clicks.js` (POST). Auth cohéren
 | `CLOUDFLARE_ACCOUNT_ID` | |
 | `CLOUDFLARE_ZONE_ID` | purge cache zone |
 | `HEALTHCHECK_TOKEN` | workflow healthcheck |
+| `CRON_PURGE_TOKEN` | **(15 mai)** Workflow `cron-purge-auth-logs.yml` (POST quotidien à 03:15 UTC). Doit avoir la même valeur que l'env var Cloudflare Pages Production `CRON_PURGE_TOKEN`. Cf §10.8 bloc Purge cron. |
 
 ⚠️ **À rotater (exposition antérieure)** : `CHAT_IP_HASH_SECRET`.
 
@@ -1053,13 +1075,20 @@ Pas de requête additionnelle côté participant — les données sont déjà co
 
 - ✅ Rate limit `/event-admin/login` : 5 tentatives échouées / minute / IP via KV `auth-fail:<ip_hash>` (TTL 60s)
 - ✅ Logs `auth_logs` : table créée (migration 0019), insertions systématiques dans `login.js`
+- ✅ Purge auto `auth_logs` > 90 jours via cron GitHub Actions (cf bloc « Purge cron » ci-dessous)
 - 🟡 CSP nonce : pas implémenté, défense actuelle suffisante (`script-src 'self'` + headers serrés dans `_headers`)
 - 🟡 CSRF token sur form login : pas implémenté, `SameSite=Lax` du cookie session couvre 95% des cas
+
+**Purge cron `auth_logs` ✅ Livré (15 mai)** — marqueur `nomacast-auth-logs-purge-v1`. Rétention 90 jours conformément à la pratique RGPD pour les logs d'authentification (justification : investigation possible sur 3 mois, au-delà la donnée n'a plus de valeur opérationnelle et crée un risque de fuite).
+
+- **Endpoint** `functions/api/admin/auth-logs/purge.js` : POST supprime les entrées > 90 jours, GET retourne le compte purgeable (sans purger, utile debug). Auth par header `X-Cron-Token` matché contre l'env var `CRON_PURGE_TOKEN`. Constante `RETENTION_DAYS = 90` en tête de fichier.
+- **Workflow** `.github/workflows/cron-purge-auth-logs.yml` : schedule cron à 03:15 UTC quotidien + `workflow_dispatch` pour déclenchement manuel. Concurrency group pour éviter chevauchement. Appel `curl POST` avec le secret GitHub.
+- **Pourquoi GitHub Actions et pas Cloudflare** : les Cloudflare Pages Functions ne supportent pas les scheduled triggers natifs (contrairement aux Workers). Endpoint HTTPS protégé par token + cron externe = workaround standard.
+- **Variables à ajouter** (cf §7.1) : secret GitHub `CRON_PURGE_TOKEN` + env var Cloudflare Pages Production `CRON_PURGE_TOKEN` (même valeur, type Secret). Générer avec `openssl rand -hex 32`.
 
 **Phase 2 candidate** (si menaces réelles observées dans `auth_logs`) :
 
 - Notification email/webhook sur burst détecté (>50 fails/h sur même IP)
-- Purge auto `auth_logs` > 90 jours (cron Cloudflare ou cleanup manuel)
 - Captcha (Turnstile, déjà configuré pour formulaire contact) après 3 fails
 - Augmenter `RATE_LIMIT_WINDOW_SEC` à 300s (5 min) selon usage réel
 
@@ -1205,25 +1234,34 @@ Résout FR-4. Endpoint `POST /api/admin/events/<id>/announce` (fichier `function
 
 **CSS distinctif** côté participant : `.chat-msg-admin { border-left: 3px solid var(--brand-color); }` pour différencier visuellement les annonces des messages des participants (respecte le white-label).
 
-### 10.17 Onglets data/live unifiés sur `admin/edit.html` ✅ Livré (15 mai)
+### 10.17 Refactor `admin/edit.html` en 2 onglets data/live ✅ Livré (15 mai)
 
-Refactor de `admin/edit.html` (marqueur `nomacast-edit-tabs-v1`). Mise en cohérence avec la structure d'onglets déjà en place dans `functions/event-admin/[token].js` (régie client) — l'admin Nomacast et la régie client utilisent désormais le même pattern.
+Refactor de `admin/edit.html` (marqueur `nomacast-edit-tabs-v2`). Le formulaire d'édition est réparti en 2 onglets, cohérents fonctionnellement avec ce que voit le client en régie sur `/event-admin/<token>` :
 
-**Structure** (commune aux 2 pages admin) :
+- **Données & paramètres** : informations event (titre, slug, dates, durée, audience, branding/couleur, description, logo, mode d'accès), credentials client, statistiques
+- **Live & interactions** : statut live, modes d'interaction, options (white-label, sous-titres), URL publique, Stream card, contrôle live (Lancer/Terminer, cf §10.11)
 
-- Onglet « Données » : formulaire / paramètres / analytics
-- Onglet « Régie en direct » : iframe vers `/admin/live.html?id=<id>` (avec `?client=1` côté `event-admin/[token].js`, sans côté `edit.html`)
+**Architecture clé** : un **seul `<form id="event-form">`** englobe les 2 panels (les inputs restent dans le scope du form pour une soumission unifiée — peu importe l'onglet actif au moment du clic Enregistrer). Les boutons d'action (Enregistrer, Archiver, etc.) sont dans une **bar sticky bottom** visible depuis les 2 onglets.
 
-**Patterns communs** :
+**Refactor de `renderForm`** : au lieu de créer un `<form>` dynamique à chaque chargement, la fonction récupère 3 zones statiques posées dans le HTML (`form-fields-data-zone`, `form-fields-live-zone`, `form-actions-zone`) et y append les sections selon leur appartenance fonctionnelle. Conséquences :
 
-- Sticky `tabs-bar` au top
-- Active state via `border-bottom` couleur brand
-- **Lazy-load iframe** : l'attribut `data-src` est défini en HTML, transféré dans `src` au 1er clic sur l'onglet — pas de chargement de la régie tant que l'admin ne l'ouvre pas
-- Persistance fragment `#live` dans l'URL (rechargement de page sur l'onglet régie le rouvre directement)
+- `setupModesCompat(form)` → `setupModesCompat(liveZone)` (scope ajusté à la zone Live)
+- `form.onsubmit = ...` (écrase) au lieu de `addEventListener` (cumulatif) pour éviter les handlers multiples au re-render
 
-**Bénéfice** : un seul point d'entrée par event côté admin Nomacast (`edit.html?id=X`), navigation fluide entre paramètres et régie sans changer de page.
+**Patterns visuels** : sticky `tabs-bar` au top, active state via `border-bottom` couleur brand, persistance fragment `#live` dans l'URL.
 
-Règle de synchronisation des 3 surfaces concernées en §11.
+**Différence avec `event-admin/[token].js`** : `edit.html` v2 n'utilise plus d'iframe pour l'onglet « Live & interactions » — c'est désormais des champs du même form. Côté régie client (`event-admin/[token].js`), l'onglet « Régie en direct » reste une iframe vers `/admin/live.html?id=<id>&client=1`. Les deux pages partagent le pattern visuel des onglets mais diffèrent dans le contenu de l'onglet droit (form fields vs iframe régie).
+
+**Ordre des sections dans l'onglet Live & interactions** (logique d'usage chronologique du livestream) :
+
+1. **Événement en direct** — Lancer/Terminer (cf §10.11)
+2. **Streaming live** — Cloudflare Stream (RTMPS, Stream Key, Playback)
+3. **Liens de l'événement** — URL publique + lien admin client
+4. **Interactions et options** — Statut, modes, options (WL/subtitles)
+
+Logique : avant le live on passe en live (1), pendant la config on règle le streaming (2), pour partager on a les URLs (3), pour ajuster en runtime on a les interactions (4). `#public-link-zone` est placé avant le bloc `form-container-live` dans le HTML ; côté JS, `renderForm` append à `publicLinkZone` dans l'ordre `renderLiveControlPanel → renderStreamCard → renderUrlPanel`.
+
+Règle d'ajout d'un nouveau champ au form en §11.
 
 ---
 
@@ -1239,12 +1277,12 @@ Règle de synchronisation des 3 surfaces concernées en §11.
 - **(15 mai)** Renommer migrations `0016_client_credentials.sql` → `0017_*` et `0017_event_description.sql` → `0018_*` via GitHub web pour respecter l'ordre chronologique
 - **(15 mai)** Variable d'env `SESSION_SECRET` à présent **critique** : si elle disparaît, tous les utilisateurs sont déconnectés et `/event-admin/login` retourne 500
 - **(15 mai)** Lot E tracking actions par personne : Phase E.3 Part 1 livrée (CTA clicks), reste Part 2 (timeline drilldown) + phases ultérieures pour `event_quote_shares` / `event_resource_views` (cf §10.7)
-- **(15 mai)** **`auth_logs` : forensics et surveillance** — La table `auth_logs` n'a pas de purge auto. À long terme (>6 mois prod), prévoir un cleanup mensuel des entrées > 90 jours via SQL manuel ou cron. Cible : moins de 100 000 lignes pour garder les indexes performants.
+- **(15 mai)** **`auth_logs` purge cron — cohérence RGPD et pattern réutilisable** — La constante `RETENTION_DAYS = 90` dans `functions/api/admin/auth-logs/purge.js` (cf §10.8 bloc Purge cron) doit rester cohérente avec ton registre RGPD et la privacy policy. Si tu modifies la valeur, mettre à jour les deux. **Pattern réutilisable** : pour toute future tâche schedulée (purge messages rejetés, archivage events anciens, etc.), créer `functions/api/admin/<task>/purge.js` + `.github/workflows/cron-<task>.yml` sur le même modèle (endpoint protégé par token + GitHub Action). Réutiliser `CRON_PURGE_TOKEN` ou en créer un par tâche selon la granularité voulue. Cloudflare Pages ne supporte pas les scheduled triggers natifs — c'est le seul workaround.
 - **(15 mai)** **Rate limit KV consumption** — Chaque IP qui rate son login crée 1 entrée KV `auth-fail:<ip_hash>` (TTL 60s, auto-purge). Pas de risque de remplissage durable.
 - **(15 mai)** **Imports relatifs depuis dossiers avec brackets `[id]`, `[token]`** — Cloudflare Pages Functions résout correctement les imports relatifs depuis les dossiers brackets (validé 15 mai 2026 après fix d'une typo). Règle : nombre de `../` = nombre de dossiers entre le fichier source et `functions/`. Erreur typique : croire que `event-admin/[token]/` a 4 niveaux comme `admin/events/[id]/`. Un seul dossier composé ≠ deux dossiers imbriqués.
 - **(15 mai)** **Polling status client : timings actuels** — Page draft poll `/chat/<slug>/status` ou `/i/<token>/status` : 60s avant T-10min, 30s avant T-1min, 10s avant T0, 5s après T0 (marqueur `nomacast-lot-c-c2-v1`). Au retour de focus onglet → poll immédiat. Si beaucoup d'utilisateurs en attente sur un event → vérifier la charge sur D1 (1 SELECT par poll × N utilisateurs). Ex. 5s × 300 viewers = 60 req/s sur la fenêtre critique. Acceptable mais à surveiller.
 - **(15 mai)** **CTA tracking : `keepalive: true`** — Le fetch POST `/api/chat/<slug>/cta-clicks` utilise `keepalive: true` pour s'assurer que le ping arrive même si l'utilisateur quitte la page immédiatement après le clic. Limitation native du navigateur : body max 64 KB (largement suffisant pour notre body `{cta_id}`).
-- **(15 mai)** **CTA tracking : duplication d'helpers** — `authenticatePrivateRequest`, `computePreviewToken`, `hashIp` dupliqués entre `messages.js` et `cta-clicks.js` (et probablement d'autres endpoints chat). À refactoriser un jour en `functions/_lib/chat-auth.js` (idem `invitation-email.js`). Pas urgent.
+- **(15 mai)** **Nouveaux endpoints chat participant : utiliser `_lib/chat-auth.js`** — Pour tout nouvel endpoint sous `functions/api/chat/[slug]/`, importer les helpers d'auth et hash IP depuis `functions/_lib/chat-auth.js` (cf §4.6). Ne pas re-dupliquer `authenticatePrivateRequest`, `computePreviewToken`, `hashIp`, `extractIp`, `hashIpFromRequest` localement. Incident 15 mai : `cta-clicks.js` avait copié ces helpers depuis `messages.js` avec un commentaire « pour cohérence » — c'est exactement le pattern à éviter. Refactor livré le 15 mai (marqueur `nomacast-chat-auth-helper-v1`). Liste des consommateurs en §12 bloc imports.
 - **(15 mai)** **Liste des modes d'interaction : 5 surfaces à synchroniser** — Une modification de la liste des modes (ajout, retrait, renommage) doit toucher en cohérence :
   1. `admin/new.html` — cases à cocher statiques (création event)
   2. `admin/edit.html` `buildModesCheckboxes` — array de définitions (édition event)
@@ -1270,12 +1308,13 @@ Règle de synchronisation des 3 surfaces concernées en §11.
   Sinon, l'admin peut déclencher une transition que les pages participant ne savent pas interpréter (ou inversement). Aujourd'hui les transitions gérées sont `draft → live` (full reload côté participant) et `live → ended` (modal `nomacast-event-ended-modal-v1`, cf §10.15).
 - **(15 mai)** **Détection auto colonne contenu `chat_messages`** — L'endpoint `announce.js` (cf §10.16) fait un `PRAGMA table_info(chat_messages)` au runtime pour détecter dynamiquement la colonne de contenu parmi (`content` / `body` / `message` / `text`). Si tu changes le schéma de `chat_messages` à l'avenir, vérifier que la nouvelle colonne reste dans cette liste — sinon, ajouter le nouveau nom dans le helper `detectContentColumn` d'`announce.js`. Sans cela, l'endpoint d'annonce renverra une erreur silencieuse à l'INSERT.
 - **(15 mai)** **Taux de clic CTA : choix du dénominateur** — La formule actuelle dans `renderCtasAnalytics` (cf §10.7 vue analytics CTA) utilise `public_unique_viewers` comme dénominateur. Pour un event 100% privé (liens personnels uniquement), il vaudrait mieux `invitees_attended`. Fallback déjà prévu côté JS : si `public_unique_viewers === 0`, on bascule sur `invitees_attended`. Si tu introduis un autre dénominateur métier (ex. inscrits ayant reçu l'email d'invitation), adapter la variable `uniqueViewers` au début de `renderCtasAnalytics` dans `functions/event-admin/[token].js`.
-- **(15 mai)** **Onglets admin (data/live) : 3 surfaces à synchroniser** — Pattern partagé entre admin Nomacast et régie client (cf §10.17). Si on ajoute un 3e onglet (« Replay », « Analytics avancé », etc.), penser à mettre à jour :
-  1. `admin/edit.html` `setupTabs` (admin Nomacast, marqueur `nomacast-edit-tabs-v1`)
-  2. `functions/event-admin/[token].js` `setupTabs` (régie client)
-  3. `admin/live.html` query param `?client=1` (mode régie embarquée pour le client — l'admin Nomacast ouvre sans ce flag)
-  
-  Sinon les deux pages divergeront et un onglet visible côté client manquera côté Nomacast (ou inversement).
+- **(15 mai)** **Onglets admin (data/live)** — Depuis la v2 (cf §10.17), `admin/edit.html` et `functions/event-admin/[token].js` **partagent le pattern visuel** des onglets (sticky tabs-bar, active state border-bottom brand, persistance fragment `#live`) mais diffèrent dans le contenu de l'onglet droit : `edit.html` met des champs du même `<form>`, `event-admin/[token].js` met une iframe vers `/admin/live.html?id=<id>&client=1`. Conséquences pour l'évolution :
+  - Ajout d'un 3e onglet (« Replay », « Analytics avancé », etc.) → mettre à jour `setupTabs` dans les 2 pages
+  - Modification du pattern de régie embarquée → seul `event-admin/[token].js` et `admin/live.html` (param `?client=1`) sont concernés, **pas** `edit.html`
+- **(15 mai)** **Ajout d'un nouveau champ au form `admin/edit.html`** — Depuis la v2 (cf §10.17), `renderForm` n'instancie plus le `<form>` dynamiquement mais append à 3 zones statiques. Procédure :
+  1. Décider de l'onglet d'appartenance fonctionnelle (Données & paramètres → `form-fields-data-zone`, Live & interactions → `form-fields-live-zone`)
+  2. Dans `renderForm`, `dataZone.appendChild(...)` ou `liveZone.appendChild(...)` selon
+  3. Si le champ est un `<input name="X">`, la soumission lit la valeur via `form.querySelectorAll('input[name="X"]')` peu importe le panel — le `<form id="event-form">` englobe les 2 panels, donc aucune adaptation côté submit handler n'est nécessaire
 
 ---
 
@@ -1306,7 +1345,8 @@ Repo Nomacast/nomacast.fr
 │   ├── _lib/                          # NOUVEAU (15 mai) — helpers internes partagés
 │   │   ├── password.js               # PBKDF2 100k generate/hash/verify
 │   │   ├── session.js                # HMAC cookie session client (sign/verify/build/read)
-│   │   └── invitation-email.js       # Template mail invitation (subject + buildText + buildHtml) — cf bloc imports ci-dessous
+│   │   ├── invitation-email.js       # Template mail invitation (subject + buildText + buildHtml) — cf bloc imports ci-dessous
+│   │   └── chat-auth.js              # Auth participant + hash IP (5 exports) — cf §4.6 + bloc imports ci-dessous
 │   ├── admin/_middleware.js          # Basic Auth pages + exception cookie session pour /admin/live.html
 │   ├── api/
 │   │   ├── admin/
@@ -1315,6 +1355,7 @@ Repo Nomacast/nomacast.fr
 │   │   │   ├── events/[id].js        # GET/PATCH/DELETE event (+ description PATCH 15 mai)
 │   │   │   ├── events/[id]/          # Cf §2.2 (15 endpoints)
 │   │   │   ├── events/[id]/credentials.js  # NOUVEAU (15 mai) GET/PUT/POST/DELETE credentials client
+│   │   │   ├── auth-logs/purge.js     # NOUVEAU (15 mai) POST purge auth_logs >90j, GET stats (marqueur `nomacast-auth-logs-purge-v1`)
 │   │   │   ├── upload-logo.js
 │   │   │   └── version.js
 │   │   ├── chat/[slug]/              # API publique participant (cf §2.3) — + cta-clicks.js (15 mai, Phase E.3 Part 1, marqueur `nomacast-cta-clicks-v1`)
@@ -1340,6 +1381,10 @@ Repo Nomacast/nomacast.fr
 │   └── nmc-7k9q3p2x/api/partners.js  # Admin codes partenaires (site marketing)
 ├── _headers                          # + Content-Type text/html sur /*.html (15 mai, C1)
 ├── .assetsignore
+├── .github/
+│   └── workflows/
+│       ├── (workflows existants : deploy, healthcheck, etc.)
+│       └── cron-purge-auth-logs.yml  # NOUVEAU (15 mai) — POST /api/admin/auth-logs/purge à 03:15 UTC quotidien
 └── (autres : site marketing, images, etc.)
 ```
 
@@ -1354,6 +1399,16 @@ functions/_lib/invitation-email.js
 ```
 
 Rappel : `[token]` ou `[id]` comptent comme **un seul** dossier (cf §11 Imports relatifs). Refactor complet terminé le 15 mai : -940 lignes (54% de réduction) sur l'ensemble des 4 endpoints.
+
+**Imports du helper `_lib/chat-auth.js`** (référence pour ne pas se tromper de `../`) :
+
+```
+functions/_lib/chat-auth.js
+├── importé par : api/chat/[slug]/messages.js     (3 ../)
+└── importé par : api/chat/[slug]/cta-clicks.js   (3 ../)
+```
+
+Refactor livré le 15 mai (marqueur `nomacast-chat-auth-helper-v1`) : -108 lignes au total (`messages.js` 298→235, `cta-clicks.js` 152→107). Pour les futurs endpoints sous `api/chat/[slug]/` (presence/heartbeat, reactions, polls/vote, ideas/vote, etc.), utiliser ces imports plutôt que de re-dupliquer (cf §11).
 
 **Favicon outil interactif** (Part 1 livrée 15 mai, marqueur `nomacast-favicon-v1`) :
 
