@@ -632,6 +632,11 @@ tbody tr:hover { background: #fafbfc; }
 }
 .stats-table tr:last-child td { border-bottom: none; }
 .stats-table td.muted { color: #94a3b8; }
+/* nomacast-lot-e-v1 — colonne Total mise en valeur */
+.stats-table td.stats-total-cell {
+  font-weight: 700;
+  color: #5A98D6;
+}
 .stats-table-empty {
   padding: 18px; text-align: center;
   color: #94a3b8; font-size: 13px; font-style: italic;
@@ -1677,15 +1682,32 @@ ${event.white_label === 1 || event.white_label === true
         }));
         return;
       }
+
+      // nomacast-lot-e-v1 — pour live/ended, re-tri côté client par total_actions DESC
+      // (le backend trie par total_duration_sec, mais l'engagement réel = somme des actions)
+      var rows = perInvitee.slice();
+      if (status !== 'draft') {
+        rows.sort(function (a, b) {
+          var totalA = a.total_actions || 0;
+          var totalB = b.total_actions || 0;
+          if (totalA !== totalB) return totalB - totalA;
+          return (b.total_duration_sec || 0) - (a.total_duration_sec || 0);
+        });
+      }
+
       var table = el('table', { className: 'stats-table' });
       var headers = ['Invité', 'Source'];
-      if (status === 'draft') headers.push('Vu le lien', 'Visites');
-      else headers.push('Vu le lien', 'Présence', 'Durée', 'Messages');
+      if (status === 'draft') {
+        headers.push('Vu le lien', 'Visites');
+      } else {
+        // nomacast-lot-e-v1 : +3 colonnes engagement (Réactions, Votes, Total)
+        headers.push('Vu le lien', 'Présence', 'Durée', '💬', '❤️', '📊', '⭐ Total');
+      }
       var thead = el('thead');
       thead.appendChild(el('tr', { children: headers.map(function (h) { return el('th', { text: h }); }) }));
       table.appendChild(thead);
       var tbody = el('tbody');
-      perInvitee.slice(0, 50).forEach(function (r) {
+      rows.slice(0, 50).forEach(function (r) {
         var cells = [];
         var nameCell = el('td');
         if (r.is_present_now) {
@@ -1712,17 +1734,41 @@ ${event.white_label === 1 || event.white_label === true
           text: r.first_visit_at ? '✓' : '—'
         }));
         if (status !== 'draft') {
+          // Présence
           cells.push(el('td', {
             className: r.total_duration_sec > 0 ? '' : 'muted',
             text: r.total_duration_sec > 0 ? '✓' : '—'
           }));
+          // Durée
           cells.push(el('td', {
             className: r.total_duration_sec > 0 ? '' : 'muted',
             text: r.total_duration_sec > 0 ? formatSeconds(r.total_duration_sec) : '—'
           }));
+          // 💬 Messages
           cells.push(el('td', {
-            className: r.messages_count > 0 ? '' : 'muted',
-            text: String(r.messages_count || 0)
+            className: (r.messages_count || 0) > 0 ? '' : 'muted',
+            text: String(r.messages_count || 0),
+            attrs: { title: 'Messages chat envoyés' }
+          }));
+          // nomacast-lot-e-v1 — ❤️ Réactions
+          cells.push(el('td', {
+            className: (r.reactions_count || 0) > 0 ? '' : 'muted',
+            text: String(r.reactions_count || 0),
+            attrs: { title: 'Réactions emojis cliquées' }
+          }));
+          // nomacast-lot-e-v1 — 📊 Votes (poll_votes + idea_votes regroupés)
+          var totalVotes = (r.poll_votes_count || 0) + (r.idea_votes_count || 0);
+          cells.push(el('td', {
+            className: totalVotes > 0 ? '' : 'muted',
+            text: String(totalVotes),
+            attrs: { title: 'Votes sondages + votes idées' }
+          }));
+          // nomacast-lot-e-v1 — ⭐ Total actions
+          var total = r.total_actions || 0;
+          cells.push(el('td', {
+            className: total > 0 ? 'stats-total-cell' : 'muted',
+            text: String(total),
+            attrs: { title: 'Somme des interactions' }
           }));
         } else {
           cells.push(el('td', {
@@ -1734,11 +1780,11 @@ ${event.white_label === 1 || event.white_label === true
       });
       table.appendChild(tbody);
       parent.appendChild(table);
-      if (perInvitee.length > 50) {
+      if (rows.length > 50) {
         parent.appendChild(el('div', {
           className: 'stats-tile-sub',
           style: { marginTop: '8px', textAlign: 'center' },
-          text: 'Affichage limité aux 50 premiers (' + perInvitee.length + ' au total).'
+          text: 'Affichage limité aux 50 premiers (' + rows.length + ' au total).'
         }));
       }
     }
