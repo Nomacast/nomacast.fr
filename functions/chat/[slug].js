@@ -527,6 +527,7 @@ function htmlShell({ title, color, logoUrl, whiteLabel, heroBody, mainBody, body
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"> <!-- nomacast-favicon-v1 -->
 <title>${escapeHtml(title)}</title>
 <style>
   *,*::before,*::after { box-sizing: border-box; }
