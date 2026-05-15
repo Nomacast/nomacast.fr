@@ -2297,6 +2297,9 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
 
       var DISMISSED_PREFIX = 'nomacast-cta-dismissed-';
       var currentCtaId = null;
+      // nomacast-cta-live-update-v1 : tracker aussi label + url pour detecter les modifs en regie
+      var currentCtaLabel = null;
+      var currentCtaUrl = null;
       var pollTimer = null;
 
       function isDismissed(ctaId) {
@@ -2343,11 +2346,20 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
             if (!cta || !cta.id || !cta.url || isDismissed(cta.id)) {
               banner.style.display = 'none';
               currentCtaId = null;
+              currentCtaLabel = null;
+              currentCtaUrl = null;
               return;
             }
-            if (cta.id === currentCtaId) return; // Pas de changement
+            // nomacast-cta-live-update-v1 : refresh DOM si id, label OU url a change
+            // (avant : skip total sur meme id -> les modifs label/url en regie n'etaient pas reflechies)
+            var unchanged = (cta.id === currentCtaId)
+              && (cta.label === currentCtaLabel)
+              && (cta.url === currentCtaUrl);
+            if (unchanged) return;
             currentCtaId = cta.id;
-            btnEl.textContent = cta.label || 'Découvrir';
+            currentCtaLabel = cta.label;
+            currentCtaUrl = cta.url;
+            btnEl.textContent = cta.label || 'Decouvrir';
             btnEl.setAttribute('href', cta.url);
             banner.style.display = '';
           })
