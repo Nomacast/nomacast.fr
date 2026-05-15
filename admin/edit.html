@@ -222,6 +222,87 @@
       color: var(--ink-faint, #94a3b8);
       font-size: 13px;
     }
+
+    /* nomacast-client-credentials-v1 — panneau "Accès client" */
+    .creds-card-body { padding: 18px 20px; }
+    .creds-card-title {
+      font-size: 14px; font-weight: 700; color: var(--ink, #0f172a);
+      margin-bottom: 4px;
+    }
+    .creds-card-sub {
+      font-size: 12px; color: var(--ink-faint, #94a3b8); margin-bottom: 14px;
+    }
+    .creds-row {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 0; border-bottom: 1px solid var(--border-light, #f1f5f9);
+    }
+    .creds-row:last-child { border-bottom: none; }
+    .creds-row-label {
+      font-size: 11px; font-weight: 700; color: var(--ink-muted, #475569);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      min-width: 90px;
+    }
+    .creds-row-value {
+      flex: 1;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      color: var(--ink, #0f172a);
+      word-break: break-all;
+    }
+    .creds-row-value.muted {
+      color: var(--ink-faint, #94a3b8);
+      font-style: italic;
+      font-family: inherit;
+    }
+    .creds-row-actions {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .creds-login-input {
+      flex: 1;
+      font: inherit;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      outline: none;
+      min-width: 140px;
+    }
+    .creds-login-input:focus {
+      border-color: #5A98D6;
+      box-shadow: 0 0 0 2px rgba(90, 152, 214, 0.15);
+    }
+    .creds-password-display {
+      background: rgba(90, 152, 214, 0.08);
+      border: 1px solid rgba(90, 152, 214, 0.25);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 10px;
+    }
+    .creds-password-display-label {
+      font-size: 11px; font-weight: 700; color: #5A98D6;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .creds-password-display-value {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink, #0f172a);
+      letter-spacing: 0.05em;
+      word-break: break-all;
+    }
+    .creds-password-display-warn {
+      font-size: 12px;
+      color: #b91c1c;
+      margin-top: 8px;
+    }
+    .creds-status-ok {
+      color: #16a34a; font-size: 12px; font-weight: 600;
+    }
+    .creds-status-empty {
+      color: #94a3b8; font-size: 12px; font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -255,6 +336,7 @@
 
   <div id="message-zone"></div>
   <div id="public-link-zone"></div>
+  <div id="credentials-zone"></div>
   <div id="stats-zone"></div>
 
   <div class="admin-card" id="form-container">
@@ -272,6 +354,7 @@
   var A = window.NomacastAdmin;
   var container = document.getElementById('form-container');
   var publicLinkZone = document.getElementById('public-link-zone');
+  var credentialsZone = document.getElementById('credentials-zone');
   var statsZone = document.getElementById('stats-zone');
   var pageSub = document.getElementById('page-sub');
   var statusBadge = document.getElementById('status-badge');
@@ -326,11 +409,24 @@
         : 'URL publique du chat — à partager aux participants'
     ));
 
-    if (ev.client_admin_token) {
+    // nomacast-client-credentials-v1 : URL client priorise login (si défini)
+    // sinon fallback vers le HMAC token (rétro-compat admin Nomacast)
+    if (ev.client_login && ev.has_client_password) {
+      rows.push(buildUrlRow(
+        'Lien admin client',
+        origin + '/event-admin/' + ev.client_login,
+        'Login client requis (cf. card « Accès client » ci-dessous). Régie + données dans une seule page.'
+      ));
+      rows.push(buildUrlRow(
+        'Lien admin client (backup HMAC)',
+        origin + '/event-admin/' + ev.client_admin_token,
+        'Accès direct sans login — pour debug Nomacast. Ne pas partager au client.'
+      ));
+    } else if (ev.client_admin_token) {
       rows.push(buildUrlRow(
         'Lien admin client',
         origin + '/event-admin/' + ev.client_admin_token,
-        'Le client gère ses invités sans login Nomacast'
+        '⚠ Aucun login/password client défini — ce lien permet l\'accès direct sans authentification. Configure les credentials dans la card « Accès client ».'
       ));
     }
 
@@ -426,6 +522,9 @@
     publicLinkZone.appendChild(renderUrlPanel(ev));
     // nomacast-stream-card-v1 : card Streaming live (rôle distinct : provisioning Cloudflare Stream)
     publicLinkZone.appendChild(A.renderStreamCard(ev, load));
+
+    // nomacast-client-credentials-v1 : card Accès client (login + password)
+    mountCredentials(ev);
 
     // nomacast-stats-card-v1 : card Statistiques (mount avec polling 5s si live)
     mountStats(ev);
@@ -952,6 +1051,8 @@
       publicLinkZone.appendChild(renderUrlPanel(result.event));
       // nomacast-stream-card-v1 : card Streaming live
       publicLinkZone.appendChild(A.renderStreamCard(result.event, load));
+      // nomacast-client-credentials-v1 : re-mount Accès client (slug/event changé)
+      mountCredentials(result.event);
       // nomacast-stats-card-v1 : re-mount stats avec le nouvel event (status a pu changer)
       mountStats(result.event);
       if (slugChanged) {
@@ -1000,6 +1101,202 @@
       // Si 409 → des invités sont présents, on bloque
       A.showMessage(messageZone, 'error', err.message);
     }
+  }
+
+  // ============================================================
+  // nomacast-client-credentials-v1 — Module "Accès client" (login + password)
+  // ============================================================
+  var credsLastGeneratedPassword = null; // affiché temporairement, jamais persisté
+
+  async function mountCredentials(ev) {
+    A.clearNode(credentialsZone);
+    credentialsZone.appendChild(A.el('div', {
+      className: 'admin-card',
+      children: [A.el('div', {
+        className: 'creds-card-body',
+        children: [A.el('div', { className: 'creds-status-empty', text: 'Chargement de l\'accès client…' })]
+      })]
+    }));
+
+    try {
+      var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/credentials');
+      renderCredentialsCard(ev, data);
+    } catch (err) {
+      A.clearNode(credentialsZone);
+      credentialsZone.appendChild(A.el('div', {
+        className: 'admin-card',
+        children: [A.el('div', {
+          className: 'creds-card-body',
+          children: [A.el('div', { className: 'stats-error', text: 'Erreur accès client : ' + err.message })]
+        })]
+      }));
+    }
+  }
+
+  function renderCredentialsCard(ev, data) {
+    var login = data.login || '';
+    var hasPassword = !!data.has_password;
+
+    var body = A.el('div', { className: 'creds-card-body' });
+    body.appendChild(A.el('div', { className: 'creds-card-title', text: 'Accès client' }));
+    body.appendChild(A.el('div', {
+      className: 'creds-card-sub',
+      text: 'Identifiants pour que le client accède à la page de gestion + régie sur /event-admin/login.'
+    }));
+
+    // Ligne LOGIN (édition inline)
+    var loginRow = A.el('div', { className: 'creds-row' });
+    loginRow.appendChild(A.el('div', { className: 'creds-row-label', text: 'Identifiant' }));
+    var loginInput = A.el('input', {
+      className: 'creds-login-input',
+      attrs: {
+        type: 'text', value: login,
+        placeholder: ev.slug || 'identifiant-court',
+        autocomplete: 'off', spellcheck: 'false'
+      }
+    });
+    loginRow.appendChild(loginInput);
+    var loginSaveBtn = A.el('button', {
+      className: 'admin-btn admin-btn-secondary admin-btn-sm',
+      attrs: { type: 'button' },
+      text: 'Enregistrer'
+    });
+    loginSaveBtn.addEventListener('click', async function () {
+      var newLogin = (loginInput.value || '').trim().toLowerCase();
+      if (!newLogin) {
+        A.showMessage(messageZone, 'error', 'L\'identifiant ne peut pas être vide.');
+        return;
+      }
+      loginSaveBtn.disabled = true;
+      loginSaveBtn.textContent = '…';
+      try {
+        var result = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/credentials', {
+          method: 'PUT', body: { login: newLogin }
+        });
+        A.showMessage(messageZone, 'success', 'Identifiant enregistré.');
+        credsLastGeneratedPassword = null;
+        renderCredentialsCard(ev, result);
+        // Re-render aussi le panneau URLs pour montrer la nouvelle URL /event-admin/<login>
+        A.clearNode(publicLinkZone);
+        publicLinkZone.appendChild(renderUrlPanel(ev));
+        publicLinkZone.appendChild(A.renderStreamCard(ev, load));
+      } catch (err) {
+        A.showMessage(messageZone, 'error', err.message);
+        loginSaveBtn.disabled = false;
+        loginSaveBtn.textContent = 'Enregistrer';
+      }
+    });
+    loginRow.appendChild(loginSaveBtn);
+    body.appendChild(loginRow);
+
+    // Ligne PASSWORD (génération)
+    var pwdRow = A.el('div', { className: 'creds-row' });
+    pwdRow.appendChild(A.el('div', { className: 'creds-row-label', text: 'Mot de passe' }));
+    var pwdStatus = A.el('div', { className: 'creds-row-value' });
+    if (hasPassword) {
+      pwdStatus.innerHTML = '<span class="creds-status-ok">✓ Défini</span> — invisible (non récupérable). Régénère-le pour en obtenir un nouveau.';
+    } else {
+      pwdStatus.innerHTML = '<span class="creds-status-empty">Aucun mot de passe défini — le client ne peut pas se connecter.</span>';
+    }
+    pwdRow.appendChild(pwdStatus);
+    var genBtn = A.el('button', {
+      className: 'admin-btn admin-btn-primary admin-btn-sm',
+      attrs: { type: 'button' },
+      text: hasPassword ? 'Régénérer' : 'Générer'
+    });
+    genBtn.addEventListener('click', async function () {
+      var msg = hasPassword
+        ? 'Régénérer le mot de passe ? Le précédent ne fonctionnera plus immédiatement.'
+        : 'Générer un mot de passe pour ce client ?';
+      if (!confirm(msg)) return;
+      genBtn.disabled = true;
+      genBtn.textContent = '…';
+      try {
+        var result = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/credentials', {
+          method: 'POST'
+        });
+        credsLastGeneratedPassword = result.password;
+        renderCredentialsCard(ev, result);
+        // Re-render le panneau URLs (login a pu changer)
+        A.clearNode(publicLinkZone);
+        publicLinkZone.appendChild(renderUrlPanel(ev));
+        publicLinkZone.appendChild(A.renderStreamCard(ev, load));
+      } catch (err) {
+        A.showMessage(messageZone, 'error', err.message);
+        genBtn.disabled = false;
+        genBtn.textContent = hasPassword ? 'Régénérer' : 'Générer';
+      }
+    });
+    pwdRow.appendChild(genBtn);
+
+    // Bouton révocation (uniquement si credentials existent)
+    if (hasPassword) {
+      var revokeBtn = A.el('button', {
+        className: 'admin-btn admin-btn-ghost admin-btn-sm admin-btn-danger',
+        attrs: { type: 'button' },
+        text: 'Révoquer'
+      });
+      revokeBtn.addEventListener('click', async function () {
+        if (!confirm('Révoquer l\'accès client ? Le login et le mot de passe seront supprimés. Tu pourras en regénérer plus tard.')) return;
+        revokeBtn.disabled = true;
+        try {
+          var result = await A.apiFetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/credentials', {
+            method: 'DELETE'
+          });
+          credsLastGeneratedPassword = null;
+          A.showMessage(messageZone, 'success', 'Accès client révoqué.');
+          renderCredentialsCard(ev, result);
+        } catch (err) {
+          A.showMessage(messageZone, 'error', err.message);
+          revokeBtn.disabled = false;
+        }
+      });
+      pwdRow.appendChild(revokeBtn);
+    }
+    body.appendChild(pwdRow);
+
+    // Si on vient de générer un password, l'afficher en clair UNE SEULE FOIS
+    if (credsLastGeneratedPassword) {
+      var pwdDisp = A.el('div', { className: 'creds-password-display' });
+      pwdDisp.appendChild(A.el('div', {
+        className: 'creds-password-display-label',
+        text: 'Mot de passe à transmettre au client'
+      }));
+      var valWrap = A.el('div', {
+        style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }
+      });
+      valWrap.appendChild(A.el('span', {
+        className: 'creds-password-display-value',
+        text: credsLastGeneratedPassword
+      }));
+      var copyBtn = A.el('button', {
+        className: 'admin-btn admin-btn-secondary admin-btn-sm',
+        attrs: { type: 'button' },
+        text: 'Copier'
+      });
+      copyBtn.addEventListener('click', function () {
+        var pwd = credsLastGeneratedPassword;
+        if (!pwd) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(pwd).then(function () {
+            copyBtn.textContent = '✓ Copié';
+            setTimeout(function () { copyBtn.textContent = 'Copier'; }, 2000);
+          }).catch(function () {
+            copyBtn.textContent = 'Erreur';
+          });
+        }
+      });
+      valWrap.appendChild(copyBtn);
+      pwdDisp.appendChild(valWrap);
+      pwdDisp.appendChild(A.el('div', {
+        className: 'creds-password-display-warn',
+        text: '⚠ Affiché une seule fois. Copie-le maintenant et envoie-le au client. Tu ne pourras plus le récupérer ensuite (mais tu pourras en générer un nouveau).'
+      }));
+      body.appendChild(pwdDisp);
+    }
+
+    A.clearNode(credentialsZone);
+    credentialsZone.appendChild(A.el('div', { className: 'admin-card', children: [body] }));
   }
 
   // ============================================================
