@@ -1084,6 +1084,8 @@
       renderVideo(data.event);
       toolsBar.style.display = '';
       layout.style.display = '';
+      // nomacast-tools-by-modes-v1 — n'afficher que les outils des modes activés
+      applyToolsByModes(data.event);
       updateLayoutGrid();
       startPolling();
       // nomacast-lot-2a-bis-l4-v1 : démarrer les CTAs (polling 5s) et init Réactions config
@@ -1093,6 +1095,38 @@
       pageSub.textContent = 'Erreur de chargement';
       A.showMessage(messageZone, 'error', 'Chargement échoué : ' + err.message);
     }
+  }
+
+  // ============================================================
+  // nomacast-tools-by-modes-v1 — Affichage conditionnel des outils selon les modes
+  // ============================================================
+  // Mapping outil régie ↔ mode event :
+  //   moderation : 'qa' OU 'libre' (chat à modérer)
+  //   polls      : 'sondages'
+  //   ctas       : 'cta'
+  //   reactions  : 'reactions'
+  // Si le mode n'est pas activé dans edit.html, le toggle ET la section sont masqués.
+  function applyToolsByModes(ev) {
+    var modes = (ev && Array.isArray(ev.modes)) ? ev.modes : [];
+    var toolEnabled = {
+      moderation: modes.indexOf('qa') !== -1 || modes.indexOf('libre') !== -1,
+      polls:      modes.indexOf('sondages') !== -1,
+      ctas:       modes.indexOf('cta') !== -1,
+      reactions:  modes.indexOf('reactions') !== -1
+    };
+    Object.keys(toolEnabled).forEach(function (toolId) {
+      var btn = document.querySelector('[data-toggle-tool="' + toolId + '"]');
+      var col = document.querySelector('.regie-col[data-tool="' + toolId + '"]');
+      if (toolEnabled[toolId]) {
+        // Mode activé : setup normal du toggle
+        if (btn) btn.style.display = '';
+        setupToolToggle(toolId);
+      } else {
+        // Mode désactivé : on masque toggle + section (et on n'attache pas le listener)
+        if (btn) btn.style.display = 'none';
+        if (col) col.hidden = true;
+      }
+    });
   }
 
   // Met à jour la classe du grid selon nombre d'outils visibles
@@ -2222,12 +2256,10 @@
     });
   }
 
-  setupToolToggle('moderation');
-  setupToolToggle('polls');
-  // nomacast-lot-2a-bis-l4-v1 : nouveaux outils
-  setupToolToggle('ctas');
-  setupToolToggle('reactions');
-  updateLayoutGrid();
+  // nomacast-tools-by-modes-v1 — Les setupToolToggle sont désormais appelés dans
+  // loadEvent → applyToolsByModes, après que currentEvent.modes soit disponible.
+  // (Avant : appel au boot, donc les 4 toggles étaient TOUJOURS visibles même si
+  //  le mode correspondant n'était pas activé sur l'event.)
 
   // Badge compteur sur le bouton modération
   // (mis à jour à chaque polling messages — on hook sur pendingCount via MutationObserver)
