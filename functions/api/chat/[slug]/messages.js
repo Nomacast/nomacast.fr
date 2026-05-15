@@ -13,6 +13,9 @@
 //   - 'qa'       : message créé en status='pending' (à modérer)
 //   - sinon      : status='approved' direct (chat libre)
 
+// nomacast-chat-auth-helper-v1 : helpers d'auth communs (factorisés depuis ce fichier)
+import { authenticatePrivateRequest, hashIpFromRequest } from '../../../_lib/chat-auth.js';
+
 // ============================================================
 // GET — lecture des messages
 // ============================================================
@@ -157,7 +160,7 @@ export const onRequestPost = async ({ params, request, env }) => {
   // No-op silencieux si CHAT_IP_HASH_SECRET pas configuré (mode dev / setup).
   let ipHash = null;
   if (authorKind !== 'admin' && env.CHAT_IP_HASH_SECRET) {
-    ipHash = await hashIp(request, env);
+    ipHash = await hashIpFromRequest(request, env.CHAT_IP_HASH_SECRET);
     if (ipHash) {
       const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
       try {
@@ -219,72 +222,6 @@ async function loadEventBySlug(env, slug) {
   return await env.DB.prepare(
     'SELECT id, slug, title, status, access_mode, modes_json FROM events WHERE slug = ?'
   ).bind(slug).first();
-}
-
-/**
- * Authentifie une requête pour un event privé.
- * Accepte : header X-Magic-Token OU query ?preview=<hmac>.
- * Returns { ok: bool, kind?: 'invitee'|'admin_preview', invitee?: {...}, reason?: string }
- */
-async function authenticatePrivateRequest(request, env, event) {
-  const url = new URL(request.url);
-
-  // Tentative 1 : X-Magic-Token (invitee)
-  const magicToken = request.headers.get('X-Magic-Token');
-  if (magicToken) {
-    const inv = await env.DB.prepare(
-      'SELECT id, email, full_name FROM invitees WHERE magic_token = ? AND event_id = ?'
-    ).bind(magicToken, event.id).first();
-    if (inv) return { ok: true, kind: 'invitee', invitee: inv };
-    return { ok: false, reason: 'Token invitee invalide' };
-  }
-
-  // Tentative 2 : ?preview=<hmac> (admin preview)
-  const previewToken = url.searchParams.get('preview');
-  if (previewToken && env.ADMIN_PASSWORD) {
-    const expected = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
-    if (previewToken === expected) {
-      return { ok: true, kind: 'admin_preview' };
-    }
-  }
-
-  return { ok: false, reason: 'Authentification requise pour cet event privé' };
-}
-
-async function computePreviewToken(slug, secret) {
-  if (!secret) return null;
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-    .slice(0, 24);
-}
-
-/**
- * Hash HMAC-SHA-256 de l'IP du client avec env.CHAT_IP_HASH_SECRET comme clé.
- * Utilisé pour le rate limit (Lot H) sans stocker d'IP en clair (RGPD compliance).
- * Si le secret n'est pas configuré, retourne null → le rate limit est désactivé.
- */
-async function hashIp(request, env) {
-  if (!env.CHAT_IP_HASH_SECRET) return null;
-  const ip = request.headers.get('CF-Connecting-IP')
-    || request.headers.get('X-Forwarded-For')
-    || 'unknown';
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(env.CHAT_IP_HASH_SECRET),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(ip));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-    .slice(0, 32);
 }
 
 function jsonResponse(body, status = 200) {

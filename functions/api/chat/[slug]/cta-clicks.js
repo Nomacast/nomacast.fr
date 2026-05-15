@@ -10,6 +10,8 @@
 //   - Admin preview ignoré (préfixe ne pollue pas les stats clients)
 //
 // Marqueur : nomacast-cta-clicks-v1
+// nomacast-chat-auth-helper-v1 : helpers d'auth factorisés dans _lib/chat-auth.js
+import { authenticatePrivateRequest, hashIp, extractIp } from '../../../_lib/chat-auth.js';
 
 export const onRequestPost = async ({ params, request, env }) => {
   if (!env.DB) return jsonResponse({ error: 'D1 binding manquant' }, 500);
@@ -64,8 +66,7 @@ export const onRequestPost = async ({ params, request, env }) => {
   let anonKey = null;
   if (env.CHAT_IP_HASH_SECRET) {
     try {
-      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-      ipHash = await hashIp(ip, env.CHAT_IP_HASH_SECRET);
+      ipHash = await hashIp(extractIp(request), env.CHAT_IP_HASH_SECRET);
       anonKey = ipHash ? ipHash.slice(0, 32) : null;
     } catch (err) {
       console.error('[cta-clicks hashIp]', err);
@@ -96,54 +97,8 @@ export const onRequestPost = async ({ params, request, env }) => {
 };
 
 // ============================================================
-// Helpers (copiés depuis messages.js pour cohérence et éviter
-// les imports relatifs traversant les brackets — voir §11 du rapport infra)
+// Helpers locaux (auth + hashIp factorisés dans _lib/chat-auth.js)
 // ============================================================
-async function authenticatePrivateRequest(request, env, event) {
-  const url = new URL(request.url);
-  const magicToken = request.headers.get('X-Magic-Token');
-  if (magicToken) {
-    const inv = await env.DB.prepare(
-      'SELECT id, email, full_name FROM invitees WHERE magic_token = ? AND event_id = ?'
-    ).bind(magicToken, event.id).first();
-    if (inv) return { ok: true, kind: 'invitee', invitee: inv };
-    return { ok: false, reason: 'Token invitee invalide' };
-  }
-  const previewToken = url.searchParams.get('preview');
-  if (previewToken && env.ADMIN_PASSWORD) {
-    const expected = await computePreviewToken(event.slug, env.ADMIN_PASSWORD);
-    if (previewToken === expected) return { ok: true, kind: 'admin_preview' };
-  }
-  return { ok: false, reason: 'Authentification requise pour cet event privé' };
-}
-
-async function computePreviewToken(slug, secret) {
-  if (!secret) return null;
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(slug));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-    .slice(0, 24);
-}
-
-async function hashIp(ip, secret) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(ip));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-    .slice(0, 32);
-}
-
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
