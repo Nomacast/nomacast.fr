@@ -940,7 +940,7 @@ Le HMAC backup `client_admin_token` reste calculé côté serveur (pour rétro-c
 
 ### 10.4 Modifier le wording du mail invitation ✅ Résolu (15 mai)
 
-**Livré** : helper `functions/_lib/invitation-email.js` créé (subject + buildText + buildHtml), 3 importeurs migrés (cf §12 bloc imports). La duplication du template à travers 5+ fichiers est terminée, le wording mis à jour est désormais centralisé. Détail historique conservé ci-dessous pour traçabilité.
+**Livré** : helper `functions/_lib/invitation-email.js` créé (subject + buildText + buildHtml), **les 4 endpoints d'envoi/resend** importent désormais le helper (single source of truth). Bilan : **1731 → 791 lignes, soit -940 lignes (54% de réduction)**. Plus aucune duplication du template HTML/texte (cf §12 bloc imports). Détail historique conservé ci-dessous pour traçabilité.
 
 **Fichier** : `functions/api/admin/events/[id]/send-invitations.js`
 
@@ -1084,7 +1084,7 @@ Question ouverte : juste le player vidéo, ou player + chat + reactions (l'app c
 - **Doublon** `functions/feed/alerts (1).js` à supprimer
 - **Incohérence** routes `resources` (EN) vs `ressources` (FR) à aligner
 - **Migrations 0001-0006** absentes : si quelqu'un repart de zéro, doc `db/schema.sql` à expliciter
-- **Templating mail** : ~~5+ fichiers dupliquent le même template — refactoriser en helper commun `_invitation-email.js` (mentionné en commentaire, jamais créé)~~ **Résolu (15 mai)** : helper `functions/_lib/invitation-email.js` créé, 3 importeurs migrés (cf §12 bloc imports).
+- **Templating mail** : ~~5+ fichiers dupliquent le même template — refactoriser en helper commun `_invitation-email.js` (mentionné en commentaire, jamais créé)~~ **Résolu (15 mai)** : helper `functions/_lib/invitation-email.js` créé, 4 importeurs migrés, -940 lignes (54%) sur l'ensemble (cf §10.4 + §12 bloc imports).
 - **(15 mai)** Renommer migrations `0016_client_credentials.sql` → `0017_*` et `0017_event_description.sql` → `0018_*` via GitHub web pour respecter l'ordre chronologique
 - **(15 mai)** Variable d'env `SESSION_SECRET` à présent **critique** : si elle disparaît, tous les utilisateurs sont déconnectés et `/event-admin/login` retourne 500
 - **(15 mai)** Lot E tracking actions par personne : migration + tables à créer (cf §10.7)
@@ -1162,12 +1162,13 @@ Repo Nomacast/nomacast.fr
 
 ```
 functions/_lib/invitation-email.js
-├── importé par : api/admin/events/[id]/send-invitations.js              (4 ../)
-├── importé par : api/event-admin/[token]/send-invitations.js            (3 ../)
-└── importé par : api/admin/events/[id]/invitees/[invitee_id]/resend.js  (6 ../)
+├── importé par : api/admin/events/[id]/send-invitations.js                  (4 ../)
+├── importé par : api/event-admin/[token]/send-invitations.js                (3 ../)
+├── importé par : api/admin/events/[id]/invitees/[invitee_id]/resend.js      (6 ../)
+└── importé par : api/event-admin/[token]/invitees/[invitee_id]/resend.js    (5 ../)
 ```
 
-Rappel : `[token]` ou `[id]` comptent comme **un seul** dossier (cf §11 Imports relatifs).
+Rappel : `[token]` ou `[id]` comptent comme **un seul** dossier (cf §11 Imports relatifs). Refactor complet terminé le 15 mai : -940 lignes (54% de réduction) sur l'ensemble des 4 endpoints.
 
 ---
 
