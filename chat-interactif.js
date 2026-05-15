@@ -1271,10 +1271,107 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
 
     setupLogoPreview();
     setupPreviewChatInput();
+    setupCustomToolForm();
 
     if (btnSubmit) btnSubmit.addEventListener('click', handleSubmit);
 
     updateRecap();
+  }
+
+  // ============================================================
+  // MINI FORMULAIRE "OUTIL SUR MESURE" · custom-tools-cta-v2
+  // ============================================================
+  // Formulaire indépendant du wizard principal.
+  // POST vers le même endpoint /chat-interactif avec type='custom-tool-request'.
+  // Le backend (functions/envoyer.php.js) doit discriminer sur le champ `type` pour envoyer un email différent.
+  function setupCustomToolForm() {
+    var form = document.getElementById('custom-tool-form');
+    if (!form) return;
+    var feedback = document.getElementById('custom-tool-feedback');
+    var submitBtn = form.querySelector('.custom-tool-form-dark-submit');
+    var originalBtnHtml = submitBtn.innerHTML;
+
+    function showFeedback(type, text) {
+      feedback.className = 'custom-tool-form-dark-feedback is-' + type;
+      feedback.textContent = text;
+      feedback.hidden = false;
+    }
+    function hideFeedback() {
+      feedback.hidden = true;
+      feedback.textContent = '';
+      feedback.className = 'custom-tool-form-dark-feedback';
+    }
+    function setLoading(isLoading) {
+      if (isLoading) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Envoi en cours…';
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      hideFeedback();
+
+      var description = form.querySelector('#custom-tool-description').value.trim();
+      var email = form.querySelector('#custom-tool-email').value.trim();
+      var honeypot = form.querySelector('input[name="hp_company_url"]').value.trim();
+
+      // Honeypot rempli = bot. On simule un succès silencieux.
+      if (honeypot) {
+        showFeedback('success', 'Demande envoyée. Nous revenons vers vous sous 24h.');
+        form.reset();
+        return;
+      }
+
+      // Validation
+      if (!description || description.length < 10) {
+        showFeedback('error', 'Merci de décrire votre besoin en quelques phrases (minimum 10 caractères).');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFeedback('error', 'Merci de saisir un email professionnel valide.');
+        return;
+      }
+
+      setLoading(true);
+
+      // Track GTM
+      try { track('chat_wizard_custom_tool_submitted', { description_length: description.length }); } catch (e) {}
+
+      var payload = {
+        type: 'custom-tool-request',
+        email: email,
+        description: description,
+        page_source: 'outils-interactifs',
+        submitted_at: new Date().toISOString()
+      };
+
+      fetch('/chat-interactif', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (response) {
+          if (response.ok) return response.json();
+          throw new Error('HTTP ' + response.status);
+        })
+        .then(function (result) {
+          setLoading(false);
+          if (result && (result.success || result.ok || result.status === 'ok')) {
+            showFeedback('success', 'Demande envoyée. Nous revenons vers vous sous 24h avec un cadrage technique.');
+            form.reset();
+          } else {
+            showFeedback('error', 'Une erreur est survenue. Réessayez ou contactez directement evenement@nomacast.fr.');
+          }
+        })
+        .catch(function () {
+          setLoading(false);
+          showFeedback('error', 'Impossible d\'envoyer. Vérifiez votre connexion et réessayez.');
+        });
+    });
   }
 
   // ============================================================

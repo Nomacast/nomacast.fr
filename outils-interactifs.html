@@ -444,6 +444,152 @@ nav.scrolled{border-bottom-color:var(--border);padding-top:14px;padding-bottom:1
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Encart "Outils sur mesure" dans le wizard · custom-tools-cta-v3 (CTA simple, le formulaire est en bas de page) */
+.wizard-custom-cta {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-top: 16px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(90,152,214,0.06) 0%, rgba(90,152,214,0.10) 100%);
+  border: 1px dashed rgba(90,152,214,0.45);
+  border-radius: 12px;
+}
+.wizard-custom-cta > svg {
+  flex-shrink: 0;
+  color: var(--cyan);
+  margin-top: 2px;
+}
+.wizard-custom-cta > div {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.wizard-custom-cta strong {
+  font-size: 14px; font-weight: 700; color: var(--ink);
+}
+.wizard-custom-cta span {
+  font-size: 13px; color: var(--ink-muted); line-height: 1.5;
+}
+.wizard-custom-cta-link {
+  margin-top: 6px;
+  display: inline-block;
+  font-size: 13px; font-weight: 600;
+  color: var(--cyan);
+  text-decoration: none;
+  align-self: flex-start;
+}
+.wizard-custom-cta-link:hover { text-decoration: underline; }
+
+/* Mini formulaire "Outil sur mesure" en bas de page · custom-tool-form-dark-v2 (fusion compacte)
+   Séparateur "OU une demande sur mesure" + formulaire centré sous les 2 CTAs principaux. */
+.cta-bottom-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 600px;
+  margin: 56px auto 28px;
+}
+.cta-bottom-divider::before,
+.cta-bottom-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.10);
+}
+.cta-bottom-divider span {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--cyan);
+  white-space: nowrap;
+}
+.custom-tool-form-dark {
+  display: flex; flex-direction: column; gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: left;
+}
+.custom-tool-form-dark textarea,
+.custom-tool-form-dark input[type="email"] {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #fff;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  transition: border-color 0.18s, background 0.18s;
+  box-sizing: border-box;
+}
+.custom-tool-form-dark textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+.custom-tool-form-dark textarea:focus,
+.custom-tool-form-dark input[type="email"]:focus {
+  outline: none;
+  border-color: var(--cyan);
+  background: rgba(255,255,255,0.08);
+}
+.custom-tool-form-dark textarea::placeholder,
+.custom-tool-form-dark input[type="email"]::placeholder {
+  color: rgba(255,255,255,0.40);
+}
+.custom-tool-form-dark-row {
+  display: flex; gap: 8px;
+  flex-wrap: wrap;
+}
+.custom-tool-form-dark-row input[type="email"] {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.custom-tool-form-dark-submit {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px;
+  background: var(--cyan);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.18s, transform 0.18s;
+  flex-shrink: 0;
+}
+.custom-tool-form-dark-submit:hover { background: #4a86c4; }
+.custom-tool-form-dark-submit:active { transform: scale(0.98); }
+.custom-tool-form-dark-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.custom-tool-form-dark-note {
+  font-size: 11px;
+  color: rgba(255,255,255,0.40);
+  margin-top: 2px;
+  line-height: 1.4;
+  text-align: center;
+}
+.custom-tool-form-dark-feedback {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.custom-tool-form-dark-feedback.is-success {
+  background: rgba(34, 197, 94, 0.14);
+  border-left: 3px solid #22c55e;
+  color: #86efac;
+}
+.custom-tool-form-dark-feedback.is-error {
+  background: rgba(220, 38, 38, 0.14);
+  border-left: 3px solid #dc2626;
+  color: #fca5a5;
+}
+@media (max-width: 480px) {
+  .custom-tool-form-dark-row { flex-direction: column; }
+  .custom-tool-form-dark-submit { width: 100%; }
+  .cta-bottom-divider { margin: 40px auto 20px; }
+}
 .summary-note {
   font-size: 12px; color: rgba(255,255,255,.5);
   line-height: 1.55; font-weight: 300;
@@ -1855,6 +2001,19 @@ body.menu-open .float-call{display:none!important}
             <span class="wizard-option-tip">+200 € · transcription temps réel</span>
           </label>
         </div>
+        <!-- Encart "Outils sur mesure" · custom-tools-cta-v3 (CTA simple + ancre vers le formulaire en bas de page) -->
+        <div class="wizard-custom-cta">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 4l6 6-6 6"/>
+            <path d="M4 14l6-6 6 6"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor"/>
+          </svg>
+          <div>
+            <strong>Besoin d'un outil sur mesure ?</strong>
+            <span>Quiz personnalisé, votes pondérés, intégration spécifique avec votre stack… Décrivez votre besoin, nous l'étudions au cas par cas.</span>
+            <a href="#demande-sur-mesure" class="wizard-custom-cta-link">Décrivez votre besoin →</a>
+          </div>
+        </div>
       </div>
 
       <div class="wizard-subgroup">
@@ -2281,6 +2440,10 @@ body.menu-open .float-call{display:none!important}
         <div class="faq-answer"><div class="faq-answer-inner">Oui. Vous recevez un <strong>code d'intégration iframe</strong> prêt à intégrer sur n'importe quelle page web (site corporate, intranet, page événementielle). L'interface s'adapte automatiquement à la largeur disponible, en desktop comme en mobile.</div></div>
       </div>
       <div class="faq-item">
+        <button class="faq-question">Puis-je demander un outil qui n'est pas dans la liste ?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Oui. La liste des 11 outils interactifs couvre la majorité des cas d'usage, mais nous étudions toute demande spécifique <strong>au cas par cas</strong> : quiz pondéré, vote multi-tours, segmentation par profil participant, intégration avec votre CRM ou votre annuaire d'entreprise, formulaires personnalisés, exports vers vos outils internes… Décrivez votre besoin dans le formulaire de contact ou directement dans le configurateur, nous revenons vers vous sous 24h avec un cadrage technique et une estimation tarifaire.</div></div>
+      </div>
+      <div class="faq-item">
         <button class="faq-question">Qui modère les messages pendant l'événement ?<div class="faq-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
         <div class="faq-answer"><div class="faq-answer-inner">La modération est <strong>assurée par votre équipe</strong> via une interface dédiée accessible par un lien séparé. Vous pouvez valider les questions avant publication (mode Q&amp;A), supprimer des messages, exclure un participant, épingler une annonce. En parallèle, une <strong>modération automatique</strong> filtre les contenus indésirables (mots interdits, anti-flood, anti-spam URL).</div></div>
       </div>
@@ -2319,6 +2482,46 @@ body.menu-open .float-call{display:none!important}
       </a>
       <a href="index.html#contact" class="btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.3);">Formulaire de contact</a>
     </div>
+
+    <!-- Séparateur visuel + mini formulaire compact pour demande sur mesure · custom-tool-form-dark-v2 -->
+    <div id="demande-sur-mesure" class="cta-bottom-divider">
+      <span>OU une demande sur mesure</span>
+    </div>
+
+    <form class="custom-tool-form-dark" id="custom-tool-form" novalidate>
+      <!-- Honeypot anti-spam (champ caché) -->
+      <input type="text" name="hp_company_url" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+
+      <textarea
+        name="description"
+        id="custom-tool-description"
+        rows="3"
+        maxlength="800"
+        placeholder="Décrivez votre besoin spécifique : cas d'usage, intégration sur mesure, outil non listé…"
+        required
+        aria-label="Description de votre besoin d'outil sur mesure"
+      ></textarea>
+
+      <div class="custom-tool-form-dark-row">
+        <input
+          type="email"
+          name="email"
+          id="custom-tool-email"
+          placeholder="Email professionnel"
+          required
+          autocomplete="email"
+          aria-label="Email professionnel"
+        >
+        <button type="submit" class="custom-tool-form-dark-submit">
+          Envoyer ma demande
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <p class="custom-tool-form-dark-note">Réponse sous 24h avec un cadrage technique.</p>
+
+      <div class="custom-tool-form-dark-feedback" id="custom-tool-feedback" role="status" aria-live="polite" hidden></div>
+    </form>
   </div>
 </section>
 
