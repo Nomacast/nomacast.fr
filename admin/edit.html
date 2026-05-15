@@ -427,10 +427,18 @@
 
     <!-- ============================================================
          ONGLET 2 : Live & interactions
-         statut, modes, options, URL publique, stream card, live control
+         Ordre des sections :
+           1. Événement en direct (Lancer/Terminer)
+           2. Streaming live (Cloudflare Stream)
+           3. Liens de l'événement (URLs)
+           4. Interactions et options (statut, modes, options)
          ============================================================ -->
     <div class="tab-panel tab-panel-live" id="panel-live">
 
+      <!-- 1+2+3 : Live control + Streaming + URLs (renseignés par renderForm dans le bon ordre) -->
+      <div id="public-link-zone"></div>
+
+      <!-- 4 : Interactions et options -->
       <div class="admin-card" id="form-container-live">
         <div class="admin-card-body" id="form-fields-live-zone">
           <div class="admin-text-muted">
@@ -438,8 +446,6 @@
           </div>
         </div>
       </div>
-
-      <div id="public-link-zone"></div>
 
     </div>
 
@@ -642,13 +648,15 @@
 
     // Lien régie : désormais géré dans le panneau URLs (renderUrlPanel)
 
-    // Panneau unique avec tous les liens de l'événement (cf. nomacast-url-panel-v1)
+    // Panneau des sections de l'onglet "Live & interactions"
+    // Ordre : 1) Événement en direct  2) Streaming live  3) Liens de l'événement
     A.clearNode(publicLinkZone);
-    publicLinkZone.appendChild(renderUrlPanel(ev));
-    // nomacast-stream-card-v1 : card Streaming live (rôle distinct : provisioning Cloudflare Stream)
-    publicLinkZone.appendChild(A.renderStreamCard(ev, load));
     // nomacast-live-control-v1 : bouton Lancer/Terminer le direct (raccourci sans passer par régie)
     publicLinkZone.appendChild(renderLiveControlPanel(ev));
+    // nomacast-stream-card-v1 : card Streaming live (provisioning Cloudflare Stream)
+    publicLinkZone.appendChild(A.renderStreamCard(ev, load));
+    // nomacast-url-panel-v1 : panneau unique avec tous les liens de l'événement
+    publicLinkZone.appendChild(renderUrlPanel(ev));
 
     // nomacast-client-credentials-v1 : card Accès client (login + password)
     mountCredentials(ev);
