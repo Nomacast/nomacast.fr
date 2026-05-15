@@ -2311,6 +2311,23 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
         banner.style.display = 'none';
       });
 
+      // nomacast-cta-clicks-v1 — tracking clic CTA (fire-and-forget, ne bloque pas l'ouverture du lien)
+      var CTA_CLICK_URL = CTA_ACTIVE_URL ? CTA_ACTIVE_URL.replace(/\/cta\/active$/, '/cta-clicks') : null;
+      btnEl.addEventListener('click', function () {
+        if (!currentCtaId || !CTA_CLICK_URL) return;
+        try {
+          var headers = { 'Content-Type': 'application/json' };
+          if (MAGIC_TOKEN) headers['X-Magic-Token'] = MAGIC_TOKEN;
+          fetch(CTA_CLICK_URL, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ cta_id: currentCtaId }),
+            keepalive: true,
+            credentials: 'same-origin'
+          }).catch(function () {});
+        } catch (e) {}
+      });
+
       function fetchActive() {
         fetch(CTA_ACTIVE_URL, { cache: 'no-store', credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : null; })
