@@ -157,6 +157,7 @@ function htmlError(title, message, status) {
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"> <!-- nomacast-favicon-v1 -->
 <title>${escapeHtml(title)}</title>
 <style>
 body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#f4f6fa;color:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
@@ -199,6 +200,7 @@ function renderPage(event, token, adminPreviewToken) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"> <!-- nomacast-favicon-v1 -->
 <title>${escapeHtml(event.title)} — Gestion des invités</title>
 <style>
 *,*::before,*::after { box-sizing: border-box; }
