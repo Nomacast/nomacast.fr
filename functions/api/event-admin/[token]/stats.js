@@ -153,6 +153,7 @@ export const onRequestGet = async ({ params, env }) => {
 
     // 3. Per-invitee : détail engagement par invité
     //    Les visites sont comptées HORS event-admin (le client ne voit pas qu'il a consulté lui-même)
+    //    nomacast-lot-e-v1 : enrichissement avec compteurs reactions / polls / ideas par invitee
     const perInviteeRes = await env.DB.prepare(`
       SELECT
         i.id AS invitee_id,
@@ -168,26 +169,41 @@ export const onRequestGet = async ({ params, env }) => {
         (SELECT COUNT(*) FROM visits WHERE invitee_id = i.id AND page_kind != 'event-admin') AS visits_count,
         (SELECT COUNT(*) * 30 FROM event_presence_history WHERE invitee_id = i.id) AS total_duration_sec,
         (SELECT COUNT(*) FROM chat_messages WHERE invitee_id = i.id AND status = 'approved') AS messages_count,
+        (SELECT COUNT(*) FROM event_reactions WHERE invitee_id = i.id) AS reactions_count,
+        (SELECT COUNT(*) FROM poll_votes pv JOIN polls p ON pv.poll_id = p.id WHERE p.event_id = i.event_id AND pv.voter_key = i.id) AS poll_votes_count,
+        (SELECT COUNT(*) FROM idea_votes iv JOIN ideas idx ON iv.idea_id = idx.id WHERE idx.event_id = i.event_id AND iv.voter_key = i.id) AS idea_votes_count,
         (SELECT 1 FROM event_presence WHERE invitee_id = i.id AND last_seen > datetime('now', '-60 seconds')) AS is_present_now
       FROM invitees i
       WHERE i.event_id = ? AND i.anonymized_at IS NULL
       ORDER BY total_duration_sec DESC, i.full_name
     `).bind(eventId).all();
-    const perInvitee = (perInviteeRes.results || []).map(r => ({
-      invitee_id: r.invitee_id,
-      name: r.name,
-      email: r.email,
-      company: r.company,
-      job_title: r.job_title,
-      source: r.source,
-      invited_at: r.invited_at,
-      first_visit_at: r.first_visit_at,
-      last_visit_at: r.last_visit_at,
-      visits_count: r.visits_count || 0,
-      total_duration_sec: r.total_duration_sec || 0,
-      messages_count: r.messages_count || 0,
-      is_present_now: !!r.is_present_now
-    }));
+    const perInvitee = (perInviteeRes.results || []).map(r => {
+      // nomacast-lot-e-v1 : total_actions = somme des interactions (hors visites passives)
+      const messages = r.messages_count || 0;
+      const reactions = r.reactions_count || 0;
+      const pollVotes = r.poll_votes_count || 0;
+      const ideaVotes = r.idea_votes_count || 0;
+      const totalActions = messages + reactions + pollVotes + ideaVotes;
+      return {
+        invitee_id: r.invitee_id,
+        name: r.name,
+        email: r.email,
+        company: r.company,
+        job_title: r.job_title,
+        source: r.source,
+        invited_at: r.invited_at,
+        first_visit_at: r.first_visit_at,
+        last_visit_at: r.last_visit_at,
+        visits_count: r.visits_count || 0,
+        total_duration_sec: r.total_duration_sec || 0,
+        messages_count: messages,
+        reactions_count: reactions,
+        poll_votes_count: pollVotes,
+        idea_votes_count: ideaVotes,
+        total_actions: totalActions,
+        is_present_now: !!r.is_present_now
+      };
+    });
 
     // 4. Géographie (top 10 pays, agrégé) — exclut event-admin pour ne pas compter le client lui-même
     const geoRes = await env.DB.prepare(`
