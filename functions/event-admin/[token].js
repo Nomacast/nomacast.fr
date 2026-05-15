@@ -1,13 +1,14 @@
 // functions/event-admin/[token].js
-// GET /event-admin/:token  →  Page client de gestion des invités.
+// GET /event-admin/:slug  →  Page client de gestion des invités + régie en direct.
 //
-// Le paramètre :token peut être :
-//   (a) Un token HMAC dérivé du slug + ADMIN_PASSWORD (legacy admin Nomacast)
-//   (b) Le slug de l'event, avec un cookie session client valide pour cet event
+// Auth obligatoire pour TOUS (admin Nomacast inclus) :
+//   - URL : /event-admin/<slug-de-l-event>
+//   - Cookie session valide pour cet event (set après login sur /event-admin/login)
+//   - Sinon → redirection vers /event-admin/login
 //
-// Le JS embarqué appelle /api/event-admin/<HMAC>/* (HMAC toujours calculé côté serveur)
-// pour les ops CRUD ; le client n'a jamais besoin de connaître le HMAC explicitement
-// quand il passe par le cookie session.
+// Le JS embarqué appelle /api/event-admin/<HMAC>/* — le HMAC est calculé côté serveur
+// à partir du slug et passé au JS comme apiBase. Sert d'auth side-channel pour les
+// endpoints event-admin (stats, csv, invitees) qui ne sont pas protégés par cookie.
 //
 // Marqueur : nomacast-analytics-visits-tracking-v1 + nomacast-client-credentials-v1
 
@@ -19,64 +20,40 @@ export const onRequestGet = async ({ params, request, env }) => {
   }
 
   // ============================================================
-  // Résolution du token :
-  //  1. Essayer comme HMAC (admin Nomacast — backup)
-  //  2. Sinon essayer comme slug + cookie session client
-  //  3. Sinon redirection vers /event-admin/login (ou 404 si slug inexistant)
+  // Résolution : params.token doit être un slug d'event existant.
+  // Auth obligatoire via cookie session.
   // ============================================================
-  const events = await env.DB.prepare(
-    'SELECT id, slug, title, client_name, scheduled_at, status, white_label, primary_color, logo_url, access_mode FROM events'
-  ).all();
-
-  let event = null;
-  let isClientSession = false;
-
-  // 1. HMAC match (admin Nomacast)
-  for (const ev of (events.results || [])) {
-    const expected = await computeClientToken(ev.slug, env.ADMIN_PASSWORD);
-    if (params.token === expected) { event = ev; break; }
-  }
-
-  // 2. Slug match + cookie session
-  if (!event) {
-    const slugEv = (events.results || []).find(ev => ev.slug === params.token);
-    if (slugEv) {
-      try {
-        const session = await getSessionFromRequest(request, env);
-        if (session && session.event_id === slugEv.id) {
-          event = slugEv;
-          isClientSession = true;
-        } else {
-          // Slug valide mais pas authentifié → redirection vers login
-          const loginUrl = new URL('/event-admin/login', request.url).toString();
-          return new Response(null, {
-            status: 302,
-            headers: { 'Location': loginUrl, 'Cache-Control': 'no-store' }
-          });
-        }
-      } catch (e) {
-        const loginUrl = new URL('/event-admin/login', request.url).toString();
-        return new Response(null, {
-          status: 302,
-          headers: { 'Location': loginUrl, 'Cache-Control': 'no-store' }
-        });
-      }
-    }
-  }
+  const event = await env.DB.prepare(
+    'SELECT id, slug, title, client_name, scheduled_at, status, white_label, primary_color, logo_url, access_mode FROM events WHERE slug = ?'
+  ).bind(params.token).first();
 
   if (!event) {
     return htmlError(
       'Lien invalide',
-      'Ce lien d\'administration n\'est pas valide ou a été révoqué. Contactez l\'équipe Nomacast.',
+      'Cet événement n\'existe pas ou a été supprimé.',
       404
     );
   }
 
-  // Si on est en mode cookie (slug), on a besoin de calculer le HMAC en interne
-  // pour le passer au JS embarqué qui appelle /api/event-admin/<HMAC>/*
-  const apiToken = isClientSession
-    ? await computeClientToken(event.slug, env.ADMIN_PASSWORD)
-    : params.token;
+  // Vérification de la session cookie
+  let session = null;
+  try {
+    session = await getSessionFromRequest(request, env);
+  } catch (e) { /* session = null */ }
+
+  if (!session || session.event_id !== event.id) {
+    // Pas authentifié pour cet event → redirection vers login
+    const loginUrl = new URL('/event-admin/login', request.url).toString();
+    return new Response(null, {
+      status: 302,
+      headers: { 'Location': loginUrl, 'Cache-Control': 'no-store' }
+    });
+  }
+
+  // ============================================================
+  // Auth OK. Calcul du HMAC interne pour le JS embarqué (apiBase /api/event-admin/<HMAC>).
+  // ============================================================
+  const apiToken = await computeClientToken(event.slug, env.ADMIN_PASSWORD);
 
   // Calcul du token preview admin (HMAC du slug seul) pour permettre au client
   // de voir un aperçu de son event privé via /chat/<slug>?preview=<token>.
@@ -111,10 +88,8 @@ export const onRequestGet = async ({ params, request, env }) => {
     console.error('[event-admin/token] visits track failed', err);
   }
 
-  // nomacast-client-credentials-v1 : on pose un cookie session systématiquement
-  // (HMAC backup OU slug+cookie déjà valide) pour que l'iframe régie /admin/live.html
-  // bénéficie de l'auth automatique côté browser. Le cookie ne donne accès qu'à CET event.
-  // En mode HMAC, isClientSession reste false → pas de bouton "Déconnexion" affiché.
+  // nomacast-client-credentials-v1 : rafraîchir le cookie session (renouvellement glissant 7j).
+  // L'utilisateur est forcément authentifié pour cet event si on arrive ici.
   const headers = {
     'Content-Type': 'text/html; charset=utf-8',
     'Cache-Control': 'private, no-store',
@@ -124,15 +99,15 @@ export const onRequestGet = async ({ params, request, env }) => {
     try {
       const cookieValue = await createSessionCookieValue(env, {
         event_id: event.id,
-        login: event.client_login || (isClientSession ? 'client' : 'hmac-admin')
+        login: session.login || event.client_login || 'client'
       });
       headers['Set-Cookie'] = buildSetCookieHeader(cookieValue);
     } catch (e) {
-      console.error('[event-admin/token] session cookie failed', e);
+      console.error('[event-admin/token] session cookie refresh failed', e);
     }
   }
 
-  return new Response(renderPage(event, apiToken, adminPreviewToken, isClientSession), {
+  return new Response(renderPage(event, apiToken, adminPreviewToken), {
     status: 200,
     headers
   });
@@ -207,7 +182,7 @@ function formatDate(iso) {
        + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function renderPage(event, token, adminPreviewToken, isClientSession) {
+function renderPage(event, token, adminPreviewToken) {
   const apiBase = `/api/event-admin/${token}`;
   const dateLabel = formatDate(event.scheduled_at);
   const isPrivate = event.access_mode === 'private';
@@ -698,11 +673,11 @@ ${event.white_label === 1 || event.white_label === true
           <img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" class="header-client-logo">
           <span class="header-baseline">Espace organisateur</span>
         </div>
-        ${isClientSession ? `<a href="/event-admin/logout" class="header-logout">Déconnexion</a>` : ''}
+        <a href="/event-admin/logout" class="header-logout">Déconnexion</a>
       </header>`
     : `<header class="header header-whitelabel">
         <span class="header-baseline">Espace organisateur</span>
-        ${isClientSession ? `<a href="/event-admin/logout" class="header-logout">Déconnexion</a>` : ''}
+        <a href="/event-admin/logout" class="header-logout">Déconnexion</a>
       </header>`)
   : `<header class="header">
       <a href="https://www.nomacast.fr/" target="_blank" rel="noopener" class="header-logo">
@@ -710,7 +685,7 @@ ${event.white_label === 1 || event.white_label === true
       </a>
       <div class="header-right">
         <span class="header-baseline">Gestion des invités</span>
-        ${isClientSession ? `<a href="/event-admin/logout" class="header-logout">Déconnexion</a>` : ''}
+        <a href="/event-admin/logout" class="header-logout">Déconnexion</a>
       </div>
     </header>`}
 

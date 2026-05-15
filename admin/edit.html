@@ -409,24 +409,18 @@
         : 'URL publique du chat — à partager aux participants'
     ));
 
-    // nomacast-client-credentials-v1 : URL client priorise login (si défini)
-    // sinon fallback vers le HMAC token (rétro-compat admin Nomacast)
+    // nomacast-client-credentials-v1 : URL d'accès client (login + password obligatoire)
     if (ev.client_login && ev.has_client_password) {
       rows.push(buildUrlRow(
         'Lien admin client',
         origin + '/event-admin/' + ev.client_login,
-        'Login client requis (cf. card « Accès client » ci-dessous). Régie + données dans une seule page.'
+        'Le client (et toi) se connecte avec login + password. Régie + données dans une seule page.'
       ));
-      rows.push(buildUrlRow(
-        'Lien admin client (backup HMAC)',
-        origin + '/event-admin/' + ev.client_admin_token,
-        'Accès direct sans login — pour debug Nomacast. Ne pas partager au client.'
-      ));
-    } else if (ev.client_admin_token) {
+    } else {
       rows.push(buildUrlRow(
         'Lien admin client',
-        origin + '/event-admin/' + ev.client_admin_token,
-        '⚠ Aucun login/password client défini — ce lien permet l\'accès direct sans authentification. Configure les credentials dans la card « Accès client ».'
+        '— Pas encore configuré —',
+        '⚠ Génère un login + mot de passe dans la card « Accès client » ci-dessous pour activer l\'accès.'
       ));
     }
 
