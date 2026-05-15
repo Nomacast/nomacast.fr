@@ -1,7 +1,7 @@
 # Rapport infrastructure — Nomacast Live (chat interactif)
 
 **Date initiale** : 14 mai 2026
-**Dernière MAJ** : 15 mai 2026 (Auth client login/password + Onglets event-admin + Lot A QA + FR-3 description + Lot F sécu phase 1)
+**Dernière MAJ** : 15 mai 2026 (Auth client login/password + Onglets event-admin + Lot A QA + FR-3 description + Lot F sécu phase 1 + Lot C QA C2/C3 + Phase E.3 Part 1 tracking CTA)
 **Méthode** : repo `Nomacast/nomacast.fr` cloné en local (`git clone --depth 1`), tous les fichiers cités ci-dessous ont été lus directement.
 **Statut** : production stable.
 
@@ -13,6 +13,8 @@
 - **Onglets event-admin** : `/event-admin/<slug>` affiche désormais 2 onglets « Données & invités » + « Régie en direct » (iframe `/admin/live.html?id=<id>`).
 - **Lot A du QA** (15 mai) : Content-Type `text/html` explicite sur `/*.html`, validation date passée + durée ≤0 à la création, fix reset logo UI quand white_label OFF, CTA 404 cohérent pour magic token invalide, champ description event 500c (migration `event_description`).
 - **Lot F sécu phase 1** (15 mai) : rate limit `/event-admin/login` (5 fails/min/IP via KV `auth-fail:`) + table `auth_logs` (migration `0019_auth_logs.sql`) avec insertions systématiques success/fail. CSP nonce + CSRF token report en phase 2 (cf §10.8).
+- **Lot C QA C2/C3** (15 mai) : countdown overdue avec dot pulse + polling client adaptatif (60→30→10→5s, marqueur `nomacast-lot-c-c2-v1`) dans `chat/[slug].js` + `i/[token].js`. Statut détaillé des items QA en §10.9.
+- **Phase E.3 Part 1 — Tracking CTA** (15 mai) : table `event_cta_clicks` (migration `0020_event_cta_clicks.sql`) + endpoint `POST /api/chat/<slug>/cta-clicks` + tracking JS keepalive dans les pages participant (marqueur `nomacast-cta-clicks-v1`). Phase E.3 Part 2 (timeline détaillée par invité) restante (cf §10.7).
 - **Conflit numérotation migrations 0016** : 2 fichiers nommés `0016_*` dans le repo (`reactions_config` + `client_credentials`). Renommage à faire via GitHub web : `0017_client_credentials.sql` + `0018_event_description.sql`.
 
 ---
@@ -282,6 +284,7 @@ Toutes publiques. Rate-limit IP via `env.CHAT_IP_HASH_SECRET` (HMAC).
 | `/api/chat/<slug>/presence/stats` | GET | Compteur "en ligne" (last_seen > NOW-60s) |
 | `/api/chat/<slug>/resources` | GET | Liste resources |
 | `/api/chat/<slug>/cta/active` | GET | CTA actif (avec expiration lazy) |
+| `/api/chat/<slug>/cta-clicks` | POST | **(15 mai, Phase E.3 Part 1)** Tracking clic CTA. Auth `X-Magic-Token` (invité) ou `ip_hash` anonyme. Body `{cta_id}`. Insert non-bloquant (200 OK même si DB échoue). Insert dans `event_cta_clicks` (cf §5.9). |
 
 ### 2.4 API admin client `/api/event-admin/<token>/*`
 
@@ -698,6 +701,7 @@ Schémas complets disponibles dans les fichiers migrations correspondants.
 - `technical_alerts` (mig 0013)
 - `pre_event_questions`, `ideas`, `idea_votes`, `event_quotes`, `event_reactions`, `event_presence`, `event_resources`, `event_ctas` (mig 0014)
 - `auth_logs` (mig 0019, 15 mai — cf §5.8 ci-dessous) — forensics tentatives login `/event-admin/login`
+- `event_cta_clicks` (mig 0020, 15 mai — cf §5.9 ci-dessous) — tracking clics CTA participant (Phase E.3 Part 1)
 
 ### 5.8 Table `auth_logs` (15 mai, Lot F sécu phase 1)
 
@@ -715,6 +719,23 @@ auth_logs
 ```
 
 Insertion systématique depuis `functions/event-admin/login.js` à chaque tentative (success ET fail). Le `event_id` est NULL si le `login` saisi n'existe pas (cas `unknown_login`). `ip_hash` réutilise `env.CHAT_IP_HASH_SECRET` pour cohérence avec les autres tables anonymisées.
+
+### 5.9 Table `event_cta_clicks` (15 mai, Phase E.3 Part 1)
+
+```
+event_cta_clicks
+  id         TEXT PK
+  cta_id     TEXT FK → event_ctas(id) ON DELETE CASCADE
+  event_id   TEXT FK → events(id) ON DELETE CASCADE
+  invitee_id TEXT FK → invitees(id) ON DELETE SET NULL
+  anon_key   TEXT (32 chars, hash IP tronqué)
+  ip_hash    TEXT (HMAC-SHA-256 IP, 32 chars b64url)
+  clicked_at TEXT ISO
+  Pas d'UNIQUE constraint (un invité peut cliquer plusieurs fois — info intéressante)
+  Indexes : (event_id, clicked_at DESC), (invitee_id, clicked_at DESC), (cta_id)
+```
+
+Insertion depuis `functions/api/chat/[slug]/cta-clicks.js` (POST). Auth cohérente `messages.js` : `X-Magic-Token` si invité, sinon `ip_hash` anonyme. Insert **non-bloquant** (200 OK même si DB échoue — la table peut manquer sans casser l'UX). Pas d'UNIQUE constraint, car connaître la fréquence de clic d'un même invité fait partie du signal analytique (Phase E.3 Part 2 timeline).
 
 ---
 
@@ -823,7 +844,8 @@ migrations/
 ├── 0016_reactions_config.sql       — ALTER events ADD reaction_emojis_json (1-5 emojis du pool de 15 par event, Tour 2.A-bis)
 ├── 0016_client_credentials.sql ⚠️  — DOUBLON DE NUMÉROTATION (15 mai). ALTER events ADD client_login + client_password_hash, UNIQUE INDEX partiel sur client_login. À renommer en `0017_client_credentials.sql` via GitHub web.
 ├── 0017_event_description.sql ⚠️  — À renommer en `0018_event_description.sql` après le rename ci-dessus. ALTER events ADD description (15 mai, FR-3).
-└── 0019_auth_logs.sql               — CREATE auth_logs (Lot F sécu phase 1, 15 mai). Forensics tentatives login `/event-admin/login`.
+├── 0019_auth_logs.sql               — CREATE auth_logs (Lot F sécu phase 1, 15 mai). Forensics tentatives login `/event-admin/login`.
+└── 0020_event_cta_clicks.sql        — CREATE event_cta_clicks (Phase E.3 Part 1, 15 mai). Tracking clics CTA participant + 3 indexes (event, invitee, cta).
 ```
 
 ### Conflit numérotation 0016 (à régulariser)
@@ -836,12 +858,12 @@ Le 15 mai, j'ai créé `0016_client_credentials.sql` sans détecter que `0016_re
 
 ### Schéma initial
 
-⚠️ **Les migrations `0001` à `0006` ne sont PAS dans le repo**. Le schéma initial des tables `events` et `invitees` est dans `db/schema.sql` (pas dans migrations/). Pour repartir de zéro, appliquer le schéma initial puis chronologiquement chaque migration `0007` à `0019` (après renommage des doublons 0016).
+⚠️ **Les migrations `0001` à `0006` ne sont PAS dans le repo**. Le schéma initial des tables `events` et `invitees` est dans `db/schema.sql` (pas dans migrations/). Pour repartir de zéro, appliquer le schéma initial puis chronologiquement chaque migration `0007` à `0020` (après renommage des doublons 0016).
 
 ### Convention nommage
 
 - `0007` à `0012` : préfixe `XXXX-nom-kebab.sql`
-- `0013` à `0019` : préfixe `XXXX_nom_snake.sql`
+- `0013` à `0020` : préfixe `XXXX_nom_snake.sql`
 
 ### Console D1 — approche privilégiée
 
@@ -1002,22 +1024,38 @@ Modes mutuellement exclusifs côté UI et backend :
 | **Q&A modéré** ↔ **Chat libre** | **Incompatibles** entre eux (un seul mode chat à la fois) |
 | **Sondages**, **Quiz**, **Nuage**, **Ideas**, **Reactions**, **Annonces** | Combinables librement (sauf avec lecture seule pour les 4 premiers) |
 
-**Implémentation à faire** :
-- Fonction `validateModes()` côté backend (`api/admin/events/[id].js` PATCH + `api/admin/events/index.js` POST) — refuse 400 si combinaison invalide
-- Désactivation visuelle des checkboxes incompatibles dans `admin/edit.html` et `admin/new.html` — listener sur les `<input name="mode">` qui grise/coche les incompatibles
+**État au 15 mai 2026 — Fallback détecté** : implémentation incomplète, cohérence à restaurer.
+
+| Surface | Statut | Détail |
+|---|---|---|
+| PATCH `/api/admin/events/[id].js` | ✅ Conforme | `validateModesCompatibility` présent, refuse 400 si combinaison invalide |
+| POST `/api/admin/events.js` | ❌ Manquant | `validateModesCompatibility` **absent** — un event peut être créé avec modes contradictoires (la validation arrive seulement au PATCH suivant) |
+| `admin/edit.html` (UI) | ❌ Manquant | Désactivation visuelle des checkboxes incompatibles absente — l'utilisateur peut cocher des modes contradictoires sans signal |
+| `admin/new.html` (UI) | ❌ Manquant | Idem `edit.html` (probablement, à confirmer fichier en main) |
+
+**Action** : re-livrer les 3 fichiers `edit.html`, `new.html`, `events.js` (POST) en alignant sur le `validateModesCompatibility` déjà présent dans `events/[id].js` PATCH. Listener JS sur les `<input name="mode">` qui grise/coche les incompatibles côté UI.
 
 ### 10.7 Lot E — Tracking actions par personne (vue simple)
 
 Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>` avec compteurs par invité (X messages envoyés, Y réactions, Z votes, W CTAs cliqués, etc.).
 
-**État actuel** : tables actions existantes ont déjà `invitee_id` (chat_messages, event_reactions, idea_votes, poll_votes, quiz_responses). Reste à ajouter pour les actions non trackées :
-- **Migration `0020_actions_tracking.sql`** (0019 désormais pris par `auth_logs`) :
-  - `event_cta_clicks` (event_id, invitee_id, cta_id, clicked_at, ip_hash)
-  - `event_quote_shares` (event_id, invitee_id, quote_id, shared_at, platform)
-  - `event_resource_views` (event_id, invitee_id, resource_id, viewed_at)
-- **JS embarqué participant** : tracker les clics CTA / share quote / open resource
-- **Endpoint agrégation** : `GET /api/event-admin/<token>/invitee-stats` retourne `{invitee_id, name, email, messages_count, reactions_count, votes_count, ctas_clicked, quotes_shared, resources_viewed}[]`
-- **UI tableau** côté `event-admin/<slug>` onglet Données
+**État actuel** : tables actions existantes ont déjà `invitee_id` (chat_messages, event_reactions, idea_votes, poll_votes, quiz_responses). Reste à ajouter pour les actions non trackées.
+
+**Phase E.3 Part 1 ✅ Livrée (15 mai)** — Tracking clics CTA :
+- Migration `0020_event_cta_clicks.sql` (cf §5.9 pour le schéma) — CREATE TABLE + 3 indexes
+- Endpoint `POST /api/chat/<slug>/cta-clicks` (`functions/api/chat/[slug]/cta-clicks.js`) — auth cohérente `messages.js` (X-Magic-Token ou ip_hash anonyme), vérif `cta_id` valide pour event, insert non-bloquant (200 OK même si DB échoue)
+- Tracking JS dans `chat/[slug].js` + `i/[token].js` — handler click sur `btnEl` avec POST `keepalive: true` fire-and-forget, ne bloque pas l'ouverture du lien CTA (marqueur `nomacast-cta-clicks-v1`)
+- Aucun impact UX
+
+**Phase E.3 Part 2 — Restante** :
+- Endpoint timeline détaillée par invité : `GET /api/event-admin/<token>/invitees/<invitee_id>/timeline` qui UNION 6 sources (messages, reactions, votes, CTAs, quotes, presence)
+- UI drilldown dans `event-admin/[token].js` pour afficher la timeline
+
+**Phases ultérieures (non encore migrées)** — tables actions complémentaires :
+- `event_quote_shares` (event_id, invitee_id, quote_id, shared_at, platform)
+- `event_resource_views` (event_id, invitee_id, resource_id, viewed_at)
+- Endpoint agrégation : `GET /api/event-admin/<token>/invitee-stats` retourne `{invitee_id, name, email, messages_count, reactions_count, votes_count, ctas_clicked, quotes_shared, resources_viewed}[]`
+- UI tableau côté `event-admin/<slug>` onglet Données
 
 ### 10.8 Lot F — Sécurité globale (sans rotation PageSpeed) — phase 1 ✅ Livrée (15 mai)
 
@@ -1041,26 +1079,26 @@ Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>
 
 ### 10.9 Lot QA résiduel (au-delà du Lot A livré 15 mai)
 
-**Bugs critiques restants** :
-- **C2** Auto-bascule live au countdown 0 : côté client, transformation countdown→"Le live va démarrer" + polling continue. Polling intervalle 5s en pré-live, 30s pendant le live. Full reload si transition status détectée.
-- **C3** Polling status participant : vérifier `/api/chat/<slug>/status` et `/i/<token>/status`, réagir aux changements admin sans refresh manuel.
-- **C4** Replay/VOD non affiché après ended : investiguer `stream_playback_url` post-live. Vérifier que CF Stream `recording.mode = 'automatic'` côté Live Inputs.
+**Statut au 15 mai 2026** :
+
+| Item | Statut | Détail |
+|---|---|---|
+| **C2** Auto-bascule live | ✅ Résolu (déjà implémenté) | Lazy serveur (`chat/[slug].js` l.69-80, `i/[token].js` l.97-107) + polling client renforcé (5s post-`scheduled_at`, marqueur `nomacast-lot-c-c2-v1`) |
+| **C3** Polling status | ✅ Résolu | Endpoints `status.js` OK ; polling client adaptatif (60→30→10→5s) ; reload sur transition `draft→live` |
+| **C4** Replay/VOD | ⏸ Reporté | Nécessite config CF Stream côté Dashboard + UI player |
+| **M4** Rate limit messages | ✅ Résolu (déjà implémenté) | 10 msg/60s/IP via `ip_hash` HMAC, 429 + `Retry-After` (`messages.js` l.155-190) |
+| **U1** Mode lecture seule | ✅ Résolu (déjà implémenté) | `buildChatPanelHtml` masque le form input, filtre côté client `author_kind='admin'` |
+| **FR-1** Modal fin d'event | ⏸ À planifier | Petit chantier ~30 min |
+| **FR-4** Annonces modérateur | 🟡 Partiel | Côté participant déjà OK (mode lecture). Côté admin : reste à ajouter input "Publier une annonce" dans `admin/live.html` |
+
+**Items hors tableau (reste à traiter)** :
+
 - **C6** Latence 15s → activer **LL-HLS** dans Dashboard CF Stream
 - **C7** DVR non fonctionnel → activer rewind dans Dashboard CF Stream
-
-**Bugs majeurs restants** :
-- **M4** Rate limit messages ~10 : à clarifier (feature ou bug ?). Si feature, documenter le seuil + l'erreur user.
-
-**Tickets UX restants** :
-- **U1** Mode lecture seule : zone chat à masquer entièrement (pas juste désactivée)
-- **U3** Modes exclusifs : géré dans Lot D ci-dessus
+- **U3** Modes exclusifs : géré dans Lot D (cf §10.6)
 - **U4** Lien régie live sans login : déjà résolu par l'iframe dans event-admin (15 mai)
-
-**Features restantes** :
-- **FR-1** Pop-up fin d'event : modal au passage live→ended
 - **FR-2** Archive froide events : page `admin/archive.html` avec metrics + désactivation URLs publiques
-- **FR-4** Annonces modérateur : finaliser implémentation existante (partiellement présente d'après screenshots)
-- **FR-3** Description event : **livré 15 mai** sauf 2 morceaux : (a) accepter `description` dans `POST /api/admin/events` (fichier `functions/api/admin/events/index.js` à uploader pour finaliser), (b) inclure description dans le template mail invitation (`send-invitations.js` à uploader).
+- **FR-3** Description event : **livré 15 mai** sauf 2 morceaux : (a) accepter `description` dans `POST /api/admin/events` (fichier `functions/api/admin/events/index.js` à uploader pour finaliser), (b) inclure description dans le template mail invitation (helper `_lib/invitation-email.js` désormais centralisé — cf §10.4).
 
 ### 10.10 Lot G — Test embed iframe player site client (exploratoire)
 
@@ -1092,6 +1130,9 @@ Question ouverte : juste le player vidéo, ou player + chat + reactions (l'app c
 - **(15 mai)** **`auth_logs` : forensics et surveillance** — La table `auth_logs` n'a pas de purge auto. À long terme (>6 mois prod), prévoir un cleanup mensuel des entrées > 90 jours via SQL manuel ou cron. Cible : moins de 100 000 lignes pour garder les indexes performants.
 - **(15 mai)** **Rate limit KV consumption** — Chaque IP qui rate son login crée 1 entrée KV `auth-fail:<ip_hash>` (TTL 60s, auto-purge). Pas de risque de remplissage durable.
 - **(15 mai)** **Imports relatifs depuis dossiers avec brackets `[id]`, `[token]`** — Cloudflare Pages Functions résout correctement les imports relatifs depuis les dossiers brackets (validé 15 mai 2026 après fix d'une typo). Règle : nombre de `../` = nombre de dossiers entre le fichier source et `functions/`. Erreur typique : croire que `event-admin/[token]/` a 4 niveaux comme `admin/events/[id]/`. Un seul dossier composé ≠ deux dossiers imbriqués.
+- **(15 mai)** **Polling status client : timings actuels** — Page draft poll `/chat/<slug>/status` ou `/i/<token>/status` : 60s avant T-10min, 30s avant T-1min, 10s avant T0, 5s après T0 (marqueur `nomacast-lot-c-c2-v1`). Au retour de focus onglet → poll immédiat. Si beaucoup d'utilisateurs en attente sur un event → vérifier la charge sur D1 (1 SELECT par poll × N utilisateurs). Ex. 5s × 300 viewers = 60 req/s sur la fenêtre critique. Acceptable mais à surveiller.
+- **(15 mai)** **CTA tracking : `keepalive: true`** — Le fetch POST `/api/chat/<slug>/cta-clicks` utilise `keepalive: true` pour s'assurer que le ping arrive même si l'utilisateur quitte la page immédiatement après le clic. Limitation native du navigateur : body max 64 KB (largement suffisant pour notre body `{cta_id}`).
+- **(15 mai)** **CTA tracking : duplication d'helpers** — `authenticatePrivateRequest`, `computePreviewToken`, `hashIp` dupliqués entre `messages.js` et `cta-clicks.js` (et probablement d'autres endpoints chat). À refactoriser un jour en `functions/_lib/chat-auth.js` (idem `invitation-email.js`). Pas urgent.
 
 ---
 
@@ -1116,7 +1157,8 @@ Repo Nomacast/nomacast.fr
 │   ├── 0016_reactions_config.sql      # Tour 2.A-bis L1
 │   ├── 0016_client_credentials.sql ⚠️ # À renommer 0017_* (15 mai)
 │   ├── 0017_event_description.sql ⚠️  # À renommer 0018_* (15 mai)
-│   └── 0019_auth_logs.sql              # Lot F sécu phase 1 — table forensics login (15 mai)
+│   ├── 0019_auth_logs.sql              # Lot F sécu phase 1 — table forensics login (15 mai)
+│   └── 0020_event_cta_clicks.sql       # Phase E.3 Part 1 — tracking clics CTA (15 mai)
 ├── functions/
 │   ├── _lib/                          # NOUVEAU (15 mai) — helpers internes partagés
 │   │   ├── password.js               # PBKDF2 100k generate/hash/verify
@@ -1132,7 +1174,7 @@ Repo Nomacast/nomacast.fr
 │   │   │   ├── events/[id]/credentials.js  # NOUVEAU (15 mai) GET/PUT/POST/DELETE credentials client
 │   │   │   ├── upload-logo.js
 │   │   │   └── version.js
-│   │   ├── chat/[slug]/              # API publique participant (cf §2.3)
+│   │   ├── chat/[slug]/              # API publique participant (cf §2.3) — + cta-clicks.js (15 mai, Phase E.3 Part 1, marqueur `nomacast-cta-clicks-v1`)
 │   │   ├── event-admin/[token]/      # API admin client (cf §2.4)
 │   │   ├── feed/alerts.js            # JSON vMix
 │   │   └── validate-code.js          # Codes partenaires (site marketing)
@@ -1170,6 +1212,22 @@ functions/_lib/invitation-email.js
 
 Rappel : `[token]` ou `[id]` comptent comme **un seul** dossier (cf §11 Imports relatifs). Refactor complet terminé le 15 mai : -940 lignes (54% de réduction) sur l'ensemble des 4 endpoints.
 
+**Favicon outil interactif** (Part 1 livrée 15 mai, marqueur `nomacast-favicon-v1`) :
+
+```
+Pattern injecté : <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+Source : /favicon.svg à la racine du repo (déjà existant)
+
+Pages couvertes :
+├── /event-admin/login        (login.js)
+├── /event-admin/<slug>       (event-admin/[token].js — 2 occurrences : page error + page main)
+├── /chat/<slug>              (chat/[slug].js)
+└── /i/<token>                (i/[token].js)
+
+Reste à faire (Part 2) :
+└── /admin/edit.html, /admin/new.html, /admin/live.html, ... (pages admin HTML statiques)
+```
+
 ---
 
-*Rapport mis à jour le 15 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` et de la session du jour (auth client login/password, onglets event-admin, Lot A QA, FR-3 description, Lot F sécu phase 1 — rate limit login + table auth_logs). Toutes les affirmations ont été vérifiées sur les fichiers réels ou sur les modifications livrées dans la session.*
+*Rapport mis à jour le 15 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` et de la session du jour (auth client login/password, onglets event-admin, Lot A QA, FR-3 description, Lot F sécu phase 1 — rate limit login + table auth_logs, Lot C QA C2/C3 polling client, Phase E.3 Part 1 tracking CTA). Toutes les affirmations ont été vérifiées sur les fichiers réels ou sur les modifications livrées dans la session.*
