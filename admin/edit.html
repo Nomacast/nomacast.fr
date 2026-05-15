@@ -305,8 +305,8 @@
     }
 
     /* ==========================================================
-       nomacast-edit-tabs-v1 — Bandeau d'onglets DATA / RÉGIE LIVE
-       Pattern identique à event-admin/[token].js pour cohérence UX
+       nomacast-edit-tabs-v2 — Onglets Données / Live & interactions
+       (form englobe les 2 panels, bouton submit en bar sticky bottom)
        ========================================================== */
     .tabs-bar {
       background: #fff;
@@ -343,20 +343,23 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* Iframe pour la régie embarquée dans l'onglet live */
-    .tab-panel-live { padding: 0; }
-    .tab-iframe-wrap {
-      height: calc(100vh - 110px); /* viewport moins header (50) + tabs (50) + marge */
-      width: 100%;
-      background: #f8fafc;
+    /* Bar sticky bottom — actions form visibles depuis les 2 onglets */
+    .form-actions-bar {
+      position: sticky;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-top: 1px solid #e2e8f0;
+      padding: 14px 24px;
+      margin: 0 -24px -24px;
+      z-index: 4;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+    }
+    .form-actions-bar:empty { display: none; }
+    .form-actions-bar .admin-form-actions {
       max-width: 1280px;
       margin: 0 auto;
-    }
-    .tab-iframe-frame {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
     }
   </style>
 </head>
@@ -377,50 +380,75 @@
   </div>
 </header>
 
-<!-- nomacast-edit-tabs-v1 : bandeau d'onglets DATA / RÉGIE LIVE -->
+<!-- nomacast-edit-tabs-v2 : bandeau d'onglets Données / Live & interactions -->
 <div class="tabs-bar">
   <div class="tabs-bar-inner">
     <button type="button" class="tab-btn active" data-tab="data">Données &amp; paramètres</button>
-    <button type="button" class="tab-btn" data-tab="live">Régie en direct</button>
+    <button type="button" class="tab-btn" data-tab="live">Live &amp; interactions</button>
   </div>
 </div>
 
-<main class="admin-main tab-panel tab-panel-data active" id="panel-data">
+<main class="admin-main">
 
-  <div class="admin-page-head">
-    <div>
-      <h1 id="page-title">Éditer l'event</h1>
-      <div class="admin-page-head-sub" id="page-sub">Chargement…</div>
-    </div>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <span class="admin-badge" id="status-badge" hidden></span>
-    </div>
-  </div>
+  <!-- Le form englobe les 2 panels — la soumission lit tous les inputs des 2 onglets -->
+  <form id="event-form" class="admin-form" autocomplete="off" novalidate>
 
-  <div id="message-zone"></div>
-  <div id="public-link-zone"></div>
-  <div id="credentials-zone"></div>
-  <div id="stats-zone"></div>
+    <!-- ============================================================
+         ONGLET 1 : Données & paramètres
+         titre, client, slug, date, durée, audience, couleur,
+         description, logo, mode d'accès, credentials, stats
+         ============================================================ -->
+    <div class="tab-panel tab-panel-data active" id="panel-data">
 
-  <div class="admin-card" id="form-container">
-    <div class="admin-card-body admin-text-muted">
-      <span class="admin-loader"></span> Chargement de l'event…
+      <div class="admin-page-head">
+        <div>
+          <h1 id="page-title">Éditer l'event</h1>
+          <div class="admin-page-head-sub" id="page-sub">Chargement…</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span class="admin-badge" id="status-badge" hidden></span>
+        </div>
+      </div>
+
+      <div id="message-zone"></div>
+
+      <div class="admin-card" id="form-container">
+        <div class="admin-card-body" id="form-fields-data-zone">
+          <div class="admin-text-muted">
+            <span class="admin-loader"></span> Chargement de l'event…
+          </div>
+        </div>
+      </div>
+
+      <div id="credentials-zone"></div>
+      <div id="stats-zone"></div>
+
     </div>
-  </div>
+
+    <!-- ============================================================
+         ONGLET 2 : Live & interactions
+         statut, modes, options, URL publique, stream card, live control
+         ============================================================ -->
+    <div class="tab-panel tab-panel-live" id="panel-live">
+
+      <div class="admin-card" id="form-container-live">
+        <div class="admin-card-body" id="form-fields-live-zone">
+          <div class="admin-text-muted">
+            <span class="admin-loader"></span> Chargement…
+          </div>
+        </div>
+      </div>
+
+      <div id="public-link-zone"></div>
+
+    </div>
+
+    <!-- Bar sticky bottom : actions du form (visibles depuis les 2 onglets) -->
+    <div class="form-actions-bar" id="form-actions-zone"></div>
+
+  </form>
 
 </main>
-
-<!-- nomacast-edit-tabs-v1 : panel régie (iframe lazy-loaded au 1er clic) -->
-<div class="tab-panel tab-panel-live" id="panel-live">
-  <div class="tab-iframe-wrap">
-    <iframe
-      id="live-iframe"
-      class="tab-iframe-frame"
-      title="Régie en direct"
-      loading="lazy"
-      referrerpolicy="same-origin"></iframe>
-  </div>
-</div>
 
 <script src="/admin/admin.js"></script>
 <script>
@@ -440,10 +468,10 @@
   var justCreated = qs.get('created') === '1';
 
   // ============================================================
-  // nomacast-edit-tabs-v1 : gestion onglets Données / Régie en direct
+  // nomacast-edit-tabs-v2 : gestion onglets Données / Live & interactions
   // - Onglet par défaut : data
-  // - L'iframe régie est lazy-loaded au 1er clic (data-src → src injecté avec ?id=)
-  // - Persistance via fragment #live pour partage et refresh
+  // - Le <form> englobe les 2 panels → soumission unique lit tous les inputs
+  // - Persistance fragment URL : #live pour partage / refresh sur l'onglet régie
   // ============================================================
   (function setupTabs() {
     var tabBtns = document.querySelectorAll('.tab-btn');
@@ -451,9 +479,6 @@
       data: document.getElementById('panel-data'),
       live: document.getElementById('panel-live')
     };
-    var iframe = document.getElementById('live-iframe');
-    var iframeLoaded = false;
-
     function activateTab(tabName) {
       tabBtns.forEach(function (b) {
         b.classList.toggle('active', b.getAttribute('data-tab') === tabName);
@@ -461,23 +486,14 @@
       Object.keys(panels).forEach(function (key) {
         if (panels[key]) panels[key].classList.toggle('active', key === tabName);
       });
-      // Lazy load iframe au 1er clic sur "Régie en direct"
-      if (tabName === 'live' && iframe && !iframeLoaded && id) {
-        iframe.src = '/admin/live.html?id=' + encodeURIComponent(id);
-        iframeLoaded = true;
-      }
-      // Persistance dans l'URL (fragment)
       var newHash = tabName === 'live' ? '#live' : '';
       if (window.location.hash !== newHash) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search + newHash);
       }
     }
-
     tabBtns.forEach(function (btn) {
       btn.addEventListener('click', function () { activateTab(btn.getAttribute('data-tab')); });
     });
-
-    // Au boot : si fragment #live, activer cet onglet directement
     if (window.location.hash === '#live') activateTab('live');
   })();
 
@@ -626,8 +642,6 @@
 
     // Lien régie : désormais géré dans le panneau URLs (renderUrlPanel)
 
-    A.clearNode(container);
-
     // Panneau unique avec tous les liens de l'événement (cf. nomacast-url-panel-v1)
     A.clearNode(publicLinkZone);
     publicLinkZone.appendChild(renderUrlPanel(ev));
@@ -642,12 +656,15 @@
     // nomacast-stats-card-v1 : card Statistiques (mount avec polling 5s si live)
     mountStats(ev);
 
-    var body = A.el('div', { className: 'admin-card-body' });
-
-    var form = A.el('form', {
-      className: 'admin-form',
-      attrs: { autocomplete: 'off' }
-    });
+    // nomacast-edit-tabs-v2 : on récupère le <form> statique + 3 zones
+    // (au lieu de créer un form dynamique ; le form englobe les 2 panels tab)
+    var form = document.getElementById('event-form');
+    var dataZone = document.getElementById('form-fields-data-zone');
+    var liveZone = document.getElementById('form-fields-live-zone');
+    var actionsZone = document.getElementById('form-actions-zone');
+    A.clearNode(dataZone);
+    A.clearNode(liveZone);
+    A.clearNode(actionsZone);
 
     // Fix 8 v2 : slug modifiable uniquement si aucun invité n'a reçu le lien
     var canChangeSlug = (ev.invitees_count || 0) === 0;
@@ -657,7 +674,7 @@
       ? 'Modifie le titre affiché. L\'URL publique reste « /chat/' + ev.slug + ' » sauf si tu modifies le slug ci-dessous.'
       : 'Modifie uniquement le titre affiché. \u26A0 L\'URL publique « /chat/' + ev.slug + ' » est figée (' + ev.invitees_count + ' invité(s) ont déjà reçu ce lien).';
 
-    form.appendChild(formRow([
+    dataZone.appendChild(formRow([
       field('Titre de l\'event', true, A.el('input', {
         className: 'admin-form-input',
         attrs: { type: 'text', name: 'title', required: true, maxlength: '200', value: ev.title }
@@ -688,14 +705,14 @@
           .replace(/^-+|-+$/g, '');
         this.value = v;
       });
-      form.appendChild(formRow([
+      dataZone.appendChild(formRow([
         field('URL publique (slug)', false, slugInput,
           'L\'URL sera « /chat/' + ev.slug + ' ». Modifiable tant qu\'aucun invité n\'a reçu le lien. Sera figée définitivement dès le 1er ajout d\'invité.')
       ]));
     }
 
     // --- Date + Durée ---
-    form.appendChild(formRow([
+    dataZone.appendChild(formRow([
       field('Date et heure', true, A.el('input', {
         className: 'admin-form-input',
         attrs: { type: 'datetime-local', name: 'scheduled_at', required: true, value: A.isoToLocalInput(ev.scheduled_at) }
@@ -707,7 +724,7 @@
     ]));
 
     // --- Audience + Couleur ---
-    form.appendChild(formRow([
+    dataZone.appendChild(formRow([
       field('Audience estimée', false, A.el('input', {
         className: 'admin-form-input',
         attrs: { type: 'number', name: 'audience_estimate', min: '1', step: '1', value: ev.audience_estimate || '' }
@@ -874,7 +891,7 @@
       }
     });
 
-    form.appendChild(formRow([
+    dataZone.appendChild(formRow([
       field(
         'Logo du client',
         false,
@@ -882,11 +899,22 @@
         'Colle une URL publique (PNG/JPG/WEBP/SVG, hauteur ~60–120 px conseillée) OU clique « Importer un fichier » pour uploader depuis ton ordi (max 2 Mo). Apparaîtra dans le header du mail d\'invitation et sur la page participant. Laisse vide pour utiliser le logo Nomacast par défaut.'
       )
     ], true));
-    form.appendChild(A.el('div', {
+    dataZone.appendChild(A.el('div', {
       className: 'admin-form-field',
       style: { marginTop: '-12px', marginBottom: '12px' },
       children: [logoPreview]
     }));
+
+    // --- Mode d'accès (config admin, va dans Données) ---
+    var accessField = fieldNoLabel('Mode d\'accès',
+      buildAccessRadios(ev.access_mode || 'public')
+    );
+    dataZone.appendChild(accessField);
+
+    // ========================================================
+    // nomacast-edit-tabs-v2 : à partir d'ici tout va dans liveZone
+    // (statut + modes + options = contrôle live & interactions)
+    // ========================================================
 
     // --- Statut ---
     var statusSelect = A.el('select', {
@@ -899,7 +927,7 @@
         text: opt[1]
       }));
     });
-    form.appendChild(formRow([
+    liveZone.appendChild(formRow([
       field('Statut', false, statusSelect, 'Brouillon (caché) → En direct (chat ouvert) → Terminé (replay).')
     ], true));
 
@@ -907,21 +935,16 @@
     var modesField = fieldNoLabel('Modes d\'interaction',
       buildModesCheckboxes(ev.modes || [])
     );
-    form.appendChild(modesField);
+    liveZone.appendChild(modesField);
     // nomacast-modes-compat-v1 / Lot D — UI désactivation cases incompatibles
-    setupModesCompat(form);
+    // (scope = liveZone car les modes sont désormais dans le panel-live)
+    setupModesCompat(liveZone);
 
     // --- Options (white-label + subtitles) ---
     var optionsField = fieldNoLabel('Options',
       buildOptionsCheckboxes(ev.white_label, ev.subtitles)
     );
-    form.appendChild(optionsField);
-
-    // --- Mode d'accès ---
-    var accessField = fieldNoLabel('Mode d\'accès',
-      buildAccessRadios(ev.access_mode || 'public')
-    );
-    form.appendChild(accessField);
+    liveZone.appendChild(optionsField);
 
     // --- Actions ---
     var saveBtn = A.el('button', {
@@ -972,15 +995,14 @@
     actions.appendChild(inviteesBtn);
     actions.appendChild(cancelBtn);
     actions.appendChild(saveBtn);
-    form.appendChild(actions);
+    // nomacast-edit-tabs-v2 : actions vont dans la bar sticky bottom, visible des 2 onglets
+    actionsZone.appendChild(actions);
 
-    form.addEventListener('submit', function (e) {
+    // Attach submit handler au form statique (override de tout listener précédent)
+    form.onsubmit = function (e) {
       e.preventDefault();
       onSubmit(ev, form, saveBtn);
-    });
-
-    body.appendChild(form);
-    container.appendChild(body);
+    };
   }
 
   // ============ DOM builders ============
