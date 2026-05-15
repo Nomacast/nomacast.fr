@@ -1,9 +1,18 @@
 # Rapport infrastructure — Nomacast Live (chat interactif)
 
 **Date initiale** : 14 mai 2026
-**Dernière MAJ** : 14 mai 2026 (Tour 2.A déployé + Tour 2.A-bis L1 backend)
+**Dernière MAJ** : 15 mai 2026 (Auth client login/password + Onglets event-admin + Lot A QA + FR-3 description)
 **Méthode** : repo `Nomacast/nomacast.fr` cloné en local (`git clone --depth 1`), tous les fichiers cités ci-dessous ont été lus directement.
 **Statut** : production stable.
+
+---
+
+## Changelog rapide depuis le 14 mai
+
+- **Auth client par event** : remplacement total du HMAC backup par un système login/password (migration `client_credentials`, helpers `_lib/password.js` + `_lib/session.js`, page `/event-admin/login` + `/event-admin/logout`). Jérôme se connecte exactement comme un client (même URL).
+- **Onglets event-admin** : `/event-admin/<slug>` affiche désormais 2 onglets « Données & invités » + « Régie en direct » (iframe `/admin/live.html?id=<id>`).
+- **Lot A du QA** (15 mai) : Content-Type `text/html` explicite sur `/*.html`, validation date passée + durée ≤0 à la création, fix reset logo UI quand white_label OFF, CTA 404 cohérent pour magic token invalide, champ description event 500c (migration `event_description`).
+- **Conflit numérotation migrations 0016** : 2 fichiers nommés `0016_*` dans le repo (`reactions_config` + `client_credentials`). Renommage à faire via GitHub web : `0017_client_credentials.sql` + `0018_event_description.sql`.
 
 ---
 
@@ -14,15 +23,19 @@ Plateforme de chat live interactif pour événements corporate B2B. **Cohabite a
 - Pages servies : `admin/*`, `chat/*`, `i/*`, `event-admin/*`, `quote/*`, `feed/*`
 - API : `/api/admin/*`, `/api/chat/*`, `/api/event-admin/*`, `/api/feed/*`
 
-**État déploiement features participants (mai 2026)** :
+**État déploiement features participants (15 mai 2026)** :
 
 | Tour | Features | Status |
 |---|---|---|
 | Tour 1 (backend complet) | Q&A modéré, chat libre, sondages, quiz, nuage mots-clés, pre_event_qa, ideas, quotes, reactions, presence, ressources, CTAs | Backend ✅ |
 | Tour 2.A (frontend participant) | reactions bar (8 emojis), compteur présence header, CTA banner dismissible | ✅ déployé (marqueurs `nomacast-lot-2a-v1` dans `[token].js` + `[slug].js`) |
-| Tour 2.A-bis L1 (backend reactions configurables) | Pool 15 emojis, sélection 1-5 par event, migration 0016 | ✅ déployé |
+| Tour 2.A-bis L1 (backend reactions configurables) | Pool 15 emojis, sélection 1-5 par event, migration `0016_reactions_config` | ✅ déployé |
 | Tour 2.A-bis L2-L4 | Frontend dynamique participant, CRUD CTAs admin, UI live.html | 🔧 à faire |
 | Tour 2.B/2.C/2.D (frontend) | Onglets ideas, quotes, resources, pre_event_qa | 🔧 à faire |
+| **Auth client login/password** (15 mai) | Migration `client_credentials` + helpers + middlewares + page login/logout + card "Accès client" dans `edit.html` | ✅ déployé |
+| **Onglets event-admin** (15 mai) | `/event-admin/<slug>` avec onglets DATA + RÉGIE LIVE en iframe `/admin/live.html?id=<id>` | ✅ déployé |
+| **Lot A QA** (15 mai) | C1 Content-Type, M1/U5 validations, M2 cast Number, M3 fix logo UI, U2 CTA 404, FR-3 description (migration `event_description`) | ✅ déployé |
+| **Chantier analytics live** | Migration `0015_analytics_foundation` + tracking visits ✅. Reste : `buildHeartbeatScript` dans `[token].js`/`[slug].js`, endpoint+UI client `event-admin/stats`, enrichissements (top emojis, votes sondages, CTAs) | 🔧 en pause |
 
 | Élément | Valeur |
 |---|---|
@@ -91,6 +104,7 @@ admin/
 | `title` | `text` (required, maxlength 200) | `title` |
 | `client_name` | `text` (maxlength 200) | `client_name` |
 | `slug` | `text` (pattern `[a-z0-9-]+`, modifiable **seulement si 0 invité**) | `slug` |
+| `description` | `textarea` (maxlength 500, FR-3) | `description` |
 | `scheduled_at` | `datetime-local` (required) | `scheduled_at` (ISO) |
 | `duration_minutes` | `number` (required, min 1) | `duration_minutes` |
 | `audience_estimate` | `number` (min 1) | `audience_estimate` |
@@ -104,16 +118,29 @@ admin/
 
 Le payload PATCH côté JS construit `data.modes = [...]` (array) et l'API le sérialise en `modes_json` côté DB.
 
+**Card "Accès client"** (15 mai, marqueur `nomacast-client-credentials-v1`) : panneau séparé entre URLs et Statistiques. Permet :
+- Définir/modifier le `client_login` (par défaut = slug, éditable)
+- Générer/régénérer un mot de passe (12 chars charset sans ambiguïté `ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789`)
+- Le mot de passe est affiché **une seule fois** en clair après génération (bouton Copier), puis stocké hashé (PBKDF2 100k)
+- Bouton Révoquer (reset login + password)
+- Endpoints : `GET/PUT/POST/DELETE /api/admin/events/<id>/credentials`
+
+**M3 fix UI (15 mai)** : après save PATCH, le DOM est resynchronisé avec `result.event` (logo_url, primary_color, white_label, subtitles, description). Quand white_label passe OFF, le backend reset logo_url=null + primary_color=default, le DOM reflète ce reset (déclenche `input` event sur logo_url et primary_color → `renderLogoPreview` se met à jour).
+
 ### 1.3 `admin/new.html` — création event
 
 | Élément | Valeur |
 |---|---|
-| Rôle | Formulaire création d'un event (minimal : titre, date, durée) |
+| Rôle | Formulaire création d'un event (minimal : titre, date, durée + description optionnelle) |
 | Param URL | aucun |
 | `<title>` actuel | `Nouvel event · Admin Nomacast` |
 | `<h1>` | `Nouvel event` (statique) |
 | Endpoint | `POST /api/admin/events` |
 | Après succès | redirection vers `/admin/edit.html?id=<new_id>&created=1` |
+| Validations submit (15 mai) | M1 : si `scheduled_at < now()` → `confirm()` selon écart ; U5 : `duration_minutes ≤ 0` refusé |
+| Champ ajouté (15 mai) | `description` (textarea 500c, compteur live) — FR-3 |
+
+⚠️ **Backend POST** `functions/api/admin/events/index.js` : à mettre à jour pour accepter `description` (sinon ignoré silencieusement à la création — éditable via `edit.html` PATCH ensuite).
 
 ### 1.4 `admin/invitees.html` — gestion invités
 
@@ -554,9 +581,16 @@ CREATE TABLE IF NOT EXISTS events (
   -- Modes d'interaction
   modes_json          TEXT,                             -- JSON array sérialisé, exposé en `modes` (array) côté API
   
-  -- Reactions configurables (mig 0016)
+  -- Reactions configurables (mig 0016_reactions_config)
   reaction_emojis_json TEXT,                            -- JSON array 1-5 emojis. NULL = défaut 8 originaux. Pool autorisé : 15 emojis.
-  
+
+  -- Description event (mig event_description du 15 mai, FR-3)
+  description         TEXT,                             -- max 500c, affichée sur waiting/live/ended + mail invitation. NULL si non renseignée.
+
+  -- Auth client login/password (mig client_credentials du 15 mai)
+  client_login        TEXT,                             -- identifiant lisible (par défaut = slug). UNIQUE INDEX partiel (NULL ignoré).
+  client_password_hash TEXT,                            -- format `pbkdf2:<salt_b64url>:<hash_b64url>` (100k itérations SHA-256). NULL = pas de credentials configurés.
+
   -- Accès
   access_mode         TEXT DEFAULT 'public',            -- ENUM : public | private
   
@@ -575,6 +609,8 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX idx_events_slug      ON events(slug);
 CREATE INDEX idx_events_status    ON events(status);
 CREATE INDEX idx_events_scheduled ON events(scheduled_at);
+-- Unique partiel : autorise plusieurs events sans login défini, mais 2 events ne peuvent pas avoir le même client_login
+CREATE UNIQUE INDEX idx_events_client_login ON events(client_login) WHERE client_login IS NOT NULL;
 ```
 
 ### 5.2 Tokens DÉRIVÉS (non stockés)
@@ -667,8 +703,8 @@ Schémas complets disponibles dans les fichiers migrations correspondants.
 
 | Pattern | Type | Auth | Description |
 |---|---|---|---|
-| `/admin/<page>` | HTML | Basic Auth (`ADMIN_PASSWORD`) | Admin Nomacast |
-| `/api/admin/*` | JSON | Basic Auth | API admin |
+| `/admin/<page>` | HTML | Basic Auth (`ADMIN_PASSWORD`) **OU** cookie session client si URL = `/admin/live.html?id=<event_id>` matching | Admin Nomacast — exception cookie session permet à l'iframe régie de fonctionner sans Basic Auth popup |
+| `/api/admin/*` | JSON | Basic Auth **OU** cookie session client si URL = `/api/admin/events/<event_id>/*` matching | API admin (iframe régie partage l'auth via cookie) |
 | `/i/<magic_token>` | HTML | magic_token (lookup invitees) | Page invité privé |
 | `/i/<magic_token>/calendar.ics` | text/calendar | magic_token | .ics personnel |
 | `/i/<magic_token>/status` | JSON | magic_token | Polling status |
@@ -676,11 +712,31 @@ Schémas complets disponibles dans les fichiers migrations correspondants.
 | `/chat/<slug>/calendar.ics` | text/calendar | publique | .ics public |
 | `/chat/<slug>/status` | JSON | publique | Polling status |
 | `/api/chat/<slug>/*` | JSON | publique (rate-limit IP) | API participant |
-| `/event-admin/<client_admin_token>` | HTML | HMAC(slug+':client', ADMIN_PASSWORD) | Page admin client (sans login Nomacast) |
-| `/api/event-admin/<client_admin_token>/*` | JSON | HMAC | API admin client |
+| **`/event-admin/login`** | HTML/POST | aucune (formulaire) | **Page login client** (15 mai) — accepte login+password, pose cookie session HMAC signé, redirige vers `/event-admin/<slug>` |
+| **`/event-admin/logout`** | HTML | aucune | **Efface cookie session** + redirige vers login |
+| `/event-admin/<slug>` | HTML | **cookie session valide pour cet event_id** | Page admin client avec onglets DATA + RÉGIE LIVE (iframe `/admin/live.html?id=<id>`). Le HMAC backup a été supprimé le 15 mai — toi tu te connectes comme un client. |
+| `/api/event-admin/<client_admin_token>/*` | JSON | HMAC (token calculé serveur-side, passé au JS embarqué) | API admin client (stats, csv, invitees, etc.) |
 | `/quote/<id>` | HTML | publique (event_quotes.status IN ('approved','pinned')) | Page partage citation (OG meta LinkedIn) |
 | `/feed/alerts?event=<id>&token=<hmac>` | HTML | HMAC | Page overlay vMix Browser Input |
 | `/api/feed/alerts?event=<id>&token=<hmac>` | JSON | HMAC | JSON polling vMix |
+
+### Architecture auth client login/password (15 mai 2026)
+
+**Helpers** :
+- `functions/_lib/password.js` : `generatePassword(12)` (charset sans ambiguïté `ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789`), `hashPassword()`/`verifyPassword()` PBKDF2-SHA256 100k itérations, comparaison constante temps
+- `functions/_lib/session.js` : `signSession/verifySession`, `createSessionCookieValue/buildSetCookieHeader/buildClearCookieHeader/readSessionCookie/getSessionFromRequest`. Cookie `nomacast_session` HttpOnly+Secure+SameSite=Lax+Max-Age=7j. Payload `{event_id, login, exp}` signé HMAC-SHA256 avec `env.SESSION_SECRET`.
+
+**Endpoints credentials (admin Nomacast uniquement)** :
+- `GET /api/admin/events/<id>/credentials` → `{ login, has_password }` (hash JAMAIS exposé)
+- `PUT /api/admin/events/<id>/credentials` body `{ login }` → met à jour le login
+- `POST /api/admin/events/<id>/credentials` → génère un nouveau password, renvoie **en clair UNE FOIS** dans la réponse, puis stocke hashé
+- `DELETE /api/admin/events/<id>/credentials` → reset login + password (event inaccessible côté client)
+
+**Variable d'env** : `env.SESSION_SECRET` (32 bytes base64, à mettre dans Cloudflare Pages settings Production+Preview). Si manquante, `/event-admin/login` retourne 500.
+
+**Cross-event protection** : cookie session contient `event_id`, middleware refuse si URL demande un autre event_id.
+
+**Rafraîchissement glissant** : à chaque visite de `/event-admin/<slug>`, le cookie est ré-émis avec `exp=now+7j`. Utilisateur actif = session indéfiniment renouvelée.
 
 ⚠️ **Pas de route `/c/<token>`**. L'interface admin client est `/event-admin/<token>` (pas `/c/`).
 
@@ -697,6 +753,7 @@ Schémas complets disponibles dans les fichiers migrations correspondants.
 | `env.PARTNERS` | KV binding | Codes partenaires configurateur tarifs (site marketing) |
 | `env.RATE_LIMIT` | KV binding | Rate limit `envoyer.php.js` (site marketing) |
 | `env.ADMIN_PASSWORD` | secret | Auth Basic admin + dérive `admin_preview_token` et `client_admin_token` (HMAC) |
+| `env.SESSION_SECRET` | secret | **(15 mai)** Signe les cookies session client login/password. 32 bytes base64. Sans cette variable, `/event-admin/login` retourne 500. |
 | `env.CHAT_IP_HASH_SECRET` | secret | HMAC anonymisation IP pour ip_hash D1 + signature URL feed vMix |
 | `env.RESEND_API_KEY` | secret | Envoi emails (Resend) |
 | `env.TURNSTILE_SECRET_KEY` | secret | Validation Turnstile (site marketing) |
@@ -744,17 +801,27 @@ migrations/
 ├── 0013_technical_alerts.sql       — CREATE technical_alerts (feed vMix Browser Input)
 ├── 0014_interactions_bundle.sql    — CREATE pre_event_questions + ideas + idea_votes + event_quotes + event_reactions + event_presence + event_resources + event_ctas (8 tables Tour 1 modes interactions)
 ├── 0015_analytics_foundation.sql   — CREATE visits + event_presence_history + event_reports / ALTER invitees (source, job_title, phone, consent_at, consent_marketing_at, anonymized_at, registered_via) / ALTER events (requires_registration, client_organization_name, data_purpose) — analytics + lead capture + RGPD
-└── 0016_reactions_config.sql       — ALTER events ADD reaction_emojis_json (1-5 emojis du pool de 15 par event, Tour 2.A-bis)
+├── 0016_reactions_config.sql       — ALTER events ADD reaction_emojis_json (1-5 emojis du pool de 15 par event, Tour 2.A-bis)
+├── 0016_client_credentials.sql ⚠️  — DOUBLON DE NUMÉROTATION (15 mai). ALTER events ADD client_login + client_password_hash, UNIQUE INDEX partiel sur client_login. À renommer en `0017_client_credentials.sql` via GitHub web.
+└── 0017_event_description.sql ⚠️  — À renommer en `0018_event_description.sql` après le rename ci-dessus. ALTER events ADD description (15 mai, FR-3).
 ```
+
+### Conflit numérotation 0016 (à régulariser)
+
+Le 15 mai, j'ai créé `0016_client_credentials.sql` sans détecter que `0016_reactions_config.sql` existait déjà. La DB s'en moque (les ALTER TABLE ADD COLUMN portent sur des colonnes différentes), mais c'est moche dans le repo.
+
+**Action** : via GitHub web (icône poubelle sur la page du fichier — la sync Drive→GitHub ne propage pas les suppressions), supprimer puis re-uploader avec les nouveaux noms :
+- `0016_client_credentials.sql` → `0017_client_credentials.sql`
+- `0017_event_description.sql` → `0018_event_description.sql`
 
 ### Schéma initial
 
-⚠️ **Les migrations `0001` à `0006` ne sont PAS dans le repo**. Le schéma initial des tables `events` et `invitees` est dans `db/schema.sql` (pas dans migrations/). Pour repartir de zéro, appliquer le schéma initial puis chronologiquement chaque migration `0007` à `0016`.
+⚠️ **Les migrations `0001` à `0006` ne sont PAS dans le repo**. Le schéma initial des tables `events` et `invitees` est dans `db/schema.sql` (pas dans migrations/). Pour repartir de zéro, appliquer le schéma initial puis chronologiquement chaque migration `0007` à `0018` (après renommage).
 
 ### Convention nommage
 
 - `0007` à `0012` : préfixe `XXXX-nom-kebab.sql`
-- `0013` à `0016` : préfixe `XXXX_nom_snake.sql` (changement de style)
+- `0013` à `0018` : préfixe `XXXX_nom_snake.sql`
 
 ### Console D1 — approche privilégiée
 
@@ -807,29 +874,15 @@ migrations/
 
 ## 10. Cibles précises pour les 4 TODOs
 
-### 10.1 Ajouter un panneau URLs dans `edit.html`
+### 10.1 Ajouter un panneau URLs dans `edit.html` ✅ FAIT (15 mai)
 
-**Fichier à modifier** : `admin/edit.html`
+Panneau URLs en place dans `<div id="public-link-zone">` ligne 41 de `admin/edit.html`. Affiche désormais :
+- Lien événement (participant) — public ou privé avec `?preview=<admin_preview_token>`
+- **Lien admin client** = `${origin}/event-admin/<client_login>` (depuis 15 mai, login obligatoire). Si pas de credentials configurés, affiche « — Pas encore configuré — » avec lien vers la card "Accès client" plus bas.
+- Lien régie en direct (si `ev.stream_uid`)
+- URL feed vMix (si `ev.stream_uid`)
 
-**Zone d'injection** : `<div id="public-link-zone"></div>` ligne 41. Actuellement (lignes 115-122 de `renderForm`) :
-```js
-A.clearNode(publicLinkZone);
-publicLinkZone.appendChild(A.renderPublicLink(ev));
-if (ev.client_admin_token) {
-  publicLinkZone.appendChild(A.renderClientAdminLink(ev));
-}
-publicLinkZone.appendChild(A.renderStreamCard(ev, load));
-```
-
-**Liens à inclure dans le panneau** :
-- Lien événement = `${origin}/chat/${ev.slug}` (public) ou `${origin}/chat/${ev.slug}?preview=${ev.admin_preview_token}` (privé)
-- Lien admin client = `${origin}/event-admin/${ev.client_admin_token}` (toujours présent — calculé via HMAC)
-- Lien régie = `${origin}/admin/live.html?id=${ev.id}` (visible **seulement si** `ev.stream_uid`)
-- Lien outil vMix = `${origin}/admin/vmix.html?id=${ev.id}` (visible **seulement si** `ev.stream_uid`)
-
-**Bouton "Régie en direct" actuel** dans le header (lignes 34-35, `<a id="regie-link">`) : à **retirer** une fois le panneau en place (redondant). Et virer le JS qui le gère (lignes 102-110 de `renderForm`).
-
-⚠️ Garder `A.renderStreamCard(ev, load)` à côté du nouveau panneau (rôle différent : provisionning Cloudflare Stream).
+Le HMAC backup `client_admin_token` reste calculé côté serveur (pour rétro-compat des liens internes du JS embarqué dans event-admin) mais n'est plus exposé à l'admin Nomacast comme lien direct sans login.
 
 ### 10.2 Uniformiser les `<title>` "nom page - nom événement"
 
@@ -903,6 +956,93 @@ publicLinkZone.appendChild(A.renderStreamCard(ev, load));
 
 → **Soit chacun de ces fichiers dupliqua le même template**, soit ils délèguent à un helper. À vérifier au cas par cas : possibilité d'un helper commun `_invitation-email.js` mentionné en commentaire ligne 109 (`// Helper d'email (dupliqué depuis _invitation-email.js)`) mais le fichier n'existe pas dans le repo (donc dupliqué).
 
+### 10.5 Chantier analytics live (en pause) — REPRISE
+
+**État** : migration `0015_analytics_foundation` + tracking JS visits déployés. La table `visits` se remplit correctement à chaque page view participant.
+
+**Bug détecté** : la table `event_presence_history` reste **vide**. Cause = `renderLivePage` dans `functions/i/[token].js` et `functions/chat/[slug].js` n'envoie pas de heartbeat ping côté client.
+
+**Reste à livrer** :
+1. **`buildHeartbeatScript`** dans les 2 fichiers (i/[token].js + chat/[slug].js) — JS embarqué qui envoie un ping toutes les ~30s vers `/api/event-admin/<token>/heartbeat` (ou équivalent) pendant que la page live est ouverte
+2. **Endpoint heartbeat** côté API qui insert dans `event_presence_history`
+3. **UI stats côté client** dans `event-admin/<slug>` (onglet "Données & invités") — affichage des metrics agrégées
+4. **Enrichissements stats** : top emojis utilisés, votes sondages cumulés, CTAs cliqués
+
+**Procédure de reprise** : redemander upload des fichiers à traiter depuis le début pour revérifier le déploiement actuel.
+
+### 10.6 Lot D — Matrice de compatibilité des modes (validée 15 mai)
+
+Modes mutuellement exclusifs côté UI et backend :
+
+| Mode | Compatible avec |
+|---|---|
+| **Lecture seule** | Reactions ✓, Annonces modérateur ✓ — **incompatible** : chat libre, Q&A, sondages, ideas, quiz, nuage de mots |
+| **Q&A modéré** ↔ **Chat libre** | **Incompatibles** entre eux (un seul mode chat à la fois) |
+| **Sondages**, **Quiz**, **Nuage**, **Ideas**, **Reactions**, **Annonces** | Combinables librement (sauf avec lecture seule pour les 4 premiers) |
+
+**Implémentation à faire** :
+- Fonction `validateModes()` côté backend (`api/admin/events/[id].js` PATCH + `api/admin/events/index.js` POST) — refuse 400 si combinaison invalide
+- Désactivation visuelle des checkboxes incompatibles dans `admin/edit.html` et `admin/new.html` — listener sur les `<input name="mode">` qui grise/coche les incompatibles
+
+### 10.7 Lot E — Tracking actions par personne (vue simple)
+
+Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>` avec compteurs par invité (X messages envoyés, Y réactions, Z votes, W CTAs cliqués, etc.).
+
+**État actuel** : tables actions existantes ont déjà `invitee_id` (chat_messages, event_reactions, idea_votes, poll_votes, quiz_responses). Reste à ajouter pour les actions non trackées :
+- **Migration `0019_actions_tracking.sql`** (après renommage) :
+  - `event_cta_clicks` (event_id, invitee_id, cta_id, clicked_at, ip_hash)
+  - `event_quote_shares` (event_id, invitee_id, quote_id, shared_at, platform)
+  - `event_resource_views` (event_id, invitee_id, resource_id, viewed_at)
+- **JS embarqué participant** : tracker les clics CTA / share quote / open resource
+- **Endpoint agrégation** : `GET /api/event-admin/<token>/invitee-stats` retourne `{invitee_id, name, email, messages_count, reactions_count, votes_count, ctas_clicked, quotes_shared, resources_viewed}[]`
+- **UI tableau** côté `event-admin/<slug>` onglet Données
+
+### 10.8 Lot F — Sécurité globale (sans rotation PageSpeed)
+
+**En place** : HTTPS, cookies HttpOnly+Secure+SameSite=Lax, PBKDF2 100k, escapeHtml, Basic Auth admin, HMAC cookie session, cross-event isolation.
+
+**À ajouter** :
+1. **Rate limit sur `/event-admin/login`** : 5 tentatives/min par IP (KV `RATE_LIMIT` existant à réutiliser)
+2. **Logs d'authentification** : table `auth_logs` (timestamp, event_id, login, ip_hash, success). À consulter pour détection brute force.
+3. **Renforcer la CSP `_headers`** : audit script-src, object-src 'none' déjà OK. Voir si on peut passer en `script-src 'self' 'nonce-XXX'` (au lieu de `'unsafe-inline'`).
+4. **Protection CSRF explicite** sur les POST sensibles : actuellement SameSite=Lax couvre la majorité. Ajouter un CSRF token form-based pour `/event-admin/login` et les POST admin.
+5. **Skip rotation Google PageSpeed** dans `script.py` / `script_PAGESPEED.py` (décision Jérôme 15 mai : on s'en fiche).
+
+### 10.9 Lot QA résiduel (au-delà du Lot A livré 15 mai)
+
+**Bugs critiques restants** :
+- **C2** Auto-bascule live au countdown 0 : côté client, transformation countdown→"Le live va démarrer" + polling continue. Polling intervalle 5s en pré-live, 30s pendant le live. Full reload si transition status détectée.
+- **C3** Polling status participant : vérifier `/api/chat/<slug>/status` et `/i/<token>/status`, réagir aux changements admin sans refresh manuel.
+- **C4** Replay/VOD non affiché après ended : investiguer `stream_playback_url` post-live. Vérifier que CF Stream `recording.mode = 'automatic'` côté Live Inputs.
+- **C6** Latence 15s → activer **LL-HLS** dans Dashboard CF Stream
+- **C7** DVR non fonctionnel → activer rewind dans Dashboard CF Stream
+
+**Bugs majeurs restants** :
+- **M4** Rate limit messages ~10 : à clarifier (feature ou bug ?). Si feature, documenter le seuil + l'erreur user.
+
+**Tickets UX restants** :
+- **U1** Mode lecture seule : zone chat à masquer entièrement (pas juste désactivée)
+- **U3** Modes exclusifs : géré dans Lot D ci-dessus
+- **U4** Lien régie live sans login : déjà résolu par l'iframe dans event-admin (15 mai)
+
+**Features restantes** :
+- **FR-1** Pop-up fin d'event : modal au passage live→ended
+- **FR-2** Archive froide events : page `admin/archive.html` avec metrics + désactivation URLs publiques
+- **FR-4** Annonces modérateur : finaliser implémentation existante (partiellement présente d'après screenshots)
+- **FR-3** Description event : **livré 15 mai** sauf 2 morceaux : (a) accepter `description` dans `POST /api/admin/events` (fichier `functions/api/admin/events/index.js` à uploader pour finaliser), (b) inclure description dans le template mail invitation (`send-invitations.js` à uploader).
+
+### 10.10 Lot G — Test embed iframe player site client (exploratoire)
+
+Test à faire ultérieurement (pas de cas client concret au 15 mai). Cloudflare Stream supporte nativement les iframes cross-origin :
+
+```html
+<iframe src="https://customer-xxx.cloudflarestream.com/<stream_uid>/iframe"
+        allow="autoplay; encrypted-media" allowfullscreen
+        style="width:100%; aspect-ratio: 16/9; border: 0;"></iframe>
+```
+
+Question ouverte : juste le player vidéo, ou player + chat + reactions (l'app complète) ?
+
 ---
 
 ## 11. Points à surveiller
@@ -914,6 +1054,10 @@ publicLinkZone.appendChild(A.renderStreamCard(ev, load));
 - **Incohérence** routes `resources` (EN) vs `ressources` (FR) à aligner
 - **Migrations 0001-0006** absentes : si quelqu'un repart de zéro, doc `db/schema.sql` à expliciter
 - **Templating mail** : 5+ fichiers dupliquent le même template — refactoriser en helper commun `_invitation-email.js` (mentionné en commentaire, jamais créé)
+- **(15 mai)** Renommer migrations `0016_client_credentials.sql` → `0017_*` et `0017_event_description.sql` → `0018_*` via GitHub web pour respecter l'ordre chronologique
+- **(15 mai)** Variable d'env `SESSION_SECRET` à présent **critique** : si elle disparaît, tous les utilisateurs sont déconnectés et `/event-admin/login` retourne 500
+- **(15 mai)** Lot E tracking actions par personne : migration + tables à créer (cf §10.7)
+- **(15 mai)** Lot F sécu : rate limit login + logs auth + CSP nonce + CSRF token (cf §10.8)
 
 ---
 
@@ -924,52 +1068,60 @@ Repo Nomacast/nomacast.fr
 ├── admin/                    # Pages admin Nomacast (Basic Auth)
 │   ├── admin.css             # Styles partagés
 │   ├── admin.js              # Helpers window.NomacastAdmin
-│   ├── edit.html             # ÉDITION EVENT (param ?id=)
+│   ├── edit.html             # ÉDITION EVENT (param ?id=) — + card Accès client (15 mai)
 │   ├── index.html            # Liste events
 │   ├── invitees.html         # Gestion invités (param ?event_id=)
-│   ├── live.html             # Régie (param ?id=)
-│   ├── new.html              # Création
+│   ├── live.html             # Régie (param ?id=) — iframée depuis event-admin/<slug> via ?client=1 (legacy, désormais auth par cookie)
+│   ├── new.html              # Création — + champ description + validations M1/U5 (15 mai)
 │   ├── polls-test.html       # Tests sondages dev
 │   └── vmix.html             # Outil URL vMix (param ?event= ou ?id=)
 ├── db/
 │   └── schema.sql            # Schéma initial events + invitees
 ├── migrations/
-│   ├── 0007 à 0014           # Migrations cumulatives (cf §8)
-│   └── rapport-pipeline-deploiement.md
+│   ├── 0007 à 0015           # Migrations cumulatives (cf §8)
+│   ├── 0016_reactions_config.sql      # Tour 2.A-bis L1
+│   ├── 0016_client_credentials.sql ⚠️ # À renommer 0017_* (15 mai)
+│   └── 0017_event_description.sql ⚠️  # À renommer 0018_* (15 mai)
 ├── functions/
-│   ├── admin/_middleware.js          # Basic Auth pages
+│   ├── _lib/                          # NOUVEAU (15 mai) — helpers internes partagés
+│   │   ├── password.js               # PBKDF2 100k generate/hash/verify
+│   │   └── session.js                # HMAC cookie session client (sign/verify/build/read)
+│   ├── admin/_middleware.js          # Basic Auth pages + exception cookie session pour /admin/live.html
 │   ├── api/
 │   │   ├── admin/
-│   │   │   ├── _middleware.js        # Basic Auth API
+│   │   │   ├── _middleware.js        # Basic Auth API + exception cookie session pour /api/admin/events/<id>/*
 │   │   │   ├── events.js             # GET/POST liste events
-│   │   │   ├── events/[id].js        # GET/PATCH/DELETE event
+│   │   │   ├── events/[id].js        # GET/PATCH/DELETE event (+ description PATCH 15 mai)
 │   │   │   ├── events/[id]/          # Cf §2.2 (15 endpoints)
+│   │   │   ├── events/[id]/credentials.js  # NOUVEAU (15 mai) GET/PUT/POST/DELETE credentials client
 │   │   │   ├── upload-logo.js
 │   │   │   └── version.js
 │   │   ├── chat/[slug]/              # API publique participant (cf §2.3)
 │   │   ├── event-admin/[token]/      # API admin client (cf §2.4)
 │   │   ├── feed/alerts.js            # JSON vMix
 │   │   └── validate-code.js          # Codes partenaires (site marketing)
-│   ├── chat/[slug].js                # Page participant publique
+│   ├── chat/[slug].js                # Page participant publique (+ description 15 mai)
 │   ├── chat/[slug]/calendar.ics.js
 │   ├── chat/[slug]/status.js
-│   ├── i/[token].js                  # Page invité privé
+│   ├── i/[token].js                  # Page invité privé (+ description + CTA 404 15 mai)
 │   ├── i/[token]/calendar.ics.js
 │   ├── i/[token]/resend.js
 │   ├── i/[token]/send-invitations.js
 │   ├── i/[token]/status.js
-│   ├── event-admin/[token].js        # Page admin client
+│   ├── event-admin/[token].js        # Page admin client — HMAC supprimé (15 mai), uniquement slug+cookie
+│   ├── event-admin/login.js          # NOUVEAU (15 mai) GET page + POST verify
+│   ├── event-admin/logout.js         # NOUVEAU (15 mai) efface cookie + redirect
 │   ├── feed/alerts.js                # Page vMix
 │   ├── feed/alerts (1).js            # DOUBLON ORPHELIN à supprimer
 │   ├── quote/[id].js                 # Page partage citation
 │   ├── chat-interactif.js            # Site marketing
 │   ├── envoyer.php.js                # Site marketing
 │   └── nmc-7k9q3p2x/api/partners.js  # Admin codes partenaires (site marketing)
-├── _headers
+├── _headers                          # + Content-Type text/html sur /*.html (15 mai, C1)
 ├── .assetsignore
 └── (autres : site marketing, images, etc.)
 ```
 
 ---
 
-*Rapport généré le 14 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` (clone via `git clone --depth 1`). Toutes les affirmations ont été vérifiées sur les fichiers réels.*
+*Rapport mis à jour le 15 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` et de la session du jour (auth client login/password, onglets event-admin, Lot A QA, FR-3 description). Toutes les affirmations ont été vérifiées sur les fichiers réels ou sur les modifications livrées dans la session.*
