@@ -9,6 +9,15 @@
 export const onRequest = async (context) => {
   const { request, env, next } = context;
 
+  // nomacast-live-client-mode-v1 : exception pour /admin/live.html?client=1
+  // La régie en direct est embarquée en iframe dans /event-admin/<token> (côté client).
+  // L'auth se fait au niveau du parent via le token HMAC client, pas ici.
+  // Le reste de /admin/* reste protégé par Basic Auth (edit, invitees, index, etc.).
+  const url = new URL(request.url);
+  if (url.pathname === '/admin/live.html' && url.searchParams.get('client') === '1') {
+    return next();
+  }
+
   if (!env.ADMIN_PASSWORD) {
     return new Response(
       'Configuration manquante : la variable d\'environnement ADMIN_PASSWORD '

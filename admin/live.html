@@ -837,9 +837,36 @@
       font-variant-numeric: tabular-nums;
       margin-right: auto;
     }
+
+    /* nomacast-live-client-mode-v1 — masquage des éléments admin lorsque
+       la page est embarquée en iframe depuis /event-admin/<token> (régie côté client).
+       Activé via body.client-mode (ajouté par JS au boot si ?client=1). */
+    body.client-mode .admin-header,
+    body.client-mode .admin-page-head,
+    body.client-mode #edit-link {
+      display: none !important;
+    }
+    body.client-mode .admin-main {
+      padding-top: 16px;
+    }
+    /* On force le body en transparent pour que l'iframe hérite de la couleur du parent */
+    body.client-mode {
+      background: transparent;
+    }
   </style>
 </head>
 <body>
+<script>
+  // nomacast-live-client-mode-v1 : si embarqué depuis /event-admin/<token>?client=1,
+  // ajouter la classe body.client-mode pour masquer header + bouton "Éditer event" + titre.
+  // Auth déjà gérée côté parent par le token HMAC client (cf. /event-admin/<token>).
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('client') === '1') {
+      document.body.classList.add('client-mode');
+    }
+  })();
+</script>
 
 <header class="admin-header">
   <a href="/admin/" class="admin-header-brand-link">
@@ -1125,6 +1152,7 @@
   // Logique cohérente avec le mail d'invitation (functions/api/admin/events/[id]/send-invitations.js)
   // nomacast-logo-reset-v1 : règle unifiée — le logo client n'apparaît QUE si
   // white_label === true ET logo_url est rempli. Sinon, badge Nomacast par défaut.
+  // nomacast-live-client-mode-v1 : marque blanche sans logo → on n'affiche RIEN (ni client, ni Nomacast).
   function buildBrandingOverlay(ev) {
     var showClientLogo = !!(ev.white_label && ev.logo_url);
     // 1. Logo client uploadé ET event en marque blanche → afficher le logo client
@@ -1136,7 +1164,11 @@
         ]
       });
     }
-    // 2. Sinon → badge Nomacast (white_label sans logo OU pas white_label)
+    // 2. Marque blanche cochée mais aucun logo uploadé → rien
+    if (ev.white_label) {
+      return null;
+    }
+    // 3. Sinon (pas de marque blanche) → badge Nomacast par défaut
     return A.el('div', {
       className: 'regie-video-overlay-logo',
       children: [

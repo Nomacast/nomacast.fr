@@ -177,6 +177,88 @@ body {
 }
 @media (max-width: 600px) { .header-baseline { display: none; } }
 
+/* nomacast-tabs-v1 : header en marque blanche (logo client) */
+.header-whitelabel {
+  justify-content: space-between;
+}
+.header-client-logo {
+  max-height: 36px; max-width: 220px; width: auto; height: auto;
+  object-fit: contain;
+}
+
+/* nomacast-tabs-v1 : bandeau d'onglets DATA / RÉGIE LIVE */
+.tabs-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+}
+.tabs-bar-inner {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px;
+}
+.tab-btn {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 14px 24px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  font-family: inherit;
+  border-radius: 0;
+}
+.tab-btn:hover {
+  color: #0f172a;
+  background: #f8fafc;
+}
+.tab-btn.active {
+  color: #5A98D6;
+  border-bottom-color: #5A98D6;
+}
+.tab-btn-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.tab-panel {
+  display: none;
+}
+.tab-panel.active {
+  display: block;
+}
+.tab-panel-live {
+  padding: 0;
+}
+.tab-iframe-wrap {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px 20px 40px;
+}
+.tab-iframe-frame {
+  width: 100%;
+  height: calc(100vh - 200px);
+  min-height: 600px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  display: block;
+}
+.tab-iframe-loading {
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
 .container { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
 
 .event-card {
@@ -519,14 +601,32 @@ tbody tr:hover { background: #fafbfc; }
 </head>
 <body>
 
-<header class="header">
-  <a href="https://www.nomacast.fr/" target="_blank" rel="noopener" class="header-logo">
-    <span class="logo-dot">&bull;</span><span class="logo-text">&nbsp;Nomacast</span>
-  </a>
-  <span class="header-baseline">Gestion des invités</span>
-</header>
+<!-- nomacast-tabs-v1 : header conditionné selon white_label -->
+${event.white_label === 1 || event.white_label === true
+  ? (event.logo_url
+    ? `<header class="header header-whitelabel">
+        <img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" class="header-client-logo">
+        <span class="header-baseline">Espace organisateur</span>
+      </header>`
+    : `<header class="header header-whitelabel">
+        <span class="header-baseline">Espace organisateur</span>
+      </header>`)
+  : `<header class="header">
+      <a href="https://www.nomacast.fr/" target="_blank" rel="noopener" class="header-logo">
+        <span class="logo-dot">&bull;</span><span class="logo-text">&nbsp;Nomacast</span>
+      </a>
+      <span class="header-baseline">Gestion des invités</span>
+    </header>`}
 
-<main class="container">
+<!-- nomacast-tabs-v1 : bandeau d'onglets DATA / RÉGIE LIVE -->
+<div class="tabs-bar">
+  <div class="tabs-bar-inner">
+    <button type="button" class="tab-btn active" data-tab="data">Données &amp; invités</button>
+    <button type="button" class="tab-btn" data-tab="live">Régie en direct</button>
+  </div>
+</div>
+
+<main class="container tab-panel tab-panel-data active" id="panel-data">
 
   <section class="event-card">
     <h1>${escapeHtml(event.title)}</h1>
@@ -614,11 +714,26 @@ tbody tr:hover { background: #fafbfc; }
   <!-- nomacast-analytics-event-admin-ui-v1 : dashboard statistiques -->
   <div id="analytics-zone"></div>
 
-  <div class="footer">
-    Propulsé par <a href="https://www.nomacast.fr/" target="_blank" rel="noopener">Nomacast</a> · Live streaming corporate
-  </div>
+  ${event.white_label === 1 || event.white_label === true
+    ? ''
+    : `<div class="footer">
+      Propulsé par <a href="https://www.nomacast.fr/" target="_blank" rel="noopener">Nomacast</a> · Live streaming corporate
+    </div>`}
 
 </main>
+
+<!-- nomacast-tabs-v1 : panel régie live (iframe lazy-loaded au premier clic sur l'onglet) -->
+<div class="tab-panel tab-panel-live" id="panel-live">
+  <div class="tab-iframe-wrap">
+    <iframe
+      id="live-iframe"
+      class="tab-iframe-frame"
+      data-src="/admin/live.html?id=${escapeHtml(event.id)}&client=1"
+      title="Régie en direct"
+      loading="lazy"
+      referrerpolicy="same-origin"></iframe>
+  </div>
+</div>
 
 <!-- Modal Ajout -->
 <div class="modal-backdrop" id="modal-add" hidden>
@@ -667,6 +782,60 @@ tbody tr:hover { background: #fafbfc; }
 (function () {
   var API = ${JSON.stringify(apiBase)};
   var state = { invitees: [], csvData: null };
+
+  // ============================================================
+  // nomacast-tabs-v1 : gestion des onglets DATA / RÉGIE LIVE
+  // - Onglet par défaut : data (boot)
+  // - L'iframe régie live est lazy-loaded au 1er clic sur l'onglet (data-src → src)
+  // - Persistance dans l'URL via fragment (#live) pour permettre le partage et le refresh
+  // ============================================================
+  (function setupTabs() {
+    var tabBtns = document.querySelectorAll('.tab-btn');
+    var panels = {
+      data: document.getElementById('panel-data'),
+      live: document.getElementById('panel-live')
+    };
+    var iframe = document.getElementById('live-iframe');
+    var iframeLoaded = false;
+
+    function activate(name) {
+      if (!panels[name]) return;
+      for (var i = 0; i < tabBtns.length; i++) {
+        var b = tabBtns[i];
+        if (b.getAttribute('data-tab') === name) b.classList.add('active');
+        else b.classList.remove('active');
+      }
+      for (var k in panels) {
+        if (Object.prototype.hasOwnProperty.call(panels, k)) {
+          if (k === name) panels[k].classList.add('active');
+          else panels[k].classList.remove('active');
+        }
+      }
+      // Lazy-load de l'iframe régie au premier clic
+      if (name === 'live' && iframe && !iframeLoaded) {
+        var src = iframe.getAttribute('data-src');
+        if (src) {
+          iframe.setAttribute('src', src);
+          iframeLoaded = true;
+        }
+      }
+      // Mémoriser dans l'URL pour permettre refresh / partage de lien profond
+      if (history && history.replaceState) {
+        var newHash = name === 'live' ? '#live' : '';
+        history.replaceState(null, '', window.location.pathname + window.location.search + newHash);
+      }
+    }
+
+    for (var i = 0; i < tabBtns.length; i++) {
+      tabBtns[i].addEventListener('click', function (e) {
+        activate(e.currentTarget.getAttribute('data-tab'));
+      });
+    }
+
+    // Au boot : restaurer depuis l'URL si fragment #live ou #data
+    var initial = window.location.hash === '#live' ? 'live' : 'data';
+    activate(initial);
+  })();
 
   function $(id) { return document.getElementById(id); }
   function escapeHtml(s) {
