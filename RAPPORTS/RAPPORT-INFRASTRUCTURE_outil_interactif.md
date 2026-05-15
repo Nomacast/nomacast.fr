@@ -1082,13 +1082,14 @@ Question ouverte : juste le player vidéo, ou player + chat + reactions (l'app c
 - **Doublon** `functions/feed/alerts (1).js` à supprimer
 - **Incohérence** routes `resources` (EN) vs `ressources` (FR) à aligner
 - **Migrations 0001-0006** absentes : si quelqu'un repart de zéro, doc `db/schema.sql` à expliciter
-- **Templating mail** : 5+ fichiers dupliquent le même template — refactoriser en helper commun `_invitation-email.js` (mentionné en commentaire, jamais créé)
+- **Templating mail** : ~~5+ fichiers dupliquent le même template — refactoriser en helper commun `_invitation-email.js` (mentionné en commentaire, jamais créé)~~ **Résolu (15 mai)** : helper `functions/_lib/invitation-email.js` créé, 3 importeurs migrés (cf §12 bloc imports).
 - **(15 mai)** Renommer migrations `0016_client_credentials.sql` → `0017_*` et `0017_event_description.sql` → `0018_*` via GitHub web pour respecter l'ordre chronologique
 - **(15 mai)** Variable d'env `SESSION_SECRET` à présent **critique** : si elle disparaît, tous les utilisateurs sont déconnectés et `/event-admin/login` retourne 500
 - **(15 mai)** Lot E tracking actions par personne : migration + tables à créer (cf §10.7)
 - **(15 mai)** Lot F sécu **phase 1 livrée** : rate limit login (KV `auth-fail:`) + table `auth_logs` (mig 0019). Phase 2 candidate (notif burst, purge auto, Turnstile post-fails, CSP nonce, CSRF token) en attente d'observations réelles (cf §10.8).
 - **(15 mai)** **`auth_logs` : forensics et surveillance** — La table `auth_logs` n'a pas de purge auto. À long terme (>6 mois prod), prévoir un cleanup mensuel des entrées > 90 jours via SQL manuel ou cron. Cible : moins de 100 000 lignes pour garder les indexes performants.
 - **(15 mai)** **Rate limit KV consumption** — Chaque IP qui rate son login crée 1 entrée KV `auth-fail:<ip_hash>` (TTL 60s, auto-purge). Pas de risque de remplissage durable.
+- **(15 mai)** **Imports relatifs depuis dossiers avec brackets `[id]`, `[token]`** — Cloudflare Pages Functions résout correctement les imports relatifs depuis les dossiers brackets (validé 15 mai 2026 après fix d'une typo). Règle : nombre de `../` = nombre de dossiers entre le fichier source et `functions/`. Erreur typique : croire que `event-admin/[token]/` a 4 niveaux comme `admin/events/[id]/`. Un seul dossier composé ≠ deux dossiers imbriqués.
 
 ---
 
@@ -1117,7 +1118,8 @@ Repo Nomacast/nomacast.fr
 ├── functions/
 │   ├── _lib/                          # NOUVEAU (15 mai) — helpers internes partagés
 │   │   ├── password.js               # PBKDF2 100k generate/hash/verify
-│   │   └── session.js                # HMAC cookie session client (sign/verify/build/read)
+│   │   ├── session.js                # HMAC cookie session client (sign/verify/build/read)
+│   │   └── invitation-email.js       # Template mail invitation (subject + buildText + buildHtml) — cf bloc imports ci-dessous
 │   ├── admin/_middleware.js          # Basic Auth pages + exception cookie session pour /admin/live.html
 │   ├── api/
 │   │   ├── admin/
@@ -1153,6 +1155,17 @@ Repo Nomacast/nomacast.fr
 ├── .assetsignore
 └── (autres : site marketing, images, etc.)
 ```
+
+**Imports du helper `_lib/invitation-email.js`** (référence pour ne pas se tromper de `../`) :
+
+```
+functions/_lib/invitation-email.js
+├── importé par : api/admin/events/[id]/send-invitations.js              (4 ../)
+├── importé par : api/event-admin/[token]/send-invitations.js            (3 ../)
+└── importé par : api/admin/events/[id]/invitees/[invitee_id]/resend.js  (6 ../)
+```
+
+Rappel : `[token]` ou `[id]` comptent comme **un seul** dossier (cf §11 Imports relatifs).
 
 ---
 
