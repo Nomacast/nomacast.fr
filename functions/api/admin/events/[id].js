@@ -114,6 +114,18 @@ export const onRequestPatch = async ({ request, params, env }) => {
   if (data.client_name !== undefined) {
     sets.push('client_name = ?'); binds.push(data.client_name ? data.client_name.trim() : null);
   }
+  // nomacast-event-description-v1 / FR-3 : description optionnelle, max 500 caractères
+  if (data.description !== undefined) {
+    if (data.description === null || data.description === '') {
+      sets.push('description = ?'); binds.push(null);
+    } else {
+      const desc = String(data.description).trim();
+      if (desc.length > 500) {
+        return jsonResponse({ error: 'La description ne doit pas dépasser 500 caractères (actuel : ' + desc.length + ').' }, 400);
+      }
+      sets.push('description = ?'); binds.push(desc || null);
+    }
+  }
   if (data.scheduled_at !== undefined) {
     if (isNaN(Date.parse(data.scheduled_at))) return jsonResponse({ error: 'Date invalide' }, 400);
     sets.push('scheduled_at = ?'); binds.push(data.scheduled_at);
@@ -324,6 +336,8 @@ function deserializeEvent(row) {
     slug: row.slug,
     title: row.title,
     client_name: row.client_name,
+    // nomacast-event-description-v1 / FR-3
+    description: row.description || null,
     scheduled_at: row.scheduled_at,
     duration_minutes: row.duration_minutes,
     audience_estimate: row.audience_estimate,

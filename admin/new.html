@@ -82,6 +82,15 @@
           </div>
         </div>
 
+        <!-- nomacast-event-description-v1 : champ description (500c max) -->
+        <div class="admin-form-field">
+          <label class="admin-form-label" for="f-description">Description de l'événement</label>
+          <textarea class="admin-form-input" id="f-description" name="description" maxlength="500" rows="3" placeholder="Présentation rapide affichée aux participants et dans le mail d'invitation. Ex: « Conférence stratégique 2026 : retours d'expérience, perspectives marché, table ronde dirigeants. »"></textarea>
+          <div class="admin-form-hint">
+            <span id="f-description-count">0</span>/500 caractères. Affichée sur la page d'accueil du chat et dans le mail d'invitation.
+          </div>
+        </div>
+
         <div class="admin-form-field">
           <div class="admin-form-label">Modes d'interaction</div>
           <div class="admin-form-checkboxes">
@@ -199,14 +208,43 @@
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
+
+    // nomacast-validation-v1
+    // M1 — refuser date dans le passé (à confirmer si écart < 1h pour les cas exceptionnels)
+    var scheduledLocal = form.scheduled_at.value;
+    if (scheduledLocal) {
+      var scheduledDate = new Date(scheduledLocal);
+      var now = new Date();
+      if (scheduledDate < now) {
+        var minutesLate = Math.round((now - scheduledDate) / 60000);
+        var msg = minutesLate < 60
+          ? 'La date saisie est dans le passé (' + minutesLate + ' min). Continuer ?'
+          : 'La date saisie est dans le passé (' + Math.round(minutesLate / 60) + 'h). Es-tu sûr de vouloir créer un event antérieur à maintenant ?';
+        if (!confirm(msg)) {
+          form.scheduled_at.focus();
+          return;
+        }
+      }
+    }
+
+    // U5 — durée doit être > 0
+    var duration = parseInt(form.duration_minutes.value, 10);
+    if (isNaN(duration) || duration <= 0) {
+      A.showMessage(messageZone, 'error', 'La durée doit être supérieure à 0 minute.');
+      form.duration_minutes.focus();
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Création…';
 
     var data = {
       title: form.title.value,
       client_name: form.client_name.value,
+      // nomacast-event-description-v1 : envoi description (string vide → null côté backend)
+      description: (form.description.value || '').trim() || null,
       scheduled_at: A.localInputToIso(form.scheduled_at.value),
-      duration_minutes: form.duration_minutes.value,
+      duration_minutes: duration,
       audience_estimate: form.audience_estimate.value || null,
       primary_color: form.primary_color.value,
       white_label: form.white_label.checked,
@@ -228,6 +266,15 @@
       submitBtn.textContent = 'Créer l\'event';
     }
   });
+
+  // Compteur de caractères pour la description (FR-3)
+  var descInput = document.getElementById('f-description');
+  var descCount = document.getElementById('f-description-count');
+  if (descInput && descCount) {
+    var updateDescCount = function () { descCount.textContent = descInput.value.length; };
+    descInput.addEventListener('input', updateDescCount);
+    updateDescCount();
+  }
 })();
 </script>
 

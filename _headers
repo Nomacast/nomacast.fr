@@ -38,9 +38,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # CACHE — Pages HTML (toujours frais, jamais en cache navigateur)
 # Important pour : tracking dynamique, contenu mis à jour, A/B tests
+# Content-Type explicite (sinon CF Pages sert parfois en text/plain → SEO/Lighthouse cassés)
 # ─────────────────────────────────────────────────────────────────────────────
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: text/html; charset=utf-8
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CACHE — Images (1 an, immutables)
