@@ -2313,7 +2313,12 @@ function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteU
       });
 
       // nomacast-cta-clicks-v1 — tracking clic CTA (fire-and-forget, ne bloque pas l'ouverture du lien)
-      var CTA_CLICK_URL = CTA_ACTIVE_URL ? CTA_ACTIVE_URL.replace(/\/cta\/active$/, '/cta-clicks') : null;
+      // Note: substring direct, evite la regex (risque d'escape dans template string serveur)
+      var CTA_CLICK_URL = null;
+      if (CTA_ACTIVE_URL) {
+        var _idx = CTA_ACTIVE_URL.lastIndexOf('/cta/active');
+        if (_idx >= 0) CTA_CLICK_URL = CTA_ACTIVE_URL.substring(0, _idx) + '/cta-clicks';
+      }
       btnEl.addEventListener('click', function () {
         if (!currentCtaId || !CTA_CLICK_URL) return;
         try {
