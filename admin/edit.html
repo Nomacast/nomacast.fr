@@ -938,6 +938,8 @@
       var checkbox = A.el('input', {
         attrs: { type: 'checkbox', name: 'mode', value: m[0], checked: activeModes.indexOf(m[0]) !== -1 }
       });
+      // nomacast-modes-compat-v1 / Lot D — refresh compatibilité au changement
+      checkbox.addEventListener('change', refreshModesCompat);
       var inner = A.el('div', {
         children: [
           A.el('div', { className: 'admin-form-check-label', text: m[1] }),
@@ -949,7 +951,49 @@
         children: [checkbox, inner]
       }));
     });
+    // Premier refresh après que le container soit attaché au DOM
+    setTimeout(refreshModesCompat, 0);
     return container;
+  }
+
+  // ============================================================
+  // nomacast-modes-compat-v1 / Lot D — Matrice de compatibilité modes
+  // ============================================================
+  // Doit rester synchronisé avec `validateModesCompatibility` dans
+  // functions/api/admin/events/[id].js. Toute modif ici → modif là-bas.
+  var MODE_INCOMPATIBLE_PAIRS = [
+    ['lecture', 'qa'],
+    ['lecture', 'libre'],
+    ['lecture', 'sondages'],
+    ['lecture', 'quiz'],
+    ['lecture', 'nuage'],
+    ['qa', 'libre']
+  ];
+  function refreshModesCompat() {
+    var checks = document.querySelectorAll('input[name="mode"]');
+    if (!checks || checks.length === 0) return;
+    var checked = new Set();
+    for (var i = 0; i < checks.length; i++) {
+      if (checks[i].checked) checked.add(checks[i].value);
+    }
+    for (var j = 0; j < checks.length; j++) {
+      var v = checks[j].value;
+      var blocker = null;
+      if (!checked.has(v)) {
+        for (var k = 0; k < MODE_INCOMPATIBLE_PAIRS.length; k++) {
+          var p = MODE_INCOMPATIBLE_PAIRS[k];
+          if (p[0] === v && checked.has(p[1])) { blocker = p[1]; break; }
+          if (p[1] === v && checked.has(p[0])) { blocker = p[0]; break; }
+        }
+      }
+      checks[j].disabled = !!blocker;
+      var labelEl = checks[j].closest ? checks[j].closest('.admin-form-check') : null;
+      if (labelEl) {
+        labelEl.style.opacity = blocker ? '0.45' : '';
+        labelEl.style.cursor = blocker ? 'not-allowed' : '';
+        labelEl.title = blocker ? 'Incompatible avec un mode déjà coché.' : '';
+      }
+    }
   }
 
   function buildOptionsCheckboxes(whiteLabel, subtitles) {

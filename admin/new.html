@@ -275,6 +275,51 @@
     descInput.addEventListener('input', updateDescCount);
     updateDescCount();
   }
+
+  // ============================================================
+  // nomacast-modes-compat-v1 / Lot D — UI compatibilité des modes
+  // ============================================================
+  // Doit rester synchronisé avec `validateModesCompatibility` dans
+  // functions/api/admin/events/[id].js. Toute modif ici → modif là-bas.
+  var MODE_INCOMPATIBLE_PAIRS = [
+    ['lecture', 'qa'],
+    ['lecture', 'libre'],
+    ['lecture', 'sondages'],
+    ['lecture', 'quiz'],
+    ['lecture', 'nuage'],
+    ['qa', 'libre']
+  ];
+  function refreshModesCompat() {
+    var checks = form.querySelectorAll('input[name="mode"]');
+    var checked = new Set();
+    for (var i = 0; i < checks.length; i++) {
+      if (checks[i].checked) checked.add(checks[i].value);
+    }
+    // Pour chaque mode possible, déterminer s'il est bloqué
+    for (var j = 0; j < checks.length; j++) {
+      var v = checks[j].value;
+      var blocker = null;
+      if (!checked.has(v)) {
+        // Cherche si un mode coché bloque celui-ci
+        for (var k = 0; k < MODE_INCOMPATIBLE_PAIRS.length; k++) {
+          var p = MODE_INCOMPATIBLE_PAIRS[k];
+          if (p[0] === v && checked.has(p[1])) { blocker = p[1]; break; }
+          if (p[1] === v && checked.has(p[0])) { blocker = p[0]; break; }
+        }
+      }
+      checks[j].disabled = !!blocker;
+      var labelEl = checks[j].closest('.admin-form-check');
+      if (labelEl) {
+        labelEl.style.opacity = blocker ? '0.45' : '';
+        labelEl.style.cursor = blocker ? 'not-allowed' : '';
+        labelEl.title = blocker ? 'Incompatible avec un mode déjà coché.' : '';
+      }
+    }
+  }
+  form.querySelectorAll('input[name="mode"]').forEach(function (cb) {
+    cb.addEventListener('change', refreshModesCompat);
+  });
+  refreshModesCompat();
 })();
 </script>
 

@@ -166,7 +166,11 @@ export const onRequestPatch = async ({ request, params, env }) => {
     sets.push('subtitles = ?'); binds.push(data.subtitles ? 1 : 0);
   }
   if (data.modes !== undefined) {
-    sets.push('modes_json = ?'); binds.push(JSON.stringify(Array.isArray(data.modes) ? data.modes : []));
+    // nomacast-modes-compat-v1 / Lot D — validation de la matrice de compatibilité
+    const modesArr = Array.isArray(data.modes) ? data.modes : [];
+    const compatError = validateModesCompatibility(modesArr);
+    if (compatError) return jsonResponse({ error: compatError }, 400);
+    sets.push('modes_json = ?'); binds.push(JSON.stringify(modesArr));
   }
   // nomacast-reactions-config-v1 : sélection des emojis de réactions par event
   // Pool de 15 autorisés, 1 à 5 par event. null = restaure le défaut (8 originaux).
@@ -272,6 +276,46 @@ function jsonResponse(body, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8' }
   });
+}
+
+// ============================================================
+// nomacast-modes-compat-v1 / Lot D — Matrice de compatibilité des modes
+// ============================================================
+// Règles validées 15 mai 2026 :
+//   - "lecture" (lecture seule) exclut tous les modes interactifs sauf "reactions"
+//   - "qa" et "libre" sont mutuellement exclusifs (un seul mode chat à la fois)
+//   - Tous les autres modes (sondages, quiz, nuage, reactions) sont combinables librement
+//     (sauf avec "lecture")
+//
+// MODES_EXPORTÉS_PARTAGÉS — garder synchronisé avec admin/edit.html et admin/new.html.
+const MODE_INCOMPATIBLE_PAIRS = [
+  ['lecture', 'qa'],
+  ['lecture', 'libre'],
+  ['lecture', 'sondages'],
+  ['lecture', 'quiz'],
+  ['lecture', 'nuage'],
+  ['qa', 'libre']
+];
+const MODE_LABELS = {
+  qa: 'Q&A modéré',
+  libre: 'Chat libre',
+  sondages: 'Sondages live',
+  quiz: 'Quiz interactif',
+  nuage: 'Nuage de mots-clés',
+  reactions: 'Réactions rapides',
+  lecture: 'Lecture seule'
+};
+function validateModesCompatibility(modes) {
+  if (!Array.isArray(modes) || modes.length === 0) return null;
+  const set = new Set(modes);
+  for (const [a, b] of MODE_INCOMPATIBLE_PAIRS) {
+    if (set.has(a) && set.has(b)) {
+      const labelA = MODE_LABELS[a] || a;
+      const labelB = MODE_LABELS[b] || b;
+      return 'Modes incompatibles : « ' + labelA + ' » et « ' + labelB + ' » ne peuvent pas être activés simultanément.';
+    }
+  }
+  return null;
 }
 
 /**
