@@ -774,6 +774,12 @@
     }
 
     /* ============ Annonce admin (broadcast) ============ */
+    /* nomacast-announce-bar-v1 : bande horizontale toujours visible quand l'event est chargé */
+    .regie-announce-bar {
+      max-width: 1280px;
+      margin: 0 auto 14px;
+      padding: 0 18px;
+    }
     .regie-announce {
       border: 1px solid #e2e8f0;
       border-radius: 8px;
@@ -921,6 +927,26 @@
     </button>
   </div>
 
+  <!-- nomacast-announce-bar-v1 : zone annonce broadcast, hors section moderation
+       (utile peu importe les modes activés, y compris en lecture seule) -->
+  <div class="regie-announce-bar" id="regie-announce-bar" style="display:none;">
+    <div class="regie-announce" id="regie-announce">
+      <div class="regie-announce-toggle" id="regie-announce-toggle">
+        <span class="icon">📢</span>
+        <span>Envoyer une annonce à tous les participants</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="regie-announce-form">
+        <textarea id="regie-announce-input" placeholder="Ex : Le speaker va commencer dans 2 minutes…" maxlength="500" rows="2"></textarea>
+        <div class="regie-announce-form-row">
+          <span class="regie-announce-counter" id="regie-announce-counter">0 / 500</span>
+          <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="regie-announce-cancel">Annuler</button>
+          <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" id="regie-announce-send">Envoyer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="regie-layout" id="regie-layout" style="display:none;">
 
     <!-- Colonne 1 : aperçu vidéo -->
@@ -957,23 +983,6 @@
           </div>
         </div>
         <div class="regie-card-body">
-          <!-- Annonce broadcast admin (repliable) -->
-          <div class="regie-announce" id="regie-announce">
-            <div class="regie-announce-toggle" id="regie-announce-toggle">
-              <span class="icon">📢</span>
-              <span>Envoyer une annonce broadcast</span>
-              <span class="chevron">▾</span>
-            </div>
-            <div class="regie-announce-form">
-              <textarea id="regie-announce-input" placeholder="Ex : Le speaker va commencer dans 2 minutes…" maxlength="500" rows="2"></textarea>
-              <div class="regie-announce-form-row">
-                <span class="regie-announce-counter" id="regie-announce-counter">0 / 500</span>
-                <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="regie-announce-cancel">Annuler</button>
-                <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" id="regie-announce-send">Envoyer</button>
-              </div>
-            </div>
-          </div>
-
           <div class="regie-msg-list" id="regie-msg-list">
             <div class="regie-msg-empty">Aucun message en attente.</div>
           </div>
@@ -1084,6 +1093,9 @@
       renderVideo(data.event);
       toolsBar.style.display = '';
       layout.style.display = '';
+      // nomacast-announce-bar-v1 : la bande annonce devient visible quand l'event est chargé
+      var announceBar = document.getElementById('regie-announce-bar');
+      if (announceBar) announceBar.style.display = '';
       // nomacast-tools-by-modes-v1 — n'afficher que les outils des modes activés
       applyToolsByModes(data.event);
       updateLayoutGrid();
