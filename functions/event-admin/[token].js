@@ -91,12 +91,16 @@ export const onRequestGet = async ({ params, request, env }) => {
     console.error('[event-admin/token] visits track failed', err);
   }
 
+  // nomacast-csp-nonce-v1 : nonce unique par requête propagé au HTML + header CSP
+  const nonce = generateNonce();
+
   // nomacast-client-credentials-v1 : rafraîchir le cookie session (renouvellement glissant 7j).
   // L'utilisateur est forcément authentifié pour cet event si on arrive ici.
   const headers = {
     'Content-Type': 'text/html; charset=utf-8',
     'Cache-Control': 'private, no-store',
-    'X-Robots-Tag': 'noindex, nofollow'
+    'X-Robots-Tag': 'noindex, nofollow',
+    'Content-Security-Policy': buildCspForAdminPage(nonce)
   };
   if (env.SESSION_SECRET) {
     try {
@@ -110,7 +114,7 @@ export const onRequestGet = async ({ params, request, env }) => {
     }
   }
 
-  return new Response(renderPage(event, apiToken, adminPreviewToken), {
+  return new Response(renderPage(event, apiToken, adminPreviewToken, nonce), {
     status: 200,
     headers
   });
@@ -186,7 +190,35 @@ function formatDate(iso) {
        + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function renderPage(event, token, adminPreviewToken) {
+// ============================================================
+// nomacast-csp-nonce-v1 — CSP stricte avec nonce pour la régie event-admin
+// (override la CSP globale de _headers — whitelist cdn.jsdelivr.net pour papaparse)
+// ============================================================
+function generateNonce() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function buildCspForAdminPage(nonce) {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' blob: https://*.r2.dev https://*.cloudflarestream.com",
+    "connect-src 'self'",
+    "frame-src 'self' https://*.cloudflarestream.com",
+    "font-src 'self' data:",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "upgrade-insecure-requests"
+  ].join('; ');
+}
+
+function renderPage(event, token, adminPreviewToken, nonce) {
   const apiBase = `/api/event-admin/${token}`;
   const dateLabel = formatDate(event.scheduled_at);
   const isPrivate = event.access_mode === 'private';
@@ -994,8 +1026,8 @@ ${event.white_label === 1 || event.white_label === true
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script>
+<script nonce="${nonce || ''}" src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script nonce="${nonce || ''}">
 (function () {
   var API = ${JSON.stringify(apiBase)};
   var state = { invitees: [], csvData: null };
