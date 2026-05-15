@@ -342,6 +342,9 @@ function deserializeEvent(row) {
     stream_created_at: row.stream_created_at,
     created_at: row.created_at,
     updated_at: row.updated_at,
+    // nomacast-client-credentials-v1 : login client exposé, hash JAMAIS exposé
+    client_login: row.client_login || null,
+    has_client_password: !!row.client_password_hash,
     invitees_count: typeof row.invitees_count === 'number' ? row.invitees_count : 0,
     invitees_sent: typeof row.invitees_sent === 'number' ? row.invitees_sent : 0
   };
