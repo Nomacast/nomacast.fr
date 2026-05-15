@@ -13,7 +13,7 @@ export const onRequestPost = async ({ params, env }) => {
   if (!env.RESEND_API_KEY) return jsonResponse({ error: 'RESEND_API_KEY non configurée' }, 500);
 
   const event = await env.DB.prepare(`
-    SELECT id, slug, title, client_name, scheduled_at, duration_minutes,
+    SELECT id, slug, title, client_name, description, scheduled_at, duration_minutes,
            primary_color, logo_url, white_label, access_mode
       FROM events WHERE id = ?
   `).bind(params.id).first();
@@ -207,22 +207,28 @@ function buildText({ greeting, event, link, dateLabel, orgLine, whiteLabel, agen
     `Vous êtes invité(e) à participer à notre événement live « ${event.title} »` + (orgLine ? `, ${orgLine}` : '') + '.',
     'Posez vos questions à l\'oral, votez en temps réel, et interagissez avec les intervenants depuis votre navigateur.',
     'Aucune installation nécessaire.',
-    '',
-    'DÉTAILS DE L\'ÉVÉNEMENT',
-    dateLabel ? `Date    : ${dateLabel}` : '',
-    event.access_mode === 'private'
-      ? 'Accès   : Lien personnel (ne pas partager)'
-      : 'Accès   : Lien public',
-    '',
-    'Pour rejoindre le chat live :',
-    link,
-    '',
-    'AJOUTER À MON AGENDA',
-    `Google  : ${agendaUrls.google}`,
-    `Outlook : ${agendaUrls.outlook}`,
-    `Apple / autre : ${agendaUrls.ics}`,
     ''
   ];
+  // nomacast-event-description-v1 / FR-3 — description optionnelle, affichée en bloc dédié
+  if (event.description) {
+    lines.push('À PROPOS DE L\'ÉVÉNEMENT');
+    lines.push(event.description);
+    lines.push('');
+  }
+  lines.push('DÉTAILS DE L\'ÉVÉNEMENT');
+  lines.push(dateLabel ? `Date    : ${dateLabel}` : '');
+  lines.push(event.access_mode === 'private'
+    ? 'Accès   : Lien personnel (ne pas partager)'
+    : 'Accès   : Lien public');
+  lines.push('');
+  lines.push('Pour rejoindre le chat live :');
+  lines.push(link);
+  lines.push('');
+  lines.push('AJOUTER À MON AGENDA');
+  lines.push(`Google  : ${agendaUrls.google}`);
+  lines.push(`Outlook : ${agendaUrls.outlook}`);
+  lines.push(`Apple / autre : ${agendaUrls.ics}`);
+  lines.push('');
   if (!whiteLabel) {
     lines.push('Nomacast — La qualité agence. Un seul interlocuteur.');
     lines.push('https://www.nomacast.fr · evenement@nomacast.fr');
@@ -364,6 +370,19 @@ function buildHtml({ greeting, event, link, dateLabel, orgLine, color, whiteLabe
           </p>
         </td>
       </tr>
+
+      <!-- nomacast-event-description-v1 / FR-3 : DESCRIPTION (optionnelle) -->
+      ${event.description ? `<tr>
+        <td style="padding:8px 36px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f7f9fc;border-left:3px solid ${color};border-radius:6px;">
+            <tr>
+              <td style="padding:14px 18px;font-family:Arial,Helvetica,sans-serif;color:#334155;font-size:14px;line-height:1.6;white-space:pre-wrap;">
+                ${escapeHtml(event.description)}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>` : ''}
 
       <!-- DETAILS BOX -->
       <tr>
