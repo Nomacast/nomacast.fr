@@ -487,6 +487,117 @@ tbody tr:hover { background: #fafbfc; }
   border-radius: 6px; font-size: 13px;
 }
 
+/* ==========================================================
+   nomacast-timeline-detail-v1 — Modal timeline détaillée
+   ========================================================== */
+.modal-timeline {
+  max-width: 720px !important; width: 100%;
+  display: flex; flex-direction: column;
+  padding: 24px 28px;
+}
+.modal-timeline-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; margin-bottom: 18px;
+}
+.modal-timeline-head h2 { margin: 0 0 4px; font-size: 18px; }
+.modal-timeline-head .modal-timeline-sub {
+  font-size: 13px; color: #64748b;
+}
+.modal-timeline-close {
+  background: transparent; border: 0; cursor: pointer;
+  font-size: 22px; line-height: 1; color: #94a3b8;
+  padding: 4px 8px; border-radius: 6px;
+}
+.modal-timeline-close:hover { background: #f1f5f9; color: #475569; }
+
+.timeline-summary {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  padding: 12px 14px; margin-bottom: 16px;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+  font-size: 12px;
+}
+.timeline-summary-item {
+  display: flex; flex-direction: column;
+}
+.timeline-summary-item-value {
+  font-weight: 700; font-size: 16px; color: #0f172a; line-height: 1.2;
+}
+.timeline-summary-item-label {
+  font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.timeline-list {
+  list-style: none; margin: 0; padding: 0;
+  max-height: 60vh; overflow-y: auto;
+  border-left: 2px solid #e2e8f0;
+  margin-left: 14px;
+}
+.timeline-item {
+  position: relative;
+  padding: 12px 0 12px 28px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.timeline-item:last-child { border-bottom: 0; }
+.timeline-item::before {
+  content: ''; position: absolute;
+  left: -7px; top: 16px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #cbd5e1; border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+}
+.timeline-item-kind-visit::before { background: #94a3b8; box-shadow: 0 0 0 1px #94a3b8; }
+.timeline-item-kind-session_start::before { background: #10b981; box-shadow: 0 0 0 1px #10b981; }
+.timeline-item-kind-session_end::before { background: #ef4444; box-shadow: 0 0 0 1px #ef4444; }
+.timeline-item-kind-message::before { background: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+.timeline-item-kind-reaction::before { background: #f59e0b; box-shadow: 0 0 0 1px #f59e0b; }
+.timeline-item-kind-poll_vote::before { background: #8b5cf6; box-shadow: 0 0 0 1px #8b5cf6; }
+.timeline-item-kind-idea_vote::before { background: #ec4899; box-shadow: 0 0 0 1px #ec4899; }
+.timeline-item-kind-cta_click::before { background: #5D9CEC; box-shadow: 0 0 0 1px #5D9CEC; }
+
+.timeline-item-time {
+  font-size: 11px; color: #94a3b8;
+  margin-bottom: 2px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.timeline-item-label {
+  font-size: 13px; font-weight: 600; color: #0f172a;
+  margin-bottom: 2px;
+}
+.timeline-item-detail {
+  font-size: 12px; color: #475569;
+  line-height: 1.4;
+}
+.timeline-item-status {
+  display: inline-block; margin-left: 6px;
+  padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+}
+.timeline-item-status-approved { background: #d1fae5; color: #065f46; }
+.timeline-item-status-pending { background: #fef3c7; color: #92400e; }
+.timeline-item-status-rejected { background: #fee2e2; color: #991b1b; }
+
+.timeline-empty {
+  padding: 32px 16px; text-align: center;
+  color: #94a3b8; font-size: 13px;
+}
+
+/* Tableau invités : ligne cliquable pour ouvrir la timeline */
+.stats-table tbody tr.is-clickable {
+  cursor: pointer; transition: background 0.1s;
+}
+.stats-table tbody tr.is-clickable:hover {
+  background: #f8fafc;
+}
+.stats-table tbody tr.is-clickable td:first-child::after {
+  content: ' →'; color: #cbd5e1; font-size: 11px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.stats-table tbody tr.is-clickable:hover td:first-child::after {
+  opacity: 1;
+}
+
 .muted { color: #94a3b8; }
 
 /* Branding card */
@@ -854,6 +965,22 @@ ${event.white_label === 1 || event.white_label === true
     <div class="modal-actions">
       <button class="btn btn-ghost" data-close>Annuler</button>
       <button class="btn btn-primary" id="csv-submit" disabled>Importer</button>
+    </div>
+  </div>
+</div>
+
+<!-- nomacast-timeline-detail-v1 — Modal Timeline détaillée d'un invité -->
+<div class="modal-backdrop" id="modal-timeline" hidden>
+  <div class="modal modal-timeline">
+    <div class="modal-timeline-head">
+      <div>
+        <h2 id="modal-timeline-name">Détail invité</h2>
+        <div class="modal-timeline-sub" id="modal-timeline-sub"></div>
+      </div>
+      <button type="button" class="modal-timeline-close" data-close aria-label="Fermer">×</button>
+    </div>
+    <div id="modal-timeline-body">
+      <div class="timeline-empty">Chargement…</div>
     </div>
   </div>
 </div>
@@ -1778,7 +1905,14 @@ ${event.white_label === 1 || event.white_label === true
             text: String(r.visits_count || 0)
           }));
         }
-        tbody.appendChild(el('tr', { children: cells }));
+        // nomacast-timeline-detail-v1 — Ligne cliquable → ouvre la timeline détaillée
+        var tr = el('tr', { children: cells });
+        tr.classList.add('is-clickable');
+        tr.title = 'Voir la timeline détaillée';
+        (function (invitee) {
+          tr.addEventListener('click', function () { openInviteeTimeline(invitee); });
+        })(r);
+        tbody.appendChild(tr);
       });
       table.appendChild(tbody);
       parent.appendChild(table);
@@ -1855,6 +1989,135 @@ ${event.white_label === 1 || event.white_label === true
       if (diffSec < 3600) return 'il y a ' + Math.floor(diffSec / 60) + 'min';
       if (diffSec < 86400) return 'il y a ' + Math.floor(diffSec / 3600) + 'h';
       return formatTimeOnly(iso);
+    }
+
+    // ============================================================
+    // nomacast-timeline-detail-v1 — Modal timeline détaillée par invité
+    // ============================================================
+    var timelineModalEl = document.getElementById('modal-timeline');
+    var timelineNameEl = document.getElementById('modal-timeline-name');
+    var timelineSubEl = document.getElementById('modal-timeline-sub');
+    var timelineBodyEl = document.getElementById('modal-timeline-body');
+
+    function openInviteeTimeline(invitee) {
+      if (!invitee || !invitee.invitee_id) return;
+      timelineNameEl.textContent = invitee.name || invitee.email || 'Invité';
+      var subParts = [];
+      if (invitee.name && invitee.email) subParts.push(invitee.email);
+      if (invitee.company) subParts.push(invitee.company);
+      timelineSubEl.textContent = subParts.join(' · ');
+      timelineBodyEl.innerHTML = '<div class="timeline-empty">Chargement de la timeline…</div>';
+      timelineModalEl.hidden = false;
+
+      fetch(API + '/invitees/' + encodeURIComponent(invitee.invitee_id) + '/timeline', {
+        credentials: 'same-origin',
+        cache: 'no-store'
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (data) { renderTimeline(data); })
+        .catch(function (err) {
+          timelineBodyEl.innerHTML = '';
+          timelineBodyEl.appendChild(el('div', {
+            className: 'timeline-empty',
+            text: 'Erreur de chargement : ' + err.message
+          }));
+        });
+    }
+
+    function closeInviteeTimeline() {
+      timelineModalEl.hidden = true;
+    }
+
+    // Fermeture : click sur backdrop OU sur l'icône × OU touche Escape
+    timelineModalEl.addEventListener('click', function (e) {
+      if (e.target === timelineModalEl || e.target.matches('[data-close]')) {
+        closeInviteeTimeline();
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !timelineModalEl.hidden) closeInviteeTimeline();
+    });
+
+    function renderTimeline(data) {
+      timelineBodyEl.innerHTML = '';
+      var events = (data && Array.isArray(data.events)) ? data.events : [];
+      var summary = (data && data.summary) || {};
+
+      // Bloc summary en tête
+      var sumEl = el('div', { className: 'timeline-summary' });
+      sumEl.appendChild(summaryItem(summary.total_events || 0, 'Actions'));
+      sumEl.appendChild(summaryItem(summary.total_sessions || 0, 'Sessions'));
+      sumEl.appendChild(summaryItem(
+        formatSeconds(summary.total_session_seconds || 0), 'Temps cumulé'
+      ));
+      sumEl.appendChild(summaryItem(summary.total_messages || 0, 'Messages'));
+      sumEl.appendChild(summaryItem(summary.total_reactions || 0, 'Réactions'));
+      sumEl.appendChild(summaryItem(
+        (summary.total_poll_votes || 0) + (summary.total_idea_votes || 0), 'Votes'
+      ));
+      sumEl.appendChild(summaryItem(summary.total_cta_clicks || 0, 'Clics CTA'));
+      timelineBodyEl.appendChild(sumEl);
+
+      // Liste des événements
+      if (!events.length) {
+        timelineBodyEl.appendChild(el('div', {
+          className: 'timeline-empty',
+          text: "Aucune activité enregistrée pour cet invité."
+        }));
+        return;
+      }
+
+      var ul = el('ul', { className: 'timeline-list' });
+      events.forEach(function (ev) {
+        var li = el('li', { className: 'timeline-item timeline-item-kind-' + (ev.kind || 'visit') });
+
+        li.appendChild(el('div', {
+          className: 'timeline-item-time',
+          text: formatTimelineTs(ev.ts)
+        }));
+
+        var labelLine = el('div', { className: 'timeline-item-label' });
+        labelLine.appendChild(document.createTextNode(ev.label || '—'));
+        if (ev.status) {
+          labelLine.appendChild(el('span', {
+            className: 'timeline-item-status timeline-item-status-' + ev.status,
+            text: ev.status
+          }));
+        }
+        li.appendChild(labelLine);
+
+        if (ev.detail) {
+          li.appendChild(el('div', { className: 'timeline-item-detail', text: ev.detail }));
+        }
+
+        ul.appendChild(li);
+      });
+      timelineBodyEl.appendChild(ul);
+    }
+
+    function summaryItem(value, label) {
+      var w = el('div', { className: 'timeline-summary-item' });
+      w.appendChild(el('div', {
+        className: 'timeline-summary-item-value',
+        text: String(value)
+      }));
+      w.appendChild(el('div', {
+        className: 'timeline-summary-item-label',
+        text: label
+      }));
+      return w;
+    }
+
+    function formatTimelineTs(iso) {
+      if (!iso) return '—';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      var date = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      var time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+      return date + ' · ' + time;
     }
 
     // Mount au boot
