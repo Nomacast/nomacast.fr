@@ -53,12 +53,16 @@ export const onRequestGet = async ({ request, env }) => {
   // nomacast-login-bots-v1 : sitekey publique Turnstile (env var)
   const turnstileSitekey = env.TURNSTILE_SITEKEY || '';
 
-  return new Response(renderLoginPage(errorMsg, csrfToken, turnstileSitekey), {
+  // nomacast-csp-nonce-v1 : nonce unique par requête pour la CSP stricte
+  const nonce = generateNonce();
+
+  return new Response(renderLoginPage(errorMsg, csrfToken, turnstileSitekey, nonce), {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-store',
-      'Set-Cookie': buildCsrfCookieHeader(csrfToken)
+      'Set-Cookie': buildCsrfCookieHeader(csrfToken),
+      'Content-Security-Policy': buildCspForLoginPage(nonce)
     }
   });
 };
@@ -452,9 +456,36 @@ async function verifyTurnstile(token, secret, clientIp) {
 }
 
 // ============================================================
+// nomacast-csp-nonce-v1 — CSP stricte avec nonce pour la page login
+// (override la CSP globale de _headers — autorise Turnstile cross-origin)
+// ============================================================
+function generateNonce() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function buildCspForLoginPage(nonce) {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' https://challenges.cloudflare.com`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "connect-src 'self' https://challenges.cloudflare.com",
+    "frame-src 'self' https://challenges.cloudflare.com",
+    "font-src 'self'",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "upgrade-insecure-requests"
+  ].join('; ');
+}
+
+// ============================================================
 // Template HTML — page de login, brand Nomacast
 // ============================================================
-function renderLoginPage(errorMsg, csrfToken, turnstileSitekey) {
+function renderLoginPage(errorMsg, csrfToken, turnstileSitekey, nonce) {
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -463,7 +494,7 @@ function renderLoginPage(errorMsg, csrfToken, turnstileSitekey) {
 <meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Connexion — Nomacast</title>
-${turnstileSitekey ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' : ''}
+${turnstileSitekey ? `<script nonce="${nonce || ''}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>` : ''}
 <style>
 *,*::before,*::after { box-sizing: border-box; }
 body {

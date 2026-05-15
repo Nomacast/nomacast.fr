@@ -108,38 +108,70 @@ export const onRequestGet = async ({ params, request, env }) => {
     }
   }
 
+  // nomacast-csp-nonce-v1 : nonce unique propagé aux render*Page
+  const nonce = generateNonce();
+
   let html;
   if (event.status === 'draft') {
-    html = renderWaitingPage(event, invitee, params.token);
+    html = renderWaitingPage(event, invitee, params.token, nonce);
   } else if (event.status === 'live') {
-    html = renderLivePage(event, invitee, params.token);
+    html = renderLivePage(event, invitee, params.token, nonce);
   } else if (event.status === 'ended') {
-    html = renderEndedPage(event, invitee, params.token);
+    html = renderEndedPage(event, invitee, params.token, nonce);
   } else {
-    html = renderErrorPage('État inconnu', 'L\'état de cet événement n\'est pas reconnu.');
+    html = renderErrorPage('État inconnu', 'L\'état de cet événement n\'est pas reconnu.', nonce);
   }
-  return htmlResponse(html, 200);
+  return htmlResponse(html, 200, { nonce });
 };
 
 // ============================================================
 // Réponse HTTP
 // ============================================================
-function htmlResponse(html, status = 200) {
-  return new Response(html, {
-    status,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'private, no-store',
-      'X-Robots-Tag': 'noindex, nofollow',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
-    }
-  });
+// ============================================================
+// nomacast-csp-nonce-v1 — CSP stricte avec nonce par requête
+// (override la CSP globale de _headers pour cette page uniquement)
+// ============================================================
+function generateNonce() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function buildCspForChatPage(nonce) {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}'`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' blob: https://*.r2.dev https://*.cloudflarestream.com",
+    "connect-src 'self'",
+    "frame-src 'self' https://*.cloudflarestream.com",
+    "font-src 'self' data:",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "upgrade-insecure-requests"
+  ].join('; ');
+}
+
+function htmlResponse(html, status = 200, opts = {}) {
+  const headers = {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'X-Robots-Tag': 'noindex, nofollow',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
+  };
+  if (opts.nonce) {
+    headers['Content-Security-Policy'] = buildCspForChatPage(opts.nonce);
+  }
+  return new Response(html, { status, headers });
 }
 
 // ============================================================
 // Pages : draft / live / ended / error
 // ============================================================
-function renderWaitingPage(event, invitee, token) {
+function renderWaitingPage(event, invitee, token, nonce) {
   const dateLabel = formatFrenchDateTime(event.scheduled_at);
   const agendaUrls = buildAgendaUrls(event, token);
   // Lot A2 : masquer le bloc agenda si l'event démarre dans moins de 2h
@@ -202,7 +234,8 @@ function renderWaitingPage(event, invitee, token) {
     mainBody,
     bodyScript: buildDraftScript({
       scheduledAt: event.scheduled_at,
-      statusUrl: `/i/${encodeURIComponent(token)}/status`
+      statusUrl: `/i/${encodeURIComponent(token)}/status`,
+      nonce
     })
   });
 }
@@ -224,7 +257,7 @@ function buildReactionsBarHtml(emojis) {
   }).join('');
 }
 
-function renderLivePage(event, invitee, token) {
+function renderLivePage(event, invitee, token, nonce) {
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
   const hasStream = !!event.stream_playback_url;
@@ -351,12 +384,13 @@ function renderLivePage(event, invitee, token) {
       hasReactions,
       hasCta,
       // L'invitee est connu côté serveur, pas besoin de demander un pseudo
-      authorPlaceholder: invitee.name || (invitee.email ? invitee.email.split('@')[0] : 'Invité')
+      authorPlaceholder: invitee.name || (invitee.email ? invitee.email.split('@')[0] : 'Invité'),
+      nonce
     })
   });
 }
 
-function renderEndedPage(event, invitee, token) {
+function renderEndedPage(event, invitee, token, nonce) {
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
   // nomacast-cta-ended-persist-v1 : CTA actif reste visible après la fin de l'event
@@ -429,12 +463,13 @@ function renderEndedPage(event, invitee, token) {
       isLectureSeule,
       isQaMode,
       isEnded: true,
-      authorPlaceholder: null
+      authorPlaceholder: null,
+      nonce
     })
   });
 }
 
-function renderErrorPage(title, message) {
+function renderErrorPage(title, message, nonce) {
   const heroBody = `
     <span class="state-badge state-error">
       <span class="state-dot"></span>
@@ -1580,8 +1615,8 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
 // Script JS de la page live (polling chat + polling status pour live→ended).
 // Concaténation + (pas de template strings) pour éviter les conflits ${...}
 // avec le template serveur.
-function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, presenceHeartbeatUrl, presenceStatsUrl, reactionsUrl, reactionsRecentUrl, reactionsConfigUrl, reactionEmojis, ctaActiveUrl, inviteeId, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, hasPresence, hasReactions, hasCta, authorPlaceholder }) {
-  return `<script>
+function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, presenceHeartbeatUrl, presenceStatsUrl, reactionsUrl, reactionsRecentUrl, reactionsConfigUrl, reactionEmojis, ctaActiveUrl, inviteeId, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, hasPresence, hasReactions, hasCta, authorPlaceholder, nonce }) {
+  return `<script nonce="${nonce || ''}">
 (function () {
   var STATUS_URL = ${JSON.stringify(statusUrl)};
   var CHAT_URL = ${JSON.stringify(chatMessagesUrl)};
@@ -2532,8 +2567,8 @@ function buildCountdownHtml(scheduledAt) {
 // Script inline : countdown 1Hz + polling adaptatif du status.
 // Utilise concaténation + (pas de template strings) pour éviter les conflits
 // avec l'interpolation ${...} du template serveur.
-function buildDraftScript({ scheduledAt, statusUrl }) {
-  return `<script>
+function buildDraftScript({ scheduledAt, statusUrl, nonce }) {
+  return `<script nonce="${nonce || ''}">
 (function () {
   var SCHEDULED_AT_ISO = ${JSON.stringify(scheduledAt || null)};
   var STATUS_URL = ${JSON.stringify(statusUrl)};

@@ -112,19 +112,22 @@ export const onRequestGet = async ({ params, env, request }) => {
     }
   }
 
+  // nomacast-csp-nonce-v1 : génère un nonce unique par requête, propagé aux render*Page
+  const nonce = generateNonce();
+
   let html;
   if (event.access_mode === 'private' && !isAdminPreview) {
-    html = renderPrivatePage(event);
+    html = renderPrivatePage(event, nonce);
   } else if (event.status === 'draft') {
-    html = renderWaitingPage(event);
+    html = renderWaitingPage(event, nonce);
   } else if (event.status === 'live') {
-    html = renderLivePage(event);
+    html = renderLivePage(event, nonce);
   } else if (event.status === 'ended') {
-    html = renderEndedPage(event);
+    html = renderEndedPage(event, nonce);
   } else {
-    html = renderErrorPage('État inconnu', 'L\'état de cet événement n\'est pas reconnu.');
+    html = renderErrorPage('État inconnu', 'L\'état de cet événement n\'est pas reconnu.', nonce);
   }
-  return htmlResponse(html, 200);
+  return htmlResponse(html, 200, { nonce });
 };
 
 async function computePreviewToken(slug, secret) {
@@ -150,22 +153,53 @@ async function hashIp(ip, secret) {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function htmlResponse(html, status = 200) {
-  return new Response(html, {
-    status,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'public, max-age=60',
-      'X-Robots-Tag': 'noindex, nofollow',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
-    }
-  });
+// ============================================================
+// nomacast-csp-nonce-v1 — CSP stricte avec nonce par requête
+// (override la CSP globale de _headers pour cette page uniquement)
+// ============================================================
+function generateNonce() {
+  const arr = new Uint8Array(16);  // 16 bytes → 22 chars base64url (largement suffisant)
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function buildCspForChatPage(nonce) {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}'`,
+    "style-src 'self' 'unsafe-inline'",  // styles inline restent autorisés (refactor coûteux, risque XSS faible)
+    "img-src 'self' data: blob: https:",  // logos clients depuis URLs externes (event.logo_url)
+    "media-src 'self' blob: https://*.r2.dev https://*.cloudflarestream.com",  // replay vidéo
+    "connect-src 'self'",  // fetch reste sur le domaine
+    "frame-src 'self' https://*.cloudflarestream.com",  // player Stream
+    "font-src 'self' data:",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "upgrade-insecure-requests"
+  ].join('; ');
+}
+
+function htmlResponse(html, status = 200, opts = {}) {
+  const headers = {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'public, max-age=60',
+    'X-Robots-Tag': 'noindex, nofollow',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
+  };
+  if (opts.nonce) {
+    // nomacast-csp-nonce-v1 : override CSP avec nonce (nonce unique par requête → impossible à cacher)
+    headers['Content-Security-Policy'] = buildCspForChatPage(opts.nonce);
+    headers['Cache-Control'] = 'no-store';
+  }
+  return new Response(html, { status, headers });
 }
 
 // ============================================================
 // Pages
 // ============================================================
-function renderPrivatePage(event) {
+function renderPrivatePage(event, nonce) {
   const heroBody = `
     <span class="state-badge state-private">
       <span class="state-dot"></span>
@@ -193,7 +227,7 @@ function renderPrivatePage(event) {
   });
 }
 
-function renderWaitingPage(event) {
+function renderWaitingPage(event, nonce) {
   const dateLabel = formatFrenchDateTime(event.scheduled_at);
   const agendaUrls = buildAgendaUrls(event);
   // Lot A2 : masquer le bloc agenda si l'event démarre dans moins de 2h
@@ -254,7 +288,8 @@ function renderWaitingPage(event) {
     heroBody, mainBody,
     bodyScript: buildDraftScript({
       scheduledAt: event.scheduled_at,
-      statusUrl: `/chat/${encodeURIComponent(event.slug)}/status`
+      statusUrl: `/chat/${encodeURIComponent(event.slug)}/status`,
+      nonce
     })
   });
 }
@@ -276,7 +311,7 @@ function buildReactionsBarHtml(emojis) {
   }).join('');
 }
 
-function renderLivePage(event) {
+function renderLivePage(event, nonce) {
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
   const hasStream = !!event.stream_playback_url;
@@ -399,12 +434,13 @@ function renderLivePage(event) {
       hasReactions,
       hasCta,
       // L'auteur n'est pas connu côté serveur, le placeholder sera demandé côté client
-      authorPlaceholder: null
+      authorPlaceholder: null,
+      nonce
     })
   });
 }
 
-function renderEndedPage(event) {
+function renderEndedPage(event, nonce) {
   const isLectureSeule = event.modes && event.modes.includes('lecture');
   const isQaMode = event.modes && event.modes.includes('qa');
   // nomacast-cta-ended-persist-v1 : si le mode CTA est activé, on continue à afficher
@@ -475,12 +511,13 @@ function renderEndedPage(event) {
       isLectureSeule,
       isQaMode,
       isEnded: true,
-      authorPlaceholder: null
+      authorPlaceholder: null,
+      nonce
     })
   });
 }
 
-function renderErrorPage(title, message) {
+function renderErrorPage(title, message, nonce) {
   const heroBody = `
     <span class="state-badge state-error">
       <span class="state-dot"></span>
@@ -1500,8 +1537,8 @@ function buildChatPanelHtml({ isLectureSeule, isQaMode, isEnded }) {
 // Script JS de la page live (polling chat + polling status pour live→ended).
 // Concaténation + (pas de template strings) pour éviter les conflits ${...}
 // avec le template serveur.
-function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, presenceHeartbeatUrl, presenceStatsUrl, reactionsUrl, reactionsRecentUrl, reactionsConfigUrl, reactionEmojis, ctaActiveUrl, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, hasPresence, hasReactions, hasCta, authorPlaceholder }) {
-  return `<script>
+function buildLivePageScript({ statusUrl, chatMessagesUrl, pollsActiveUrl, voteUrlBase, reportIssueUrl, presenceHeartbeatUrl, presenceStatsUrl, reactionsUrl, reactionsRecentUrl, reactionsConfigUrl, reactionEmojis, ctaActiveUrl, accessMode, magicToken, isLectureSeule, isQaMode, isEnded, hasPresence, hasReactions, hasCta, authorPlaceholder, nonce }) {
+  return `<script nonce="${nonce || ''}">
 (function () {
   var STATUS_URL = ${JSON.stringify(statusUrl)};
   var CHAT_URL = ${JSON.stringify(chatMessagesUrl)};
@@ -2471,8 +2508,8 @@ function buildCountdownHtml(scheduledAt) {
 // Script inline : countdown 1Hz + polling adaptatif du status.
 // Concaténation + (pas de template strings) pour éviter les conflits avec
 // l'interpolation ${...} du template serveur.
-function buildDraftScript({ scheduledAt, statusUrl }) {
-  return `<script>
+function buildDraftScript({ scheduledAt, statusUrl, nonce }) {
+  return `<script nonce="${nonce || ''}">
 (function () {
   var SCHEDULED_AT_ISO = ${JSON.stringify(scheduledAt || null)};
   var STATUS_URL = ${JSON.stringify(statusUrl)};
