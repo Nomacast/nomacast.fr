@@ -28,11 +28,14 @@ export const onRequestGet = async ({ params, request, env }) => {
   ).bind(params.token).first();
 
   if (!event) {
-    return htmlError(
-      'Lien invalide',
-      'Cet événement n\'existe pas ou a été supprimé.',
-      404
-    );
+    // Slug inconnu (ou ancien HMAC bookmarké) → on redirige vers login plutôt que d'afficher
+    // une erreur. Si l'utilisateur a une session active pour un autre event, login.js
+    // le redirigera vers son event ; sinon il pourra se logger.
+    const loginUrl = new URL('/event-admin/login', request.url).toString();
+    return new Response(null, {
+      status: 302,
+      headers: { 'Location': loginUrl, 'Cache-Control': 'no-store' }
+    });
   }
 
   // Vérification de la session cookie
