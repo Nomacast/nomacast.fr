@@ -1,24 +1,67 @@
 // functions/event-admin/[token].js
 // GET /event-admin/:token  →  Page client de gestion des invités.
 //
-// Valide le token côté serveur, sert le HTML avec les infos event injectées.
-// Le JS embarqué appelle ensuite /api/event-admin/:token/* pour les ops CRUD.
+// Le paramètre :token peut être :
+//   (a) Un token HMAC dérivé du slug + ADMIN_PASSWORD (legacy admin Nomacast)
+//   (b) Le slug de l'event, avec un cookie session client valide pour cet event
+//
+// Le JS embarqué appelle /api/event-admin/<HMAC>/* (HMAC toujours calculé côté serveur)
+// pour les ops CRUD ; le client n'a jamais besoin de connaître le HMAC explicitement
+// quand il passe par le cookie session.
+//
+// Marqueur : nomacast-analytics-visits-tracking-v1 + nomacast-client-credentials-v1
 
-// Marqueur : nomacast-analytics-visits-tracking-v1
+import { getSessionFromRequest } from '../_lib/session.js';
+
 export const onRequestGet = async ({ params, request, env }) => {
   if (!env.DB || !env.ADMIN_PASSWORD) {
     return htmlError('Service indisponible', 'Le service n\'est pas correctement configuré.', 500);
   }
 
-  // Résolution token → event
+  // ============================================================
+  // Résolution du token :
+  //  1. Essayer comme HMAC (admin Nomacast — backup)
+  //  2. Sinon essayer comme slug + cookie session client
+  //  3. Sinon redirection vers /event-admin/login (ou 404 si slug inexistant)
+  // ============================================================
   const events = await env.DB.prepare(
     'SELECT id, slug, title, client_name, scheduled_at, status, white_label, primary_color, logo_url, access_mode FROM events'
   ).all();
 
   let event = null;
+  let isClientSession = false;
+
+  // 1. HMAC match (admin Nomacast)
   for (const ev of (events.results || [])) {
     const expected = await computeClientToken(ev.slug, env.ADMIN_PASSWORD);
     if (params.token === expected) { event = ev; break; }
+  }
+
+  // 2. Slug match + cookie session
+  if (!event) {
+    const slugEv = (events.results || []).find(ev => ev.slug === params.token);
+    if (slugEv) {
+      try {
+        const session = await getSessionFromRequest(request, env);
+        if (session && session.event_id === slugEv.id) {
+          event = slugEv;
+          isClientSession = true;
+        } else {
+          // Slug valide mais pas authentifié → redirection vers login
+          const loginUrl = new URL('/event-admin/login', request.url).toString();
+          return new Response(null, {
+            status: 302,
+            headers: { 'Location': loginUrl, 'Cache-Control': 'no-store' }
+          });
+        }
+      } catch (e) {
+        const loginUrl = new URL('/event-admin/login', request.url).toString();
+        return new Response(null, {
+          status: 302,
+          headers: { 'Location': loginUrl, 'Cache-Control': 'no-store' }
+        });
+      }
+    }
   }
 
   if (!event) {
@@ -28,6 +71,12 @@ export const onRequestGet = async ({ params, request, env }) => {
       404
     );
   }
+
+  // Si on est en mode cookie (slug), on a besoin de calculer le HMAC en interne
+  // pour le passer au JS embarqué qui appelle /api/event-admin/<HMAC>/*
+  const apiToken = isClientSession
+    ? await computeClientToken(event.slug, env.ADMIN_PASSWORD)
+    : params.token;
 
   // Calcul du token preview admin (HMAC du slug seul) pour permettre au client
   // de voir un aperçu de son event privé via /chat/<slug>?preview=<token>.
@@ -62,7 +111,7 @@ export const onRequestGet = async ({ params, request, env }) => {
     console.error('[event-admin/token] visits track failed', err);
   }
 
-  return new Response(renderPage(event, params.token, adminPreviewToken), {
+  return new Response(renderPage(event, apiToken, adminPreviewToken, isClientSession), {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
@@ -141,7 +190,7 @@ function formatDate(iso) {
        + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function renderPage(event, token, adminPreviewToken) {
+function renderPage(event, token, adminPreviewToken, isClientSession) {
   const apiBase = `/api/event-admin/${token}`;
   const dateLabel = formatDate(event.scheduled_at);
   const isPrivate = event.access_mode === 'private';
@@ -184,6 +233,29 @@ body {
 .header-client-logo {
   max-height: 36px; max-width: 220px; width: auto; height: auto;
   object-fit: contain;
+}
+
+/* nomacast-client-credentials-v1 : bouton déconnexion + alignement */
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.header-logout {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.header-logout:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
 }
 
 /* nomacast-tabs-v1 : bandeau d'onglets DATA / RÉGIE LIVE */
@@ -605,17 +677,24 @@ tbody tr:hover { background: #fafbfc; }
 ${event.white_label === 1 || event.white_label === true
   ? (event.logo_url
     ? `<header class="header header-whitelabel">
-        <img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" class="header-client-logo">
-        <span class="header-baseline">Espace organisateur</span>
+        <div class="header-left">
+          <img src="${escapeHtml(event.logo_url)}" alt="${escapeHtml(event.client_name || event.title)}" class="header-client-logo">
+          <span class="header-baseline">Espace organisateur</span>
+        </div>
+        ${isClientSession ? `<a href="/event-admin/logout" class="header-logout">Déconnexion</a>` : ''}
       </header>`
     : `<header class="header header-whitelabel">
         <span class="header-baseline">Espace organisateur</span>
+        ${isClientSession ? `<a href="/event-admin/logout" class="header-logout">Déconnexion</a>` : ''}
       </header>`)
   : `<header class="header">
       <a href="https://www.nomacast.fr/" target="_blank" rel="noopener" class="header-logo">
         <span class="logo-dot">&bull;</span><span class="logo-text">&nbsp;Nomacast</span>
       </a>
-      <span class="header-baseline">Gestion des invités</span>
+      <div class="header-right">
+        <span class="header-baseline">Gestion des invités</span>
+        ${isClientSession ? `<a href="/event-admin/logout" class="header-logout">Déconnexion</a>` : ''}
+      </div>
     </header>`}
 
 <!-- nomacast-tabs-v1 : bandeau d'onglets DATA / RÉGIE LIVE -->
