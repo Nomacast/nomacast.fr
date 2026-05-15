@@ -1,7 +1,7 @@
 # Rapport infrastructure — Nomacast Live (chat interactif)
 
 **Date initiale** : 14 mai 2026
-**Dernière MAJ** : 15 mai 2026 (Auth client login/password + Onglets event-admin + Lot A QA + FR-3 description)
+**Dernière MAJ** : 15 mai 2026 (Auth client login/password + Onglets event-admin + Lot A QA + FR-3 description + Lot F sécu phase 1)
 **Méthode** : repo `Nomacast/nomacast.fr` cloné en local (`git clone --depth 1`), tous les fichiers cités ci-dessous ont été lus directement.
 **Statut** : production stable.
 
@@ -12,6 +12,7 @@
 - **Auth client par event** : remplacement total du HMAC backup par un système login/password (migration `client_credentials`, helpers `_lib/password.js` + `_lib/session.js`, page `/event-admin/login` + `/event-admin/logout`). Jérôme se connecte exactement comme un client (même URL).
 - **Onglets event-admin** : `/event-admin/<slug>` affiche désormais 2 onglets « Données & invités » + « Régie en direct » (iframe `/admin/live.html?id=<id>`).
 - **Lot A du QA** (15 mai) : Content-Type `text/html` explicite sur `/*.html`, validation date passée + durée ≤0 à la création, fix reset logo UI quand white_label OFF, CTA 404 cohérent pour magic token invalide, champ description event 500c (migration `event_description`).
+- **Lot F sécu phase 1** (15 mai) : rate limit `/event-admin/login` (5 fails/min/IP via KV `auth-fail:`) + table `auth_logs` (migration `0019_auth_logs.sql`) avec insertions systématiques success/fail. CSP nonce + CSRF token report en phase 2 (cf §10.8).
 - **Conflit numérotation migrations 0016** : 2 fichiers nommés `0016_*` dans le repo (`reactions_config` + `client_credentials`). Renommage à faire via GitHub web : `0017_client_credentials.sql` + `0018_event_description.sql`.
 
 ---
@@ -696,6 +697,24 @@ Schémas complets disponibles dans les fichiers migrations correspondants.
 - `polls`, `poll_options`, `poll_votes` (mig 0012)
 - `technical_alerts` (mig 0013)
 - `pre_event_questions`, `ideas`, `idea_votes`, `event_quotes`, `event_reactions`, `event_presence`, `event_resources`, `event_ctas` (mig 0014)
+- `auth_logs` (mig 0019, 15 mai — cf §5.8 ci-dessous) — forensics tentatives login `/event-admin/login`
+
+### 5.8 Table `auth_logs` (15 mai, Lot F sécu phase 1)
+
+```
+auth_logs
+  id           TEXT PK
+  event_id     TEXT FK → events(id) ON DELETE SET NULL
+  login        TEXT (≤80c)
+  ip_hash      TEXT (HMAC-SHA-256 de l'IP, 32 chars b64url)
+  success      INTEGER (0/1)
+  reason       TEXT NULL ('unknown_login' | 'wrong_password' | 'rate_limited' | null)
+  user_agent   TEXT (≤256c)
+  attempted_at TEXT ISO
+  Indexes : (ip_hash, attempted_at DESC), (event_id, attempted_at DESC), (attempted_at DESC)
+```
+
+Insertion systématique depuis `functions/event-admin/login.js` à chaque tentative (success ET fail). Le `event_id` est NULL si le `login` saisi n'existe pas (cas `unknown_login`). `ip_hash` réutilise `env.CHAT_IP_HASH_SECRET` pour cohérence avec les autres tables anonymisées.
 
 ---
 
@@ -803,7 +822,8 @@ migrations/
 ├── 0015_analytics_foundation.sql   — CREATE visits + event_presence_history + event_reports / ALTER invitees (source, job_title, phone, consent_at, consent_marketing_at, anonymized_at, registered_via) / ALTER events (requires_registration, client_organization_name, data_purpose) — analytics + lead capture + RGPD
 ├── 0016_reactions_config.sql       — ALTER events ADD reaction_emojis_json (1-5 emojis du pool de 15 par event, Tour 2.A-bis)
 ├── 0016_client_credentials.sql ⚠️  — DOUBLON DE NUMÉROTATION (15 mai). ALTER events ADD client_login + client_password_hash, UNIQUE INDEX partiel sur client_login. À renommer en `0017_client_credentials.sql` via GitHub web.
-└── 0017_event_description.sql ⚠️  — À renommer en `0018_event_description.sql` après le rename ci-dessus. ALTER events ADD description (15 mai, FR-3).
+├── 0017_event_description.sql ⚠️  — À renommer en `0018_event_description.sql` après le rename ci-dessus. ALTER events ADD description (15 mai, FR-3).
+└── 0019_auth_logs.sql               — CREATE auth_logs (Lot F sécu phase 1, 15 mai). Forensics tentatives login `/event-admin/login`.
 ```
 
 ### Conflit numérotation 0016 (à régulariser)
@@ -816,12 +836,12 @@ Le 15 mai, j'ai créé `0016_client_credentials.sql` sans détecter que `0016_re
 
 ### Schéma initial
 
-⚠️ **Les migrations `0001` à `0006` ne sont PAS dans le repo**. Le schéma initial des tables `events` et `invitees` est dans `db/schema.sql` (pas dans migrations/). Pour repartir de zéro, appliquer le schéma initial puis chronologiquement chaque migration `0007` à `0018` (après renommage).
+⚠️ **Les migrations `0001` à `0006` ne sont PAS dans le repo**. Le schéma initial des tables `events` et `invitees` est dans `db/schema.sql` (pas dans migrations/). Pour repartir de zéro, appliquer le schéma initial puis chronologiquement chaque migration `0007` à `0019` (après renommage des doublons 0016).
 
 ### Convention nommage
 
 - `0007` à `0012` : préfixe `XXXX-nom-kebab.sql`
-- `0013` à `0018` : préfixe `XXXX_nom_snake.sql`
+- `0013` à `0019` : préfixe `XXXX_nom_snake.sql`
 
 ### Console D1 — approche privilégiée
 
@@ -989,7 +1009,7 @@ Modes mutuellement exclusifs côté UI et backend :
 Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>` avec compteurs par invité (X messages envoyés, Y réactions, Z votes, W CTAs cliqués, etc.).
 
 **État actuel** : tables actions existantes ont déjà `invitee_id` (chat_messages, event_reactions, idea_votes, poll_votes, quiz_responses). Reste à ajouter pour les actions non trackées :
-- **Migration `0019_actions_tracking.sql`** (après renommage) :
+- **Migration `0020_actions_tracking.sql`** (0019 désormais pris par `auth_logs`) :
   - `event_cta_clicks` (event_id, invitee_id, cta_id, clicked_at, ip_hash)
   - `event_quote_shares` (event_id, invitee_id, quote_id, shared_at, platform)
   - `event_resource_views` (event_id, invitee_id, resource_id, viewed_at)
@@ -1001,12 +1021,21 @@ Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>
 
 **En place** : HTTPS, cookies HttpOnly+Secure+SameSite=Lax, PBKDF2 100k, escapeHtml, Basic Auth admin, HMAC cookie session, cross-event isolation.
 
-**À ajouter** :
-1. **Rate limit sur `/event-admin/login`** : 5 tentatives/min par IP (KV `RATE_LIMIT` existant à réutiliser)
-2. **Logs d'authentification** : table `auth_logs` (timestamp, event_id, login, ip_hash, success). À consulter pour détection brute force.
-3. **Renforcer la CSP `_headers`** : audit script-src, object-src 'none' déjà OK. Voir si on peut passer en `script-src 'self' 'nonce-XXX'` (au lieu de `'unsafe-inline'`).
-4. **Protection CSRF explicite** sur les POST sensibles : actuellement SameSite=Lax couvre la majorité. Ajouter un CSRF token form-based pour `/event-admin/login` et les POST admin.
-5. **Skip rotation Google PageSpeed** dans `script.py` / `script_PAGESPEED.py` (décision Jérôme 15 mai : on s'en fiche).
+**Phase 1 livrée le 15 mai 2026** :
+
+- ✅ Rate limit `/event-admin/login` : 5 tentatives échouées / minute / IP via KV `auth-fail:<ip_hash>` (TTL 60s)
+- ✅ Logs `auth_logs` : table créée (migration 0019), insertions systématiques dans `login.js`
+- 🟡 CSP nonce : pas implémenté, défense actuelle suffisante (`script-src 'self'` + headers serrés dans `_headers`)
+- 🟡 CSRF token sur form login : pas implémenté, `SameSite=Lax` du cookie session couvre 95% des cas
+
+**Phase 2 candidate** (si menaces réelles observées dans `auth_logs`) :
+
+- Notification email/webhook sur burst détecté (>50 fails/h sur même IP)
+- Purge auto `auth_logs` > 90 jours (cron Cloudflare ou cleanup manuel)
+- Captcha (Turnstile, déjà configuré pour formulaire contact) après 3 fails
+- Augmenter `RATE_LIMIT_WINDOW_SEC` à 300s (5 min) selon usage réel
+
+**Hors lot** : Skip rotation Google PageSpeed dans `script.py` / `script_PAGESPEED.py` (décision Jérôme 15 mai : on s'en fiche).
 
 ### 10.9 Lot QA résiduel (au-delà du Lot A livré 15 mai)
 
@@ -1057,7 +1086,9 @@ Question ouverte : juste le player vidéo, ou player + chat + reactions (l'app c
 - **(15 mai)** Renommer migrations `0016_client_credentials.sql` → `0017_*` et `0017_event_description.sql` → `0018_*` via GitHub web pour respecter l'ordre chronologique
 - **(15 mai)** Variable d'env `SESSION_SECRET` à présent **critique** : si elle disparaît, tous les utilisateurs sont déconnectés et `/event-admin/login` retourne 500
 - **(15 mai)** Lot E tracking actions par personne : migration + tables à créer (cf §10.7)
-- **(15 mai)** Lot F sécu : rate limit login + logs auth + CSP nonce + CSRF token (cf §10.8)
+- **(15 mai)** Lot F sécu **phase 1 livrée** : rate limit login (KV `auth-fail:`) + table `auth_logs` (mig 0019). Phase 2 candidate (notif burst, purge auto, Turnstile post-fails, CSP nonce, CSRF token) en attente d'observations réelles (cf §10.8).
+- **(15 mai)** **`auth_logs` : forensics et surveillance** — La table `auth_logs` n'a pas de purge auto. À long terme (>6 mois prod), prévoir un cleanup mensuel des entrées > 90 jours via SQL manuel ou cron. Cible : moins de 100 000 lignes pour garder les indexes performants.
+- **(15 mai)** **Rate limit KV consumption** — Chaque IP qui rate son login crée 1 entrée KV `auth-fail:<ip_hash>` (TTL 60s, auto-purge). Pas de risque de remplissage durable.
 
 ---
 
@@ -1081,7 +1112,8 @@ Repo Nomacast/nomacast.fr
 │   ├── 0007 à 0015           # Migrations cumulatives (cf §8)
 │   ├── 0016_reactions_config.sql      # Tour 2.A-bis L1
 │   ├── 0016_client_credentials.sql ⚠️ # À renommer 0017_* (15 mai)
-│   └── 0017_event_description.sql ⚠️  # À renommer 0018_* (15 mai)
+│   ├── 0017_event_description.sql ⚠️  # À renommer 0018_* (15 mai)
+│   └── 0019_auth_logs.sql              # Lot F sécu phase 1 — table forensics login (15 mai)
 ├── functions/
 │   ├── _lib/                          # NOUVEAU (15 mai) — helpers internes partagés
 │   │   ├── password.js               # PBKDF2 100k generate/hash/verify
@@ -1124,4 +1156,4 @@ Repo Nomacast/nomacast.fr
 
 ---
 
-*Rapport mis à jour le 15 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` et de la session du jour (auth client login/password, onglets event-admin, Lot A QA, FR-3 description). Toutes les affirmations ont été vérifiées sur les fichiers réels ou sur les modifications livrées dans la session.*
+*Rapport mis à jour le 15 mai 2026 à partir de la lecture directe du repo `Nomacast/nomacast.fr` et de la session du jour (auth client login/password, onglets event-admin, Lot A QA, FR-3 description, Lot F sécu phase 1 — rate limit login + table auth_logs). Toutes les affirmations ont été vérifiées sur les fichiers réels ou sur les modifications livrées dans la session.*
