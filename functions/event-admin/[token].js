@@ -765,6 +765,15 @@ tbody tr:hover { background: #fafbfc; }
   text-transform: uppercase; letter-spacing: 0.03em;
 }
 .stats-source-badge.self { background: rgba(90, 152, 214, 0.08); color: #5A98D6; }
+
+/* nomacast-cta-analytics-v1 — Badges statut CTA dans tableau analytics */
+.stats-cta-status {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.stats-cta-status.is-active { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.stats-cta-status.is-inactive { background: #f1f5f9; color: #64748b; }
 .stats-error {
   padding: 12px 14px; background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
@@ -1620,11 +1629,13 @@ ${event.white_label === 1 || event.white_label === true
         renderTilesLive(body, s);
         renderTimelineChart(body, stats.timeline || [], s.peak_concurrent || 0);
         renderTopChatters(body, stats.top_chatters || []);
+        renderCtasAnalytics(body, stats.ctas || [], s); // nomacast-cta-analytics-v1
         renderPerInviteeTable(body, stats.per_invitee || [], status);
       } else if (status === 'ended') {
         renderTilesEnded(body, s, ev);
         renderTimelineChart(body, stats.timeline || [], s.peak_concurrent || 0);
         renderTopChatters(body, stats.top_chatters || []);
+        renderCtasAnalytics(body, stats.ctas || [], s); // nomacast-cta-analytics-v1
         renderPerInviteeTable(body, stats.per_invitee || [], status);
         renderGeoAndSources(body, stats.geography || [], stats.traffic_sources || []);
       }
@@ -1800,6 +1811,99 @@ ${event.white_label === 1 || event.white_label === true
         style: { marginBottom: '18px' },
         children: [table]
       }));
+    }
+
+    // ============================================================
+    // nomacast-cta-analytics-v1 — Performance des CTAs
+    // ============================================================
+    function renderCtasAnalytics(parent, ctas, summary) {
+      // Pas afficher si aucun CTA jamais créé pour cet event
+      if (!ctas || !ctas.length) return;
+
+      parent.appendChild(el('div', {
+        className: 'stats-section-title',
+        text: 'Performance des CTAs'
+      }));
+
+      // Bloc summary KPIs CTA (3 tuiles compactes)
+      var totalClicks = summary.cta_total_clicks || 0;
+      var uniqueClickers = summary.cta_unique_clickers || 0;
+      var uniqueViewers = summary.public_unique_viewers || summary.invitees_attended || 0;
+      var clickRate = uniqueViewers > 0 ? Math.round((uniqueClickers / uniqueViewers) * 1000) / 10 : 0;
+
+      var kpiRow = el('div', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' } });
+      kpiRow.appendChild(ctaKpiTile(String(totalClicks), 'Clics totaux'));
+      kpiRow.appendChild(ctaKpiTile(String(uniqueClickers), 'Cliqueurs uniques'));
+      kpiRow.appendChild(ctaKpiTile(clickRate + ' %', 'Taux de clic'));
+      parent.appendChild(kpiRow);
+
+      // Tableau des CTAs
+      var table = el('table', { className: 'stats-table' });
+      var thead = el('thead');
+      thead.appendChild(el('tr', { children: [
+        el('th', { text: 'CTA' }),
+        el('th', { text: 'Statut' }),
+        el('th', { text: 'Clics', attrs: { style: 'text-align:right' } }),
+        el('th', { text: 'Uniques', attrs: { style: 'text-align:right' } })
+      ]}));
+      table.appendChild(thead);
+      var tbody = el('tbody');
+      ctas.forEach(function (c) {
+        var labelCell = el('td');
+        labelCell.appendChild(el('div', {
+          style: { fontWeight: '600', color: '#0f172a' },
+          text: c.label || '—'
+        }));
+        labelCell.appendChild(el('div', {
+          className: 'stats-tile-sub',
+          style: { marginTop: '2px', fontSize: '11px', wordBreak: 'break-all' },
+          text: c.url || ''
+        }));
+
+        var statusCell = el('td');
+        var statusBadge = el('span', {
+          className: 'stats-cta-status ' + (c.active ? 'is-active' : 'is-inactive'),
+          text: c.active ? 'Actif' : 'Inactif'
+        });
+        statusCell.appendChild(statusBadge);
+
+        var clicksCell = el('td', {
+          text: String(c.total_clicks || 0),
+          attrs: { style: 'text-align:right; font-weight:600' }
+        });
+        var uniquesCell = el('td', {
+          text: String(c.unique_clicks || 0),
+          attrs: { style: 'text-align:right' }
+        });
+
+        tbody.appendChild(el('tr', { children: [labelCell, statusCell, clicksCell, uniquesCell] }));
+      });
+      table.appendChild(tbody);
+      parent.appendChild(el('div', {
+        style: { marginBottom: '18px' },
+        children: [table]
+      }));
+    }
+
+    function ctaKpiTile(value, label) {
+      var w = el('div', {
+        style: {
+          flex: '1', minWidth: '120px',
+          padding: '12px 14px',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px'
+        }
+      });
+      w.appendChild(el('div', {
+        style: { fontSize: '20px', fontWeight: '700', color: '#0f172a' },
+        text: value
+      }));
+      w.appendChild(el('div', {
+        style: { fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: '2px' },
+        text: label
+      }));
+      return w;
     }
 
     function renderPerInviteeTable(parent, perInvitee, status) {

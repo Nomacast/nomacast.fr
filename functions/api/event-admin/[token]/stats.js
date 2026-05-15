@@ -238,7 +238,40 @@ export const onRequestGet = async ({ params, env }) => {
     `).bind(eventId).all();
     const topChatters = topChattersRes.results || [];
 
-    // 7. Construction réponse (structure identique à l'endpoint admin pour réutilisation UI)
+    // 7. CTAs avec analytics (clics totaux + clics uniques + taux)
+    //    nomacast-cta-analytics-v1
+    const ctasRes = await safeQuery(env.DB, `
+      SELECT
+        c.id, c.label, c.url, c.active,
+        c.activated_at, c.deactivated_at, c.created_at, c.expires_in_seconds,
+        (SELECT COUNT(*) FROM event_cta_clicks WHERE cta_id = c.id) AS total_clicks,
+        (SELECT COUNT(DISTINCT COALESCE(invitee_id, anon_key)) FROM event_cta_clicks WHERE cta_id = c.id) AS unique_clicks
+      FROM event_ctas c
+      WHERE c.event_id = ?
+      ORDER BY total_clicks DESC, c.created_at DESC
+    `, [eventId]);
+    const ctasAnalytics = ctasRes.map(r => ({
+      id: r.id,
+      label: r.label,
+      url: r.url,
+      active: r.active === 1,
+      activated_at: r.activated_at,
+      deactivated_at: r.deactivated_at,
+      created_at: r.created_at,
+      expires_in_seconds: r.expires_in_seconds,
+      total_clicks: r.total_clicks || 0,
+      unique_clicks: r.unique_clicks || 0
+    }));
+    // Agrégat global CTAs
+    const ctaTotalClicks = ctasAnalytics.reduce((acc, c) => acc + c.total_clicks, 0);
+    const ctaUniqueClickersRes = await safeQuery(env.DB, `
+      SELECT COUNT(DISTINCT COALESCE(invitee_id, anon_key)) AS n
+      FROM event_cta_clicks
+      WHERE event_id = ?
+    `, [eventId]);
+    const ctaUniqueClickers = (ctaUniqueClickersRes[0] && ctaUniqueClickersRes[0].n) || 0;
+
+    // 8. Construction réponse (structure identique à l'endpoint admin pour réutilisation UI)
     const response = {
       event: {
         id: event.id,
@@ -282,13 +315,19 @@ export const onRequestGet = async ({ params, env }) => {
         reactions_total: (reactionsCount && reactionsCount.n) || 0,
         polls_total: (pollsCount && pollsCount.n) || 0,
         ideas_total: (ideasCount && ideasCount.n) || 0,
-        quotes_total: (quotesCount && quotesCount.n) || 0
+        quotes_total: (quotesCount && quotesCount.n) || 0,
+        // nomacast-cta-analytics-v1
+        ctas_total: ctasAnalytics.length,
+        cta_total_clicks: ctaTotalClicks,
+        cta_unique_clickers: ctaUniqueClickers
       },
       timeline,
       per_invitee: perInvitee,
       geography,
       traffic_sources: trafficSources,
-      top_chatters: topChatters
+      top_chatters: topChatters,
+      // nomacast-cta-analytics-v1 — Performance des CTAs (label, clics totaux/uniques, statut)
+      ctas: ctasAnalytics
     };
 
     return json(response);
@@ -301,6 +340,17 @@ export const onRequestGet = async ({ params, env }) => {
 // ============================================================
 // Helpers
 // ============================================================
+
+// nomacast-cta-analytics-v1 — Query défensive : retourne [] si erreur SQL (résilience aux schémas)
+async function safeQuery(db, sql, binds) {
+  try {
+    const res = await db.prepare(sql).bind(...binds).all();
+    return res.results || [];
+  } catch (err) {
+    console.warn('[stats safeQuery]', err.message);
+    return [];
+  }
+}
 
 // Résolution du token HMAC client → event row (réutilise le pattern de event-admin/[token].js)
 async function resolveEventByToken(token, env) {

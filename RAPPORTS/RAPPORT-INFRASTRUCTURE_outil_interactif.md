@@ -247,7 +247,7 @@ Toutes protégées par Basic Auth via `functions/api/admin/_middleware.js`.
 | `/api/admin/events/<id>/send-invitations` | POST | Envoi batch à tous les invités sans `invited_at` |
 | `/api/admin/events/<id>/messages` | GET | Liste messages (filtre `?status=`) |
 | `/api/admin/events/<id>/messages/<msgId>` | PATCH, DELETE | Modération |
-| `/api/admin/events/<id>/announce` | POST | Push annonce broadcast admin |
+| `/api/admin/events/<id>/announce` | POST | **(livré 15 mai, marqueur `nomacast-admin-announce-v1`)** Push annonce broadcast admin. INSERT dans `chat_messages` avec `author_kind='admin'` et `status='approved'`. Détection auto colonne contenu via `PRAGMA table_info`. Auteur = email admin depuis JWT Cloudflare Access (avant `@`), fallback « Modérateur ». Cf §10.16. |
 | `/api/admin/events/<id>/polls` | GET, POST | CRUD sondages |
 | `/api/admin/events/<id>/polls/<pollId>` | GET, PATCH, DELETE | CRUD sondage individuel |
 | `/api/admin/events/<id>/feed-token` | GET | URL signée vMix |
@@ -1018,7 +1018,7 @@ Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>
 **Phase E.3 Part 1 ✅ Livrée (15 mai)** — Tracking clics CTA :
 - Migration `0020_event_cta_clicks.sql` (cf §5.9 pour le schéma) — CREATE TABLE + 3 indexes
 - Endpoint `POST /api/chat/<slug>/cta-clicks` (`functions/api/chat/[slug]/cta-clicks.js`) — auth cohérente `messages.js` (X-Magic-Token ou ip_hash anonyme), vérif `cta_id` valide pour event, insert non-bloquant (200 OK même si DB échoue)
-- Tracking JS dans `chat/[slug].js` + `i/[token].js` — handler click sur `btnEl` avec POST `keepalive: true` fire-and-forget, ne bloque pas l'ouverture du lien CTA (marqueur `nomacast-cta-clicks-v1`)
+- Tracking JS dans `chat/[slug].js` + `i/[token].js` — handler click sur `btnEl` avec POST `keepalive: true` fire-and-forget, ne bloque pas l'ouverture du lien CTA (marqueur `nomacast-cta-clicks-v1`). Fix syntaxe 15 mai : remplacement d'une regex `/\\/cta\\/active$/` (qui cassait l'IIFE dans le HTML rendu) par `lastIndexOf + substring`. Cf §11 « Regex dans template strings serveur ».
 - Aucun impact UX
 
 **Phase E.3 Part 2 — Restante** :
@@ -1062,8 +1062,8 @@ Validation 15 mai : **vue simple** = tableau d'invités dans `event-admin/<slug>
 | **C4** Replay/VOD | ⏸ Reporté | Nécessite config CF Stream côté Dashboard + UI player |
 | **M4** Rate limit messages | ✅ Résolu (déjà implémenté) | 10 msg/60s/IP via `ip_hash` HMAC, 429 + `Retry-After` (`messages.js` l.155-190) |
 | **U1** Mode lecture seule | ✅ Résolu (déjà implémenté) | `buildChatPanelHtml` masque le form input, filtre côté client `author_kind='admin'` |
-| **FR-1** Modal fin d'event | ⏸ À planifier | Petit chantier ~30 min |
-| **FR-4** Annonces modérateur | 🟡 Partiel | Côté participant déjà OK (mode lecture). Côté admin : reste à ajouter input "Publier une annonce" dans `admin/live.html` |
+| **FR-1** Modal fin d'event | ✅ Résolu (15 mai) | Overlay avec countdown 10s à la transition `live → ended` (cf §10.15) |
+| **FR-4** Annonces modérateur | ✅ Résolu (15 mai) | Endpoint `POST /api/admin/events/<id>/announce` + UI régie + CSS distinctif (cf §10.16) |
 
 **Items hors tableau (reste à traiter)** :
 
@@ -1123,6 +1123,62 @@ Cohérent avec le côté participant (`chat/[slug].js` + `i/[token].js`) qui con
 
 **Bugfix corollaire** : `admin/new.html` proposait 7 modes au lieu de 9 (les 2 modes Tour 2.A `presence` + `cta` avaient été ajoutés à `edit.html` `buildModesCheckboxes` lors du Tour 2.A mais oubliés à la création). Symptôme : un CTA configuré en régie n'apparaissait pas côté chat car le mode `cta` n'avait jamais pu être coché à la création (`modes_json` ne le contenait pas). Listes désormais alignées à 9 modes entre `new.html` et `edit.html`. Règle de synchronisation des modes en §11.
 
+### 10.13 Régie : préservation de l'édition CTA pendant le polling ✅ Livré (15 mai)
+
+Fix dans `admin/live.html` (marqueur `nomacast-cta-edit-preserve-v1`). Symptôme : le polling CTA toutes les 5s appelait `renderCtas()` qui faisait `clearNode(ctasList)` puis reconstruisait le DOM, donc l'input d'édition était détruit/recréé à chaque tick et l'admin perdait sa frappe en cours.
+
+**Pattern de fix** :
+1. Variable `lastCtas = []` (cache du dernier fetch réussi)
+2. `loadCtas()` skip `renderCtas` si `ctasEditingId !== null`, et affiche « Pause (édition) » dans le status badge
+3. Clic « Modifier » : `renderCtas(lastCtas)` direct (au lieu de `loadCtas()` qui maintenant skipperait)
+4. Clic « Annuler » : `renderCtas(lastCtas)` après reset `ctasEditingId = null`
+
+Pendant l'édition, le fetch polling continue en arrière-plan (donc `lastCtas` reste à jour pour la sortie d'édition) mais le DOM reste figé jusqu'au save ou cancel. Règle générale du pattern « édition vs polling » et zones à vérifier en §11.
+
+### 10.14 Participant : propagation live des modifs CTA ✅ Livré (15 mai)
+
+Fix dans `functions/chat/[slug].js` + `functions/i/[token].js` (marqueur `nomacast-cta-live-update-v1`). Symptôme : modifier le label ou l'URL d'un CTA actif via la régie ne se propageait pas chez les viewers — il fallait désactiver puis réactiver le CTA pour forcer le refresh.
+
+**Cause** : le polling `fetchActive` skippait toute mise à jour du DOM si le CTA actif servi avait le même ID que celui en mémoire (`if (cta.id === currentCtaId) return`). Donc une modification d'un champ mutable (label, url) sur le même CTA passait inaperçue.
+
+**Fix** : comparaison composite (id + label + url) — refresh du DOM dès qu'un des 3 a changé. Deux nouvelles variables d'état `currentCtaLabel` et `currentCtaUrl` côté client, reset à `null` quand le CTA est désactivé.
+
+Polling inchangé à 10s, donc latence max 10s pour les viewers. Règle générale du pattern « polling avec early return » et zones à vérifier en §11.
+
+### 10.15 Participant : modal fin d'événement ✅ Livré (15 mai)
+
+Résout FR-1. Fix dans `functions/chat/[slug].js` + `functions/i/[token].js` (marqueur `nomacast-event-ended-modal-v1`). Quand le polling status détecte que l'event est passé de `live` à `ended`, le navigateur participant n'affiche plus un reload brutal mais un overlay propre.
+
+**Comportement** :
+
+- Badge « Événement terminé » + titre + texte
+- Bouton « Voir le replay » → reload immédiat vers la `renderEndedPage`
+- Countdown 10s d'auto-reload en filet de sécurité (cas utilisateur inattentif)
+- Backdrop + blur, animations sobres (`ended-fade-in`, `ended-slide-up`)
+- **Non-fermable** : pas de croix, pas de close-on-backdrop. Le seul chemin de sortie est le reload — voulu, le user ne doit pas rester coincé dans un état « live mais ended »
+
+**Détails techniques** :
+
+- Couleur du bouton = `var(--brand-color)` → respecte le white-label si configuré sur l'event
+- Idempotent : `if (document.getElementById('event-ended-overlay')) return` en tête de `showEndedModal()` empêche le double affichage si plusieurs polls détectent la transition en parallèle
+- ~70 lignes CSS + ~50 lignes JS par fichier participant
+
+Règle de synchronisation des transitions de status (3 lieux concernés) en §11.
+
+### 10.16 Annonces modérateur ✅ Livré (15 mai)
+
+Résout FR-4. Endpoint `POST /api/admin/events/<id>/announce` (fichier `functions/api/admin/events/[id]/announce.js`, marqueur `nomacast-admin-announce-v1`). Permet au modérateur (Nomacast ou client en régie) de publier une annonce visible par **tous les participants, y compris en mode lecture seule**.
+
+**Mécanique** : INSERT dans `chat_messages` avec `author_kind='admin'` et `status='approved'`. Pas de modération, pas de validation par tiers. Le polling chat côté participant récupère le message naturellement (filtre `status=approved` existant) et le filtre lecture seule (`m.author_kind !== 'admin'`) **préserve** les annonces — c'est ce qui permet à un event en lecture seule de continuer à recevoir des annonces.
+
+**Détection auto colonne contenu** : `announce.js` fait un `PRAGMA table_info(chat_messages)` au runtime pour détecter dynamiquement la colonne (`content` / `body` / `message` / `text`) plutôt que de hardcoder. Helper `detectContentColumn`. Règle de maintenance en §11.
+
+**UI régie** (`admin/live.html`) : zone repliable « Publier une annonce », shortcut **Ctrl+Entrée**, max 500 chars, compteur visible.
+
+**Auteur affiché** côté participant : email admin extrait du JWT Cloudflare Access (partie avant `@`), fallback « Modérateur » si le JWT n'est pas dispo.
+
+**CSS distinctif** côté participant : `.chat-msg-admin { border-left: 3px solid var(--brand-color); }` pour différencier visuellement les annonces des messages des participants (respecte le white-label).
+
 ---
 
 ## 11. Points à surveiller
@@ -1151,6 +1207,22 @@ Cohérent avec le côté participant (`chat/[slug].js` + `i/[token].js`) qui con
   5. `functions/i/[token].js` — mêmes flags côté invité privé
   
   Sinon : bugs silencieux. Incident 15 mai : `new.html` proposait 7 modes au lieu de 9 (`presence` + `cta` ajoutés à `edit.html` Tour 2.A mais oubliés à la création). Détecté quand un CTA configuré en régie n'apparaissait pas sur la page chat car le mode `cta` n'était pas dans `modes_json` (jamais coché à la création).
+- **(15 mai)** **Regex dans template strings serveur — piège d'escape** — Éviter les regex avec `\` dans les `<script>` générés par les Pages Functions (`chat/[slug].js`, `i/[token].js`, etc.). Les double-backslashes peuvent perdre un niveau d'escape entre le serveur (où ils s'écrivent `\\\\`) et le HTML rendu côté navigateur. Préférer `String.prototype.lastIndexOf + substring` ou des opérations de string sans caractères spéciaux. Incident 15 mai : la regex `/\\/cta\\/active$/` du tracking CTA cassait toute l'IIFE de la page chat (`SyntaxError: missing ) after argument list`) — corrigée par `lastIndexOf` (cf §10.7). **Méthodologie de test associée** : une `SyntaxError` dans un script généré est silencieuse pour l'utilisateur final (une ligne console, aucun signal UX). Après modification d'un `<script>` embarqué dans une Function, toujours tester en ouvrant la console DevTools (F12) sur la page rendue — un `node --check` sur le source serveur ne détecte pas le problème car l'escape se joue à la sérialisation HTML.
+- **(15 mai)** **Pattern « édition vs polling »** — Tout formulaire d'édition inline dans une zone qui poll (CTAs, sondages, Q&A, etc.) doit suivre ce pattern, sinon l'input est détruit/recréé à chaque tick et l'utilisateur perd sa frappe :
+  1. Variable d'état `editingId` qui mémorise l'item en cours d'édition
+  2. Cache des dernières données reçues du fetch (`lastXxx = []`)
+  3. Skip du re-render pendant édition (`if (editingId !== null) return`)
+  4. Clic Modifier/Annuler : re-render direct via le cache, sans repasser par le fetch
+  
+  Appliqué le 15 mai aux CTAs régie (cf §10.13, marqueur `nomacast-cta-edit-preserve-v1`). **À vérifier dans** : `polls` (édition d'un sondage existant), `pre-event Q&A` (modération qui poll), et toute autre zone admin qui combine polling + édition inline. Si édition inline présente, appliquer le même pattern.
+- **(15 mai)** **Pattern « polling avec early return »** — Tout polling côté participant qui skippe le re-render DOM sur égalité d'identifiant (`if (item.id === currentId) return`) doit aussi comparer les **champs mutables** du payload. Sinon, une modification d'un champ éditable sur le même item passe inaperçue chez les viewers (il faut désactiver/réactiver pour forcer le refresh). Appliqué le 15 mai au CTA actif côté participant (cf §10.14, marqueur `nomacast-cta-live-update-v1`) — comparaison composite `id + label + url`. **À étendre** si on ajoute des CTAs avec champs supplémentaires (couleur, icône) ou pour d'autres widgets qui poll : reactions config, sondages actifs, annonces modérateur.
+- **(15 mai)** **Transitions de status event : 3 lieux à synchroniser** — Si on ajoute une étape de status (ex. `paused`, `replay`), penser à mettre à jour en cohérence :
+  1. `functions/chat/[slug].js` `pollStatus` (page publique) — réaction côté participant
+  2. `functions/i/[token].js` `pollStatus` (page lien personnel) — réaction côté invité privé
+  3. `admin/edit.html` bouton « Lancer/Terminer le direct » (cf §10.11, marqueur `nomacast-live-control-v1`) — déclenchement côté admin
+  
+  Sinon, l'admin peut déclencher une transition que les pages participant ne savent pas interpréter (ou inversement). Aujourd'hui les transitions gérées sont `draft → live` (full reload côté participant) et `live → ended` (modal `nomacast-event-ended-modal-v1`, cf §10.15).
+- **(15 mai)** **Détection auto colonne contenu `chat_messages`** — L'endpoint `announce.js` (cf §10.16) fait un `PRAGMA table_info(chat_messages)` au runtime pour détecter dynamiquement la colonne de contenu parmi (`content` / `body` / `message` / `text`). Si tu changes le schéma de `chat_messages` à l'avenir, vérifier que la nouvelle colonne reste dans cette liste — sinon, ajouter le nouveau nom dans le helper `detectContentColumn` d'`announce.js`. Sans cela, l'endpoint d'annonce renverra une erreur silencieuse à l'INSERT.
 
 ---
 
