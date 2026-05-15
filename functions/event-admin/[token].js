@@ -11,7 +11,7 @@
 //
 // Marqueur : nomacast-analytics-visits-tracking-v1 + nomacast-client-credentials-v1
 
-import { getSessionFromRequest } from '../_lib/session.js';
+import { getSessionFromRequest, createSessionCookieValue, buildSetCookieHeader } from '../_lib/session.js';
 
 export const onRequestGet = async ({ params, request, env }) => {
   if (!env.DB || !env.ADMIN_PASSWORD) {
@@ -111,13 +111,30 @@ export const onRequestGet = async ({ params, request, env }) => {
     console.error('[event-admin/token] visits track failed', err);
   }
 
+  // nomacast-client-credentials-v1 : on pose un cookie session systématiquement
+  // (HMAC backup OU slug+cookie déjà valide) pour que l'iframe régie /admin/live.html
+  // bénéficie de l'auth automatique côté browser. Le cookie ne donne accès qu'à CET event.
+  // En mode HMAC, isClientSession reste false → pas de bouton "Déconnexion" affiché.
+  const headers = {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'private, no-store',
+    'X-Robots-Tag': 'noindex, nofollow'
+  };
+  if (env.SESSION_SECRET) {
+    try {
+      const cookieValue = await createSessionCookieValue(env, {
+        event_id: event.id,
+        login: event.client_login || (isClientSession ? 'client' : 'hmac-admin')
+      });
+      headers['Set-Cookie'] = buildSetCookieHeader(cookieValue);
+    } catch (e) {
+      console.error('[event-admin/token] session cookie failed', e);
+    }
+  }
+
   return new Response(renderPage(event, apiToken, adminPreviewToken, isClientSession), {
     status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'private, no-store',
-      'X-Robots-Tag': 'noindex, nofollow'
-    }
+    headers
   });
 };
 
