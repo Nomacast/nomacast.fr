@@ -28,6 +28,8 @@ export const onRequestGet = async ({ params, env }) => {
 
     // Récupération des invités avec engagement (même logique que stats per_invitee,
     // filtrage page_kind != 'event-admin' sur les visites)
+    // nomacast-csv-engagement-v1 : ajout des compteurs réactions / votes sondages /
+    //                              votes idées / clics CTA / total actions
     const rowsRes = await env.DB.prepare(`
       SELECT
         i.full_name AS name,
@@ -42,7 +44,11 @@ export const onRequestGet = async ({ params, env }) => {
         (SELECT MAX(visited_at) FROM visits WHERE invitee_id = i.id AND page_kind != 'event-admin') AS last_visit_at,
         (SELECT COUNT(*) FROM visits WHERE invitee_id = i.id AND page_kind != 'event-admin') AS visits_count,
         (SELECT COUNT(*) * 30 FROM event_presence_history WHERE invitee_id = i.id) AS total_duration_sec,
-        (SELECT COUNT(*) FROM chat_messages WHERE invitee_id = i.id AND status = 'approved') AS messages_count
+        (SELECT COUNT(*) FROM chat_messages WHERE invitee_id = i.id AND status = 'approved') AS messages_count,
+        (SELECT COUNT(*) FROM event_reactions WHERE invitee_id = i.id) AS reactions_count,
+        (SELECT COUNT(*) FROM poll_votes pv JOIN polls p ON pv.poll_id = p.id WHERE pv.voter_key = i.id AND p.event_id = i.event_id) AS poll_votes_count,
+        (SELECT COUNT(*) FROM idea_votes iv JOIN ideas idx ON iv.idea_id = idx.id WHERE iv.voter_key = i.id AND idx.event_id = i.event_id) AS idea_votes_count,
+        (SELECT COUNT(*) FROM event_cta_clicks WHERE invitee_id = i.id AND event_id = i.event_id) AS cta_clicks_count
       FROM invitees i
       WHERE i.event_id = ? AND i.anonymized_at IS NULL
       ORDER BY i.full_name COLLATE NOCASE
@@ -65,13 +71,25 @@ export const onRequestGet = async ({ params, env }) => {
       'Nb visites',
       'Durée connexion (s)',
       'Durée connexion (lisible)',
-      'Messages chat'
+      'Messages chat',
+      // nomacast-csv-engagement-v1
+      'Réactions',
+      'Votes sondages',
+      'Votes idées',
+      'Clics CTA',
+      'Total actions'
     ];
 
     const lines = [headers.map(csvEscape).join(',')];
 
     for (const r of rows) {
       const dur = parseInt(r.total_duration_sec, 10) || 0;
+      const messages = parseInt(r.messages_count, 10) || 0;
+      const reactions = parseInt(r.reactions_count, 10) || 0;
+      const pollVotes = parseInt(r.poll_votes_count, 10) || 0;
+      const ideaVotes = parseInt(r.idea_votes_count, 10) || 0;
+      const ctaClicks = parseInt(r.cta_clicks_count, 10) || 0;
+      const totalActions = messages + reactions + pollVotes + ideaVotes + ctaClicks;
       lines.push([
         r.name || '',
         r.email || '',
@@ -86,7 +104,13 @@ export const onRequestGet = async ({ params, env }) => {
         String(r.visits_count || 0),
         String(dur),
         formatDuration(dur),
-        String(r.messages_count || 0)
+        String(messages),
+        // nomacast-csv-engagement-v1
+        String(reactions),
+        String(pollVotes),
+        String(ideaVotes),
+        String(ctaClicks),
+        String(totalActions)
       ].map(csvEscape).join(','));
     }
 
