@@ -1773,6 +1773,9 @@
   var ctasCreateOpen = false;
   var ctasEditingId  = null;
   var ctasNowTimer   = null; // refresh des "il y a X min" toutes les 30s
+  // nomacast-cta-edit-preserve-v1 : cache des dernières ctas pour éviter de détruire
+  // les inputs d'édition (label/url) toutes les 5s pendant que l'admin tape.
+  var lastCtas = [];
 
   // Options d'expiration exposées à l'UI (valeurs en secondes, null = pas d'expiration)
   var CTAS_EXPIRES_OPTIONS = [
@@ -1872,9 +1875,14 @@
   async function loadCtas() {
     try {
       var data = await A.apiFetch('/api/admin/events/' + encodeURIComponent(eventId) + '/ctas');
-      renderCtas(data.ctas || []);
+      lastCtas = data.ctas || [];
+      // nomacast-cta-edit-preserve-v1 : ne PAS re-render pendant l'édition
+      // (sinon l'input d'édition est détruit/recréé toutes les 5s pendant que l'admin tape).
+      if (ctasEditingId === null) {
+        renderCtas(lastCtas);
+      }
       ctasDot.classList.remove('error', 'paused');
-      ctasStatusTx.textContent = 'Auto · 5s';
+      ctasStatusTx.textContent = ctasEditingId !== null ? 'Pause (édition)' : 'Auto · 5s';
     } catch (err) {
       console.error('[regie] ctas poll error:', err);
       ctasDot.classList.add('error');
@@ -1933,7 +1941,12 @@
       actions.appendChild(toggleBtn);
 
       var editBtn = A.el('button', { attrs: { type: 'button', title: 'Modifier' }, text: 'Modifier' });
-      editBtn.addEventListener('click', function () { ctasEditingId = cta.id; loadCtas(); });
+      // nomacast-cta-edit-preserve-v1 : renderCtas(lastCtas) au lieu de loadCtas (qui skippe en mode édition)
+      editBtn.addEventListener('click', function () {
+        ctasEditingId = cta.id;
+        renderCtas(lastCtas);
+        ctasStatusTx.textContent = 'Pause (édition)';
+      });
       actions.appendChild(editBtn);
 
       var delBtn = A.el('button', { className: 'danger', attrs: { type: 'button', title: 'Supprimer' }, text: 'Supprimer' });
@@ -1945,7 +1958,12 @@
       actions.appendChild(saveBtn);
 
       var cancelEditBtn = A.el('button', { attrs: { type: 'button' }, text: 'Annuler' });
-      cancelEditBtn.addEventListener('click', function () { ctasEditingId = null; loadCtas(); });
+      // nomacast-cta-edit-preserve-v1 : sortir du mode édition + render direct (loadCtas refetch sera relancé naturellement)
+      cancelEditBtn.addEventListener('click', function () {
+        ctasEditingId = null;
+        renderCtas(lastCtas);
+        ctasStatusTx.textContent = 'Auto · 5s';
+      });
       actions.appendChild(cancelEditBtn);
     }
     head.appendChild(actions);
